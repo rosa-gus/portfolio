@@ -1,0 +1,30 @@
+{
+  "name": "luis-gustavo-portfolio",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "homepage": "https://rosa-gus.github.io/portfolio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rosa-gus/portfolio.git"
+  },
+  "type": "module",
+  "scripts": {
+    "images:covers": "node scripts/generate-project-covers.mjs",
+    "assets:dev": "vite build --watch",
+    "assets:build": "vite build",
+    "generate": "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate",
+    "check": "tsc --noEmit",
+    "build": "npm run assets:build && npm run check && mkdir -p bin && go build -o bin/portfolio ./cmd/portfolio",
+    "site:build": "npm run assets:build && npm run check && npm run generate && go run ./cmd/export"
+  },
+  "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "embla-carousel": "8.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.2"
+  }
+}

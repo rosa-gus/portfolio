@@ -1,0 +1,1 @@
+Encurtar essa jornada sem criar uma experiência alheia ao GNOME: o envio precisava começar no Nautilus, manter uma confirmação explícita e lidar com dispositivos indisponíveis, lotes, cancelamentos e falhas parciais de forma confiável.

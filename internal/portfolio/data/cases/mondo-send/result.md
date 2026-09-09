@@ -1,0 +1,1 @@
+O envio passou a começar no próprio Nautilus: o usuário seleciona um ou mais arquivos, aciona “Enviar para \<dispositivo favorito\>” e confirma a transferência no Mondó. Além de encurtar a rota original, o aplicativo acompanha o progresso, permite cancelar com segurança e, após uma falha parcial, tenta novamente a partir do primeiro arquivo ainda não confirmado.

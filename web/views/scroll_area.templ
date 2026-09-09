@@ -1,0 +1,15 @@
+package views
+
+templ ScrollArea(label string, axis string) {
+	<div class="scroll-area" data-scroll-area data-axis={ axis }>
+		<div
+			class="scroll-area__viewport"
+			data-scroll-area-viewport
+			role="region"
+			aria-label={ label }
+			tabindex="0"
+		>
+			{ children... }
+		</div>
+	</div>
+}

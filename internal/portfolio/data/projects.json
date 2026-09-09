@@ -1,0 +1,502 @@
+[
+  {
+    "slug": "abrigo-do-wlad",
+    "index": "01",
+    "title": "Abrigo do Wlad",
+    "category": "Plataforma de Impacto Social",
+    "year": "2026",
+    "status": "production",
+    "briefDescription": "Uma plataforma voluntária que transforma a divulgação e a adoção de cães em um fluxo digital contínuo.",
+    "summary": "Do PDF difícil de manter a um ecossistema com site público, gestão protegida, design system próprio e automações que distribuem visibilidade entre os cães.",
+    "role": "Volunteer full-stack development",
+    "stack": [
+      "React",
+      "TypeScript",
+      "Vite",
+      "Cloudflare Workers",
+      "Cloudflare Access",
+      "Cloudflare KV",
+      "Firestore",
+      "Vitest"
+    ],
+    "featuredStack": ["TypeScript", "Cloudflare Workers"],
+    "capabilities": [
+      "interfaces",
+      "systems-and-apis",
+      "data-and-automation",
+      "design-systems",
+      "security"
+    ],
+    "practiceMap": [
+      {
+        "capability": "interfaces",
+        "technologies": ["React", "TypeScript", "Vite"]
+      },
+      {
+        "capability": "systems-and-apis",
+        "technologies": ["Cloudflare Workers", "Firestore"]
+      },
+      {
+        "capability": "data-and-automation",
+        "technologies": ["Cloudflare Workers", "Cloudflare KV", "Firestore"]
+      },
+      {
+        "capability": "design-systems",
+        "technologies": ["React", "TypeScript", "Vitest"]
+      },
+      {
+        "capability": "security",
+        "technologies": ["Cloudflare Access"]
+      }
+    ],
+    "caseStudy": {
+      "context": "cases/abrigo-do-wlad/context.md",
+      "challenge": "cases/abrigo-do-wlad/challenge.md",
+      "decision": "cases/abrigo-do-wlad/decision.md",
+      "result": "cases/abrigo-do-wlad/result.md"
+    },
+    "media": {
+      "cover": "public-home-desktop",
+      "items": [
+        {
+          "id": "public-home-desktop",
+          "src": "/projects/wlad/image01.png",
+          "width": 1341,
+          "height": 933,
+          "alt": "Página inicial do Abrigo do Wlad em uma tela desktop, com a cadela Teka em destaque.",
+          "label": "Site público · Página inicial",
+          "caption": "Destaque diário e caminhos para adoção, apadrinhamento e apoio ao abrigo."
+        },
+        {
+          "id": "private-dashboard",
+          "src": "/projects/wlad/image02.png",
+          "width": 1290,
+          "height": 865,
+          "alt": "Visão geral do painel privado do Abrigo do Wlad com indicadores e atividade recente.",
+          "label": "Painel privado · Visão geral",
+          "caption": "Animais, pontos de coleta e candidaturas reunidos em uma visão operacional."
+        },
+        {
+          "id": "private-application-review",
+          "src": "/projects/wlad/image03.png",
+          "width": 1163,
+          "height": 947,
+          "alt": "Tela do painel privado para avaliação de uma candidatura de adoção.",
+          "label": "Painel privado · Revisão de candidatura",
+          "caption": "Fluxo interno de avaliação e acompanhamento de uma solicitação de adoção.",
+          "note": "Dados fictícios utilizados exclusivamente para demonstração."
+        },
+        {
+          "id": "public-home-mobile",
+          "src": "/projects/wlad/image04.png",
+          "width": 374,
+          "height": 665,
+          "alt": "Página inicial do Abrigo do Wlad em uma tela de celular, com a cadela Teka em destaque.",
+          "label": "Site público · Experiência mobile",
+          "caption": "Apresentação do abrigo e de seus principais caminhos adaptada a telas menores."
+        }
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/abrigo-do-wlad",
+      "repository": "https://github.com/rosa-gus/abrigo-do-wlad",
+      "live": "https://abrigodowlad.com.br"
+    },
+    "featured": true,
+    "tone": "#F2F9F9"
+  },
+  {
+    "slug": "coleoptera-identifier",
+    "index": "02",
+    "title": "Coleoptera Identifier",
+    "category": "Pesquisa em IA aplicada",
+    "year": "2026",
+    "status": "prototype",
+    "briefDescription": "Uma experiência de terminal que transforma fotografias de besouros em hipóteses taxonômicas com IA — sem fingir que substitui um especialista.",
+    "summary": "Curiosidade por besouros virou um protótipo full-stack: uma TUI em Go envia imagens para uma API FastAPI, o BioCLIP procura parentes na árvore da vida e o sistema responde somente com o nível taxonômico que seus limiares permitem sustentar.",
+    "role": "Pesquisa aplicada, arquitetura e desenvolvimento full-stack",
+    "stack": [
+      "Go",
+      "Bubble Tea",
+      "Python",
+      "FastAPI",
+      "PyTorch",
+      "BioCLIP",
+      "GBIF API"
+    ],
+    "featuredStack": ["PyTorch", "BioCLIP"],
+    "capabilities": [
+      "interfaces",
+      "systems-and-apis",
+      "data-and-automation",
+      "security"
+    ],
+    "practiceMap": [
+      {
+        "capability": "interfaces",
+        "technologies": ["Go", "Bubble Tea"]
+      },
+      {
+        "capability": "systems-and-apis",
+        "technologies": ["Python", "FastAPI", "GBIF API"]
+      },
+      {
+        "capability": "data-and-automation",
+        "technologies": ["Python", "PyTorch", "BioCLIP", "GBIF API"]
+      },
+      {
+        "capability": "security",
+        "technologies": ["FastAPI"]
+      }
+    ],
+    "license": {
+      "name": "GPL-3.0",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+    },
+    "caseStudy": {
+      "context": "cases/coleoptera-identifier/context.md",
+      "challenge": "cases/coleoptera-identifier/challenge.md",
+      "decision": "cases/coleoptera-identifier/decision.md",
+      "result": "cases/coleoptera-identifier/result.md"
+    },
+    "media": {
+      "cover": "coleoptera-experiment-cover",
+      "items": [
+        {
+          "id": "coleoptera-experiment-cover",
+          "src": "/projects/carousel/coleoptera-identifier.webp",
+          "width": 1200,
+          "height": 800,
+          "alt": "Ilustração verde e preta de um besouro observado por uma lupa, com o título Coleoptera Identifier Experiment.",
+          "label": "Coleoptera Identifier · Capa Editorial",
+          "caption": "Créditos a foto sem tratamento a Tao Yuan, via Unsplash."
+        },
+        {
+          "id": "terminal-analysis",
+          "src": "/projects/coleoptera-identifier/image01.png",
+          "width": 879,
+          "height": 333,
+          "alt": "Interface do Coleoptera Identifier no terminal durante a análise do arquivo test_beetle.jpg.",
+          "label": "TUI · Análise em andamento",
+          "caption": "O cliente em Go envia a imagem enquanto o modelo permanece isolado no servidor."
+        },
+        {
+          "id": "taxonomic-suggestion",
+          "src": "/projects/coleoptera-identifier/image02.png",
+          "width": 1020,
+          "height": 955,
+          "alt": "Resultado no terminal com prévia pixelada de um besouro, score do modelo, árvore taxonômica e candidatos alternativos.",
+          "label": "TUI · Hipótese taxonômica",
+          "caption": "Prévia pixelada, nível taxonômico sugerido e alternativas reunidos sem esconder as limitações do modelo."
+        },
+        {
+          "id": "outside-coleoptera",
+          "src": "/projects/coleoptera-identifier/image03.png",
+          "width": 909,
+          "height": 486,
+          "alt": "Resultado no terminal para uma imagem que o modelo classificou como não pertencente à ordem Coleoptera.",
+          "label": "TUI · Fora de Coleoptera",
+          "caption": "Quando a sugestão sai do universo dos besouros, a interface interrompe a árvore taxonômica e sinaliza o limite."
+        },
+        {
+          "id": "project-cover",
+          "src": "/projects/coleoptera-identifier/image04.webp",
+          "width": 909,
+          "height": 486,
+          "alt": "Um besouro com uma lupa e dentro um asterisco, representando a logo externa do projeto.",
+          "label": "Coleoptera Identifier · Capa Externa",
+          "caption": "Capa utilizada no Github e em outros meios externos."
+        }
+
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/coleoptera-identifier",
+      "repository": "https://github.com/rosa-gus/coleoptera-identifier",
+      "live": ""
+    },
+    "featured": false,
+    "tone": "#b7d348"
+  },
+  {
+    "slug": "mondo-send",
+    "index": "03",
+    "title": "Mondó",
+    "category": "Utilitário nativo para GNOME",
+    "year": "2026",
+    "status": "prototype",
+    "briefDescription": "Um utilitário nativo para GNOME que transforma o envio de arquivos por Bluetooth em uma ação direta no Nautilus.",
+    "summary": "Da rota escondida nas Configurações a um comando junto do arquivo: o Mondó conecta Nautilus, BlueZ e OBEX para enviar arquivos a um dispositivo favorito, com confirmação e recuperação de falhas.",
+    "role": "Design de produto e desenvolvimento desktop",
+    "stack": [
+      "Python",
+      "GTK 4",
+      "Libadwaita",
+      "PyGObject",
+      "BlueZ",
+      "OBEX",
+      "Nautilus"
+    ],
+    "featuredStack": ["Python", "GTK 4"],
+    "capabilities": ["interfaces", "systems-and-apis"],
+    "practiceMap": [
+      {
+        "capability": "interfaces",
+        "technologies": ["Python", "GTK 4", "Libadwaita", "PyGObject", "Nautilus"]
+      },
+      {
+        "capability": "systems-and-apis",
+        "technologies": ["Python", "BlueZ", "OBEX", "Nautilus"]
+      }
+    ],
+    "license": {
+      "name": "GPL-3.0",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+    },
+    "caseStudy": {
+      "context": "cases/mondo-send/context.md",
+      "challenge": "cases/mondo-send/challenge.md",
+      "decision": "cases/mondo-send/decision.md",
+      "result": "cases/mondo-send/result.md"
+    },
+    "media": {
+      "cover": "cover",
+      "items": [
+        {
+          "id": "cover",
+          "src": "/projects/carousel/mondo-send.webp",
+          "width": 1200,
+          "height": 800,
+          "alt": "Janela inicial do Mondó em tema escuro, com opções para escolher arquivos e um dispositivo Bluetooth favorito.",
+          "label": "Mondó · Capa editorial",
+          "caption": "Créditos a foto sem tratamento a Sue Hughes, via Unsplash."
+        },
+        {
+          "id": "initial-screen",
+          "src": "/projects/mondo-send/image01.png",
+          "width": 684,
+          "height": 724,
+          "alt": "Tela inicial do Mondó com botões para escolher arquivos ou definir um dispositivo favorito.",
+          "label": "Aplicativo · Estado inicial",
+          "caption": "O fluxo também pode começar no aplicativo, pela seleção de arquivos ou do destino favorito."
+        },
+        {
+          "id": "nautilus-context-action",
+          "src": "/projects/mondo-send/image02.png",
+          "width": 457,
+          "height": 578,
+          "alt": "Menu de contexto do Nautilus sobre um arquivo, com a ação para enviá-lo ao smartphone de Luis destacada.",
+          "label": "Nautilus · Ação contextual",
+          "caption": "O dispositivo favorito aparece ao lado das ações do próprio arquivo."
+        },
+        {
+          "id": "send-confirmation",
+          "src": "/projects/mondo-send/image03.png",
+          "width": 740,
+          "height": 780,
+          "alt": "Janela do Mondó com uma caixa de confirmação para enviar um arquivo ao smartphone de Luis.",
+          "label": "Envio rápido · Confirmação",
+          "caption": "Uma última confirmação preserva o controle sem devolver o usuário ao caminho longo das Configurações."
+        },
+        {
+          "id": "file-and-device",
+          "src": "/projects/mondo-send/image04.png",
+          "width": 740,
+          "height": 780,
+          "alt": "Janela do Mondó mostrando o arquivo snoopy.png pronto para envio e o smartphone de Luis marcado como favorito.",
+          "label": "Aplicativo · Arquivo e dispositivo",
+          "caption": "Arquivo selecionado e destino favorito reunidos antes de iniciar a transferência."
+        }
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/mondo-send",
+      "repository": "https://github.com/rosa-gus/mondo-send",
+      "live": ""
+    },
+    "featured": false,
+    "tone": "#2270d7"
+  },
+  {
+    "slug": "jaci-ui",
+    "index": "04",
+    "title": "Jaci UI",
+    "category": "Design system",
+    "year": "2026",
+    "status": "production",
+    "briefDescription": "O design system compartilhado pelas experiências pública e administrativa do Abrigo do Wlad.",
+    "summary": "Nascida durante o desenvolvimento do Abrigo do Wlad, a Jaci UI transforma sua identidade inspirada na água, no céu, na terra e na vegetação em uma fundação reutilizável de tokens e componentes acessíveis.",
+    "role": "Volunteer design system and front-end development",
+    "stack": [
+      "React",
+      "TypeScript",
+      "CSS Modules",
+      "Radix UI Primitives",
+      "Vitest"
+    ],
+    "featuredStack": ["React", "TypeScript"],
+    "capabilities": ["design-systems", "interfaces", "accessibility"],
+    "practiceMap": [
+      {
+        "capability": "design-systems",
+        "technologies": ["React", "TypeScript", "CSS Modules", "Vitest"]
+      },
+      {
+        "capability": "interfaces",
+        "technologies": ["React", "CSS Modules", "Radix UI Primitives"]
+      },
+      {
+        "capability": "accessibility",
+        "technologies": ["Radix UI Primitives", "Vitest"]
+      }
+    ],
+    "license": {
+      "name": "GPL-3.0",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+    },
+    "caseStudy": {
+      "context": "cases/jaci-ui/context.md",
+      "challenge": "cases/jaci-ui/challenge.md",
+      "decision": "cases/jaci-ui/decision.md",
+      "result": "cases/jaci-ui/result.md"
+    },
+    "media": {
+      "cover": "jaci-moon-cover",
+      "items": [
+        {
+          "id": "jaci-moon-cover",
+          "src": "/projects/carousel/jaci-ui.webp",
+          "width": 1200,
+          "height": 800,
+          "alt": "Lua cheia em dois tons, com textura 'dithering' duotone bayer com matriz 4x4.",
+          "label": "Jaci UI · Capa editorial",
+          "caption": "Créditos a foto sem tratamento a Julia Reushenova, via Unsplash."
+        },
+        {
+          "id": "actions-dark",
+          "src": "/projects/jaci/image01.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Painel da Jaci UI em tema escuro com botões de ação principal, variações de suporte e marcadores de status.",
+          "label": "Ações · Tema escuro",
+          "caption": "Hierarquia, intenção e feedback reunidos em botões e marcadores para diferentes contextos."
+        },
+        {
+          "id": "actions-light",
+          "src": "/projects/jaci/image02.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Painel da Jaci UI em tema claro com botões de ação principal, variações de suporte e marcadores de status.",
+          "label": "Ações · Tema claro",
+          "caption": "A mesma hierarquia de ações preservada sobre superfícies claras."
+        },
+        {
+          "id": "surfaces-dark",
+          "src": "/projects/jaci/image03.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Composição da Jaci UI em tema escuro com dois cartões sobre adoção responsável e cuidado contínuo, além de uma faixa informativa.",
+          "label": "Superfícies · Tema escuro",
+          "caption": "Cards combinam tom, hierarquia e propósito sem perder a identidade visual."
+        },
+        {
+          "id": "surfaces-light",
+          "src": "/projects/jaci/image04.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Composição da Jaci UI em tema claro com dois cartões sobre adoção responsável e cuidado contínuo, além de uma faixa informativa.",
+          "label": "Superfícies · Tema claro",
+          "caption": "Contraste, elevação e cores semânticas adaptados às superfícies claras."
+        },
+        {
+          "id": "destructive-dialog-dark",
+          "src": "/projects/jaci/image05.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Diálogo modal da Jaci UI em tema escuro solicitando confirmação antes de remover um cadastro.",
+          "label": "Feedback · Diálogo destrutivo escuro",
+          "caption": "Contexto, consequência e próxima ação permanecem próximos em uma decisão irreversível."
+        },
+        {
+          "id": "destructive-dialog-light",
+          "src": "/projects/jaci/image06.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Diálogo modal da Jaci UI em tema claro solicitando confirmação antes de remover um cadastro.",
+          "label": "Feedback · Diálogo destrutivo claro",
+          "caption": "O mesmo diálogo semântico com sobreposição e foco visual ajustados ao tema claro."
+        },
+        {
+          "id": "form-dark",
+          "src": "/projects/jaci/image07.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Formulário da Jaci UI em tema escuro com campos de texto, seleção, mensagem de validação, opções de moradia e preferência de porte.",
+          "label": "Formulários · Tema escuro",
+          "caption": "Campos, textos de apoio, validação e seletores organizam uma coleta de dados extensa."
+        },
+        {
+          "id": "form-light",
+          "src": "/projects/jaci/image08.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Formulário da Jaci UI em tema claro com campos de texto, seleção, mensagem de validação, opções de moradia e preferência de porte.",
+          "label": "Formulários · Tema claro",
+          "caption": "Controles e estados de validação mantêm ritmo e legibilidade sobre a superfície clara."
+        },
+        {
+          "id": "progressive-flow",
+          "src": "/projects/jaci/image09.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Exemplo da Jaci UI com progresso de cadastro na etapa três de quatro, aviso contextual, seção expansível e paginação.",
+          "label": "Fluxos · Progresso visível",
+          "caption": "Navegação, progresso e divulgação gradual orientam jornadas mais longas."
+        },
+        {
+          "id": "discovery-dark",
+          "src": "/projects/jaci/image10.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Interface de descoberta da Jaci UI em tema escuro com busca de cães, sugestões, filtros ativos e opções de visualização.",
+          "label": "Descoberta · Tema escuro",
+          "caption": "Busca, sugestões, filtros e seleção trabalham juntos para reduzir o esforço de descoberta."
+        },
+        {
+          "id": "discovery-light",
+          "src": "/projects/jaci/image11.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Interface de descoberta da Jaci UI em tema claro com busca de cães, sugestões, filtros ativos e opções de visualização.",
+          "label": "Descoberta · Tema claro",
+          "caption": "Os controles de descoberta preservam agrupamento e destaque no tema claro."
+        },
+        {
+          "id": "async-states-dark",
+          "src": "/projects/jaci/image12.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Exemplos da Jaci UI em tema escuro com estado sem resultados, ação para limpar filtros e cartão de carregamento com conteúdo esqueleto.",
+          "label": "Estados · Tema escuro",
+          "caption": "Vazio, carregamento e orientação dão uma resposta clara enquanto o conteúdo não está disponível."
+        },
+        {
+          "id": "async-states-light",
+          "src": "/projects/jaci/image13.webp",
+          "width": 2400,
+          "height": 1800,
+          "alt": "Exemplos da Jaci UI em tema claro com estado sem resultados, ação para limpar filtros e cartão de carregamento com conteúdo esqueleto.",
+          "label": "Estados · Tema claro",
+          "caption": "Mensagens, ações de recuperação e esqueletos de carregamento adaptados ao tema claro."
+        }
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/jaci-ui",
+      "repository": "https://github.com/rosa-gus/abrigo-do-wlad/tree/main/packages/ui",
+      "live": ""
+    },
+    "featured": false,
+    "tone": "#577142"
+  }
+]

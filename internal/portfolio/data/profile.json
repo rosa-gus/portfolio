@@ -1,0 +1,60 @@
+{
+  "identity": {
+    "name": "Luis Gustavo R.C.",
+    "displayName": "Luis Gustavo",
+    "profession": "Desenvolvedor de software",
+    "professionalTitle": "Desenvolvedor de Software Full-Stack"
+  },
+  "seo": {
+    "title": "Luis Gustavo R.C. | Full-Stack Developer",
+    "description": "Luis Gustavo R.C. é Desenvolvedor de Software Full-Stack, criando produtos digitais de ponta a ponta entre produto, interface e sistemas.",
+    "socialImageAlt": "Imagem em preto e branco de uma porta aberta em estilo dither, representando o portfólio de Luis Gustavo R.C."
+  },
+  "introduction": {
+    "availability": "Disponível para novos projetos",
+    "heading": "Desenvolvedor full-stack entre produto, interface e sistemas.",
+    "summary": "Projetos que transformam decisões em experiências digitais claras e sustentáveis."
+  },
+  "career": {
+    "heading": "Carreira construída entre interface, sistema e produto.",
+    "entries": [
+      {
+        "period": "2026—Agora",
+        "title": "Desenvolvimento full-stack",
+        "context": "Projeto voluntário · Abrigo do Wlad",
+        "description": "Atuação da definição do produto à interface, APIs, dados, segurança e publicação.",
+        "detailLabel": "Evidência",
+        "evidenceSlugs": ["abrigo-do-wlad"]
+      },
+      {
+        "period": "2025—2029",
+        "title": "Engenharia de Software",
+        "context": "Graduação em andamento",
+        "description": "Formação orientada à construção e evolução de sistemas de software.",
+        "detailLabel": "Ênfase",
+        "detail": "Arquitetura · Produto · Sistemas web"
+      }
+    ]
+  },
+  "about": {
+    "heading": "Entre estrutura e percepção.",
+    "paragraphs": [
+      "Sou Luis Gustavo R.C., desenvolvedor full-stack e estudante de Engenharia de Software. Desenvolvo produtos digitais por inteiro, conectando a experiência percebida pelo usuário aos sistemas que operam nos bastidores.",
+      "Para mim, um produto não é uma coleção de partes isoladas. Seu contexto define a linguagem visual, orienta a interface e determina como cada interação deve funcionar. Arquitetura, dados, automações e segurança formam a estrutura que sustenta essa experiência e acompanha sua evolução.",
+      "Meu trabalho busca aproximar engenharia, produto e design para criar soluções claras, sustentáveis e consistentes ao longo do tempo."
+    ],
+    "media": {
+      "label": "Estudo visual 01",
+      "description": "Movimento em dithering duotone",
+      "technique": "Bayer 4×4"
+    }
+  },
+  "contact": {
+    "heading": "Vamos construir algo.",
+    "introduction": "Tem um projeto, uma oportunidade ou quer trocar uma ideia? Chama aí!",
+    "email": "rosagus.contato@protonmail.com",
+    "githubURL": "https://github.com/rosa-gus",
+    "linkedInURL": "",
+    "sourceURL": "https://github.com/rosa-gus/portfolio"
+  }
+}

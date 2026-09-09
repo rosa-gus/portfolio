@@ -1,0 +1,233 @@
+package views
+
+import "portfolio/internal/portfolio"
+
+templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePath string, publicURL string) {
+	<!DOCTYPE html>
+	<html lang="pt-BR">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="description" content={ profile.SEO.Description }/>
+			@siteIcons(basePath)
+			@themeHead()
+			<title>{ siteMetadataTitle(profile) }</title>
+			<link rel="canonical" href={ externalURL(publicURL) }/>
+			<meta property="og:locale" content="pt_BR"/>
+			<meta property="og:type" content="website"/>
+			<meta property="og:site_name" content={ siteMetadataTitle(profile) }/>
+			<meta property="og:title" content={ siteMetadataTitle(profile) }/>
+			<meta property="og:description" content={ profile.SEO.Description }/>
+			<meta property="og:url" content={ publicURL }/>
+			<meta property="og:image" content={ socialImageURL(publicURL) }/>
+			<meta property="og:image:type" content="image/png"/>
+			<meta property="og:image:width" content="1000"/>
+			<meta property="og:image:height" content="525"/>
+			<meta property="og:image:alt" content={ profile.SEO.SocialImageAlt }/>
+			<meta name="twitter:card" content="summary_large_image"/>
+			<meta name="twitter:title" content={ siteMetadataTitle(profile) }/>
+			<meta name="twitter:description" content={ profile.SEO.Description }/>
+			<meta name="twitter:image" content={ socialImageURL(publicURL) }/>
+			<meta name="twitter:image:alt" content={ profile.SEO.SocialImageAlt }/>
+			<link rel="stylesheet" href={ siteURL(basePath, "/assets/app.css") }/>
+			<script type="module" src={ siteURL(basePath, "/assets/app.js") }></script>
+		</head>
+		<body>
+			<div class="site-shell">
+				<header class="masthead">
+					<a class="identity" href={ siteURL(basePath, "/") } aria-label={ "Página inicial de " + profile.Identity.DisplayName }>
+						<span class="identity__mark" aria-hidden="true">
+							<img class="identity__mark-image identity__mark-image--light" src={ siteURL(basePath, "/favicon/favicon-32x32.png") } width="32" height="32" alt=""/>
+							<img class="identity__mark-image identity__mark-image--dark" src={ siteURL(basePath, "/favicon/dark/favicon-32x32.png") } width="32" height="32" alt=""/>
+						</span>
+						<span>{ profile.Identity.DisplayName }</span>
+					</a>
+					<p class="masthead__role" data-page-title aria-live="polite">{ profile.Introduction.Availability }</p>
+					<div class="masthead__actions">
+						<p class="masthead__profession">{ profile.Identity.Profession }</p>
+						@themeToggle()
+					</div>
+				</header>
+				<main class="stage" id="content">
+					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ profile.Introduction.Availability } aria-labelledby="projects-title">
+						@SectionHeading(
+							"projects-title",
+							profile.Introduction.Heading,
+							profile.Introduction.Summary,
+							true,
+						)
+						<div class="carousel" data-carousel aria-roledescription="carrossel" aria-label="Arquivo de projetos">
+							<div class="carousel__viewport">
+								<div class="carousel__track">
+									for index, project := range availableProjects(projects) {
+										<div class={ carouselSlideClass(index == 0) }>
+											<article class={ projectCardClass(index == 0) } data-project={ project.Slug } data-project-title={ project.Title }>
+												<span class="project-card__folder-tab" aria-hidden="true">
+													<span>Case</span>
+													<span>{ project.Index }</span>
+												</span>
+												<span class="project-card__technology-tab" aria-label="Tecnologias em destaque">
+													for _, technology := range project.FeaturedStack {
+														<abbr title={ technology }>[{ featuredTechnologyLabel(technology) }]</abbr>
+													}
+												</span>
+												<a class="project-card__select" data-project-select href={ projectURL(basePath, project.Slug) } aria-label={ "Abrir projeto " + project.Title }>
+													<span class="project-card__media" aria-hidden="true">
+														if images := projectCarouselImages(project); len(images) > 0 {
+															<span class="project-card__editorial-header">
+																<span>{ project.Index }</span>
+																<span>{ project.Title }</span>
+																<span>{ projectCategoryLabel(project.Category) }</span>
+																<span>{ project.Year }</span>
+																<span class="project-card__technology-list" aria-label="Tecnologias em destaque">
+																	for _, technology := range project.FeaturedStack {
+																		<abbr title={ technology }>[{ featuredTechnologyLabel(technology) }]</abbr>
+																	}
+																</span>
+															</span>
+															<span class="project-card__cover-frame" data-project-images>
+																for imageIndex, image := range images {
+																	<img
+																		class={ carouselImageClass(imageIndex) }
+																		data-project-image
+																		data-src={ siteURL(basePath, image.Src) }
+																		if index == 0 && imageIndex == 0 {
+																			src={ siteURL(basePath, image.Src) }
+																		}
+																		alt=""
+																		width={ imageDimension(image.Width) }
+																		height={ imageDimension(image.Height) }
+																		loading={ carouselImageLoading(index, imageIndex) }
+																		decoding="async"
+																		aria-hidden={ imageIndex != 0 }
+																	/>
+																}
+															</span>
+														} else {
+															<span class="project-card__matrix"></span>
+														}
+													</span>
+												</a>
+												<div class="project-card__details" aria-hidden={ index != 0 }>
+													<p class="project-card__status">[{ projectStatusLabel(project.Status) }]</p>
+													<a class="text-action" data-project-link href={ projectURL(basePath, project.Slug) }>[ABRIR CASE]</a>
+												</div>
+											</article>
+										</div>
+									}
+								</div>
+							</div>
+							<div class="carousel__controls" aria-label="Controles do carrossel">
+								<button type="button" data-carousel-play>[*] REPRODUZINDO</button>
+								<div class="carousel__navigation">
+									<button type="button" data-carousel-prev aria-label="Projeto anterior">[↑]</button>
+									<span class="carousel__counter" data-carousel-counter>{ galleryCounter(0, len(availableProjects(projects))) }</span>
+									<button type="button" data-carousel-next aria-label="Próximo projeto">[↓]</button>
+								</div>
+							</div>
+						</div>
+					</section>
+					<section class="content-panel information-panel career-panel" id="career" data-panel data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
+						@SectionHeading("career-title", profile.Career.Heading, "", false)
+						<div class="career-record">
+							<header class="career-record__header meta-text">
+								<p>Percurso selecionado</p>
+								<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
+							</header>
+							<ol class="career-record__list">
+								for _, entry := range profile.Career.Entries {
+									<li class="career-entry">
+										<p class="career-entry__period meta-text">{ entry.Period }</p>
+										<article class="career-entry__body">
+											<h3>{ entry.Title }</h3>
+											<p class="career-entry__context meta-text">{ entry.Context }</p>
+											<p class="career-entry__description">{ entry.Description }</p>
+											<div class="career-entry__meta meta-text">
+												<p>{ entry.DetailLabel }</p>
+												if len(entry.EvidenceSlugs) > 0 {
+													<div class="evidence-links">
+														for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
+															<a href={ projectURL(basePath, project.Slug) }>{ project.Title } ↗</a>
+														}
+													</div>
+												} else {
+													<p>{ entry.Detail }</p>
+												}
+											</div>
+										</article>
+									</li>
+								}
+							</ol>
+							<footer class="career-record__practice meta-text">
+								<p>Prática</p>
+								<p class="career-capabilities">
+									for _, capability := range careerCapabilities(projects) {
+										<span>{ capability }</span>
+									}
+								</p>
+							</footer>
+						</div>
+					</section>
+					<section class="content-panel information-panel about-panel" id="about" data-panel data-panel-title="Perfil" hidden aria-labelledby="about-title">
+						<div class="about-panel__media" data-fish-media data-fish-state="loading" aria-hidden="true">
+							<img data-fish-image src={ siteURL(basePath, "/fish.png") } alt="" decoding="async" loading="lazy"/>
+							<video data-fish-video muted playsinline preload="metadata">
+								<source src={ siteURL(basePath, "/fish.mp4") } type="video/mp4"/>
+							</video>
+						</div>
+						@SectionHeading("about-title", profile.About.Heading, "", false)
+						<div class="about-panel__copy prose prose--intro">
+							for _, paragraph := range profile.About.Paragraphs {
+								<p>{ paragraph }</p>
+							}
+						</div>
+						<div class="about-panel__controls">
+							<p class="about-panel__caption"><span>{ profile.About.Media.Label }</span><span>{ profile.About.Media.Description }</span><span>{ profile.About.Media.Technique }</span></p>
+							<button class="about-panel__play" data-fish-play type="button" aria-label="Reproduzir o vídeo do peixe desde o início" aria-pressed="false">[ ] REPRODUZIR</button>
+						</div>
+					</section>
+					<section class="content-panel information-panel contact-panel" id="contact" data-panel data-panel-title="Contato" hidden aria-labelledby="contact-title">
+						@SectionHeading("contact-title", profile.Contact.Heading, "", false)
+						<div class="contact-panel__body">
+							<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
+							<div class="contact-panel__primary">
+								<div class="contact-panel__address">
+									<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>{ profile.Contact.Email }</a>
+									<button
+										class="contact-panel__copy"
+										type="button"
+										data-contact-copy
+										data-copy-value={ profile.Contact.Email }
+										aria-describedby="contact-copy-status"
+										hidden
+									>[COPIAR]</button>
+								</div>
+								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>[ENVIAR E-MAIL →]</a>
+								<p class="contact-panel__status meta-text" id="contact-copy-status" data-contact-copy-status aria-live="polite"></p>
+							</div>
+							if profile.Contact.GitHubURL != "" || profile.Contact.LinkedInURL != "" || profile.Contact.SourceURL != "" {
+								<nav class="contact-panel__channels meta-text" aria-label="Outros canais de contato">
+									if profile.Contact.GitHubURL != "" {
+										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">GitHub ↗</a>
+									}
+									if profile.Contact.LinkedInURL != "" {
+										<a href={ externalURL(profile.Contact.LinkedInURL) } target="_blank" rel="me noreferrer">LinkedIn ↗</a>
+									}
+									if profile.Contact.SourceURL != "" {
+										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">Código-fonte ↗</a>
+									}
+								</nav>
+							}
+						</div>
+					</section>
+				</main>
+				<nav class="command-bar" aria-label="Seções principais">
+					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Projetos</a>
+					<a data-panel-target="career" href="#career">Carreira</a>
+					<a data-panel-target="about" href="#about">Sobre</a>
+					<a data-panel-target="contact" href="#contact">Contato</a>
+				</nav>
+			</div>
+		</body>
+	</html>
+}

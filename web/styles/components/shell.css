@@ -1,0 +1,108 @@
+.site-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(1rem, 2.2vh, 1.75rem);
+  height: 100dvh;
+  min-height: 0;
+  padding: 1.25rem var(--page-gutter) 1.5rem;
+  overflow: hidden;
+}
+
+.masthead {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding-bottom: 0.9rem;
+  font: 500 0.7rem/1 var(--font-mono);
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: fit-content;
+}
+
+.identity__mark {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 0.75rem;
+  height: 0.5rem;
+}
+
+.identity__mark-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 2rem;
+  max-width: none;
+  height: 2rem;
+  transform: translate(-50%, -50%);
+}
+
+.identity__mark-image--dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .identity__mark-image--light {
+  display: none;
+}
+
+:root[data-theme="dark"] .identity__mark-image--dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .identity__mark-image--light {
+    display: none;
+  }
+
+  :root:not([data-theme]) .identity__mark-image--dark {
+    display: block;
+  }
+}
+
+.masthead__role {
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.masthead__profession {
+  white-space: nowrap;
+}
+
+.masthead__actions {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  align-items: center;
+  justify-self: end;
+}
+
+.theme-toggle {
+  min-width: 9ch;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.theme-toggle:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.stage {
+  display: grid;
+  min-height: 0;
+}
+
+.projects-panel {
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.72fr) minmax(0, 2fr);
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+  min-height: 0;
+}

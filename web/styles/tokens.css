@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light;
+  --color-ink: #eee9de;
+  --color-ink-raised: #e3ded3;
+  --color-paper: #171713;
+  --color-paper-muted: #6d6961;
+  --color-line: rgba(23, 23, 19, 0.2);
+  --color-line-strong: rgba(23, 23, 19, 0.62);
+  --color-accent: #0d0d0b;
+  --color-chrome: rgba(238, 233, 222, 0.92);
+  --color-shadow: rgba(54, 48, 37, 0.16);
+  --font-display: "Instrument Sans Variable", "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* Semantic color roles */
+  --color-surface-canvas: var(--color-ink);
+  --color-surface-raised: var(--color-ink-raised);
+  --color-text-primary: var(--color-paper);
+  --color-text-muted: var(--color-paper-muted);
+  --color-border-subtle: var(--color-line);
+  --color-border-strong: var(--color-line-strong);
+  --color-text-on-media: #f4f4f0;
+  --color-text-on-media-muted: rgba(244, 244, 240, 0.72);
+  --color-text-on-media-subtle: rgba(244, 244, 240, 0.42);
+
+  /* Type roles */
+  --type-size-display: clamp(2rem, 4vw, 4.6rem);
+  --type-size-section-title: clamp(2.4rem, 5.5vw, 6.5rem);
+  --type-size-body: clamp(1rem, 1.25vw, 1.125rem);
+  --type-size-lead: clamp(1.25rem, 1.65vw, 1.5rem);
+  --type-size-meta: 0.7rem;
+  --type-size-control-compact: 0.6875rem;
+  --type-size-caption: 0.625rem;
+  --type-leading-body: 1.5;
+  --type-leading-lead: 1.38;
+  --type-leading-title: 0.94;
+  --type-tracking-body: -0.01em;
+  --type-tracking-lead: -0.02em;
+  --type-tracking-title: -0.025em;
+  --type-tracking-meta: 0.055em;
+  --type-font-meta: 500 var(--type-size-meta) / 1.45 var(--font-mono);
+  --type-font-control: 500 var(--type-size-meta) / 1.2 var(--font-mono);
+  --type-font-control-compact: 500 var(--type-size-control-compact) / 1.3 var(--font-mono);
+
+  /* Spacing and readable measures */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --measure-title: 12ch;
+  --measure-intro: 44ch;
+  --measure-body: 68ch;
+  --section-padding-start: clamp(1rem, 4vh, 3rem);
+  --page-gutter: clamp(1rem, 2.4vw, 2.5rem);
+  --transition-fast: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-main: 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-dossier: 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #0a0a09;
+  --color-ink-raised: #131311;
+  --color-paper: #e9e9e5;
+  --color-paper-muted: #9d9d99;
+  --color-line: rgba(233, 233, 229, 0.2);
+  --color-line-strong: rgba(233, 233, 229, 0.62);
+  --color-accent: #fffefa;
+  --color-chrome: rgba(10, 10, 9, 0.92);
+  --color-shadow: rgba(0, 0, 0, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-ink: #0a0a09;
+    --color-ink-raised: #131311;
+    --color-paper: #e9e9e5;
+    --color-paper-muted: #9d9d99;
+    --color-line: rgba(233, 233, 229, 0.2);
+    --color-line-strong: rgba(233, 233, 229, 0.62);
+    --color-accent: #fffefa;
+    --color-chrome: rgba(10, 10, 9, 0.92);
+    --color-shadow: rgba(0, 0, 0, 0.32);
+  }
+}

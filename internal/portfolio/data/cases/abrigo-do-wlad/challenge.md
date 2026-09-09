@@ -1,0 +1,1 @@
+Substituir a listagem estática por uma experiência acessível e sustentável, capaz de reunir divulgação, candidaturas de adoção, campanhas e pontos de reciclagem sem aumentar a carga operacional da equipe do abrigo.

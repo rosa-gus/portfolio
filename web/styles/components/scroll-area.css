@@ -1,0 +1,122 @@
+.scroll-area {
+  --scroll-area-size: 0.55rem;
+  --scroll-area-shadow-size: clamp(1.5rem, 4vw, 3.5rem);
+  --scroll-area-surface: var(--color-surface-canvas);
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.scroll-area__viewport {
+  min-width: 0;
+  min-height: 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-area__viewport {
+    scrollbar-color: currentColor transparent;
+    scrollbar-width: thin;
+  }
+}
+
+.scroll-area[data-axis="horizontal"] > .scroll-area__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+}
+
+.scroll-area[data-axis="vertical"] > .scroll-area__viewport {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+}
+
+.scroll-area__viewport::-webkit-scrollbar {
+  height: var(--scroll-area-size);
+  width: var(--scroll-area-size);
+}
+
+.scroll-area__viewport::-webkit-scrollbar-track,
+.scroll-area__viewport::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.scroll-area__viewport::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 0;
+  background: currentColor;
+}
+
+.scroll-area__viewport::-webkit-scrollbar-button {
+  display: none;
+}
+
+.scroll-area::before,
+.scroll-area::after {
+  position: absolute;
+  z-index: 2;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.scroll-area[data-axis="horizontal"]::before,
+.scroll-area[data-axis="horizontal"]::after {
+  top: 0;
+  bottom: var(--scroll-area-size);
+  width: var(--scroll-area-shadow-size);
+}
+
+.scroll-area[data-axis="horizontal"]::before {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    var(--scroll-area-surface) 0%,
+    color-mix(in srgb, var(--scroll-area-surface) 78%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.scroll-area[data-axis="horizontal"]::after {
+  right: 0;
+  background: linear-gradient(
+    270deg,
+    var(--scroll-area-surface) 0%,
+    color-mix(in srgb, var(--scroll-area-surface) 78%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.scroll-area[data-axis="vertical"]::before,
+.scroll-area[data-axis="vertical"]::after {
+  right: var(--scroll-area-size);
+  left: 0;
+  height: var(--scroll-area-shadow-size);
+}
+
+.scroll-area[data-axis="vertical"]::before {
+  top: 0;
+  background: linear-gradient(
+    180deg,
+    var(--scroll-area-surface) 0%,
+    color-mix(in srgb, var(--scroll-area-surface) 78%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.scroll-area[data-axis="vertical"]::after {
+  bottom: 0;
+  background: linear-gradient(
+    0deg,
+    var(--scroll-area-surface) 0%,
+    color-mix(in srgb, var(--scroll-area-surface) 78%, transparent) 42%,
+    transparent 100%
+  );
+}
+
+.scroll-area[data-scroll-start]::before,
+.scroll-area[data-scroll-end]::after {
+  opacity: 1;
+}

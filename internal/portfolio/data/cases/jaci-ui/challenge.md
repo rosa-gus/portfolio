@@ -1,0 +1,1 @@
+Manter a consistência visual e comportamental entre as duas aplicações sem duplicar componentes nem levar regras específicas de produto para a biblioteca. A fundação também precisava sustentar formulários extensos, navegação, feedback e sobreposições com estados previsíveis, responsivos e acessíveis.

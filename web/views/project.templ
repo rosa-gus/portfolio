@@ -1,0 +1,364 @@
+package views
+
+import "portfolio/internal/portfolio"
+
+templ ProjectContent(project portfolio.Project, basePath string) {
+	<article class="project-content project-content--page" style={ projectToneStyle(project.Tone) }>
+		<header class="project-content__dossier">
+			<div class="project-content__identity">
+				<p class="project-content__coordinate meta-text">
+					<span>Case / { project.Index }</span>
+					<span>{ project.Year }</span>
+				</p>
+				<div class="project-content__edition-mark" aria-hidden="true">
+					for _, row := range projectFolioGlyphRows(project) {
+						<span>{ row }</span>
+					}
+				</div>
+				<div class="project-content__folio-caption">
+					<h2>
+						<span class="visually-hidden">{ project.Title }</span>
+						<span aria-hidden="true">{ projectFolioID(project) }</span>
+					</h2>
+					<p class="meta-text">{ projectFolioMeta(project) }</p>
+				</div>
+			</div>
+		</header>
+
+		<header class="project-content__mobile-heading">
+			<span>Case / { project.Index }</span>
+			<strong>
+				<span class="visually-hidden">{ project.Title }</span>
+				<span aria-hidden="true">{ projectFolioID(project) }</span>
+			</strong>
+			<span>{ project.Year }</span>
+		</header>
+
+		<div class="project-content__story" data-project-story>
+			@ScrollArea("Seções do estudo de caso", "horizontal") {
+				<div class="project-content__index control-text" role="tablist" aria-label="Seções do projeto">
+					<button
+						class="project-content__tab is-active"
+						id={ "project-" + project.Slug + "-context-tab" }
+						data-project-tab="context"
+						type="button"
+						role="tab"
+						aria-selected="true"
+						aria-controls={ "project-" + project.Slug + "-context-panel" }
+						tabindex="0"
+					>
+						<span class="project-content__tab-number">01</span>
+						<span>Contexto</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+					<button
+						class="project-content__tab"
+						id={ "project-" + project.Slug + "-challenge-tab" }
+						data-project-tab="challenge"
+						type="button"
+						role="tab"
+						aria-selected="false"
+						aria-controls={ "project-" + project.Slug + "-challenge-panel" }
+						tabindex="-1"
+					>
+						<span class="project-content__tab-number">02</span>
+						<span>Desafio</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+					<button
+						class="project-content__tab"
+						id={ "project-" + project.Slug + "-decision-tab" }
+						data-project-tab="decision"
+						type="button"
+						role="tab"
+						aria-selected="false"
+						aria-controls={ "project-" + project.Slug + "-decision-panel" }
+						tabindex="-1"
+					>
+						<span class="project-content__tab-number">03</span>
+						<span>Decisão</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+					<button
+						class="project-content__tab"
+						id={ "project-" + project.Slug + "-result-tab" }
+						data-project-tab="result"
+						type="button"
+						role="tab"
+						aria-selected="false"
+						aria-controls={ "project-" + project.Slug + "-result-panel" }
+						tabindex="-1"
+					>
+						<span class="project-content__tab-number">04</span>
+						<span>Resultado</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+					<button
+						class="project-content__tab"
+						id={ "project-" + project.Slug + "-gallery-tab" }
+						data-project-tab="gallery"
+						type="button"
+						role="tab"
+						aria-selected="false"
+						aria-controls={ "project-" + project.Slug + "-gallery-panel" }
+						tabindex="-1"
+					>
+						<span class="project-content__tab-number">05</span>
+						<span>Galeria</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+					<button
+						class="project-content__tab"
+						id={ "project-" + project.Slug + "-practice-tab" }
+						data-project-tab="practice"
+						type="button"
+						role="tab"
+						aria-selected="false"
+						aria-controls={ "project-" + project.Slug + "-practice-panel" }
+						tabindex="-1"
+					>
+						<span class="project-content__tab-number">06</span>
+						<span>Ficha</span>
+						<span class="project-content__tab-marker" aria-hidden="true">■</span>
+					</button>
+				</div>
+			}
+
+			@ScrollArea("Conteúdo do estudo de caso", "vertical") {
+				<div class="project-content__panels">
+					<section
+						class="project-content__panel is-active"
+						id={ "project-" + project.Slug + "-context-panel" }
+						data-project-panel="context"
+						role="tabpanel"
+						aria-labelledby={ "project-" + project.Slug + "-context-tab" }
+						tabindex="0"
+					>
+						<div class="project-content__prose">
+							if project.Summary != "" {
+								<p class="project-content__standfirst">{ project.Summary }</p>
+							}
+							@renderMarkdown(project.CaseStudy.Context, basePath)
+						</div>
+					</section>
+					<section
+						class="project-content__panel project-content__panel--gallery"
+						id={ "project-" + project.Slug + "-gallery-panel" }
+						data-project-panel="gallery"
+						role="tabpanel"
+						aria-labelledby={ "project-" + project.Slug + "-gallery-tab" }
+						tabindex="0"
+						hidden
+					>
+						<div class="project-gallery" data-project-gallery aria-label={ "Galeria de " + project.Title }>
+							<div class="project-gallery__viewport" data-gallery-viewport>
+							<div class="project-gallery__track">
+								for index, image := range project.Media.Items {
+									<figure class="project-gallery__slide" data-gallery-slide aria-hidden={ index != 0 }>
+										<div class={ galleryMediaClass(image.Note != "") }>
+											if image.Note != "" {
+												<p class="project-gallery__note" id={ galleryNoteID(project.Slug, image.ID) }><span>[NOTA]</span> { image.Note }</p>
+											}
+											<div class="project-gallery__image-frame">
+												<img
+													class="project-gallery__image"
+													src={ siteURL(basePath, image.Src) }
+													alt={ image.Alt }
+													width={ imageDimension(image.Width) }
+													height={ imageDimension(image.Height) }
+													loading="lazy"
+													decoding="async"
+													aria-describedby={ galleryDescriptionIDs(project.Slug, image.ID, image.Note != "") }
+												/>
+											</div>
+										</div>
+										<figcaption class="project-gallery__caption" id={ galleryCaptionID(project.Slug, image.ID) }>
+											<p class="project-gallery__label">{ image.Label }</p>
+											<p class="project-gallery__description">{ image.Caption }</p>
+										</figcaption>
+										</figure>
+									}
+								</div>
+							</div>
+						<div class="project-gallery__controls" aria-label="Controles da galeria">
+							<span data-gallery-counter aria-live="polite">
+									if len(project.Media.Items) > 0 {
+										{ galleryCounter(0, len(project.Media.Items)) }
+									} else {
+										00 / 00
+									}
+							</span>
+							<div>
+								<button type="button" data-gallery-expand>[AMPLIAR]</button>
+								<button type="button" data-gallery-prev>[ANTERIOR]</button>
+								<button type="button" data-gallery-next>[PRÓXIMA]</button>
+								</div>
+							</div>
+						</div>
+						</section>
+					<section
+					class="project-content__panel"
+					id={ "project-" + project.Slug + "-challenge-panel" }
+					data-project-panel="challenge"
+					role="tabpanel"
+					aria-labelledby={ "project-" + project.Slug + "-challenge-tab" }
+					tabindex="0"
+					hidden
+				>
+					<div class="project-content__prose">
+						@renderMarkdown(project.CaseStudy.Challenge, basePath)
+					</div>
+					</section>
+					<section
+					class="project-content__panel"
+					id={ "project-" + project.Slug + "-decision-panel" }
+					data-project-panel="decision"
+					role="tabpanel"
+					aria-labelledby={ "project-" + project.Slug + "-decision-tab" }
+					tabindex="0"
+					hidden
+				>
+					<div class="project-content__prose">
+						@renderMarkdown(project.CaseStudy.Decision, basePath)
+					</div>
+					</section>
+					<section
+					class="project-content__panel"
+					id={ "project-" + project.Slug + "-result-panel" }
+					data-project-panel="result"
+					role="tabpanel"
+					aria-labelledby={ "project-" + project.Slug + "-result-tab" }
+					tabindex="0"
+					hidden
+				>
+					<div class="project-content__prose">
+						@renderMarkdown(project.CaseStudy.Result, basePath)
+					</div>
+					</section>
+					<section
+						class="project-content__panel project-content__panel--practice"
+						id={ "project-" + project.Slug + "-practice-panel" }
+						data-project-panel="practice"
+						role="tabpanel"
+						aria-labelledby={ "project-" + project.Slug + "-practice-tab" }
+						tabindex="0"
+						hidden
+					>
+						<section class="practice-map" aria-label="Ficha técnica">
+							<header class="practice-map__header">
+								<p class="meta-text">Ficha técnica / 06</p>
+							</header>
+							<div class="practice-map__tree">
+								<div class="practice-map__root">
+									<p class="meta-text">Atuação</p>
+									<p>{ projectRoleLabel(project.Role) }</p>
+								</div>
+								<ul class="practice-map__branches" aria-label="Competências e tecnologias relacionadas">
+									for _, branch := range project.PracticeMap {
+										<li class="practice-map__branch">
+											<p class="practice-map__capability">{ capabilityLabel(branch.Capability) }</p>
+											<ul class="practice-map__technologies" aria-label={ "Tecnologias relacionadas a " + capabilityLabel(branch.Capability) }>
+												for _, technology := range branch.Technologies {
+													<li>[{ technology }]</li>
+												}
+											</ul>
+										</li>
+									}
+								</ul>
+							</div>
+							if project.Links.Repository != "" || project.License.Name != "" {
+								<footer class="practice-map__provenance" aria-label="Código-fonte e licença">
+									if project.Links.Repository != "" {
+										<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
+											<span class="meta-text">Código-fonte</span>
+											<strong>{ repositoryLabel(project.Links.Repository) }</strong>
+											<span class="practice-map__provenance-arrow" aria-hidden="true">↗</span>
+										</a>
+									}
+									if project.License.Name != "" {
+										<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
+											<span class="meta-text">Licença</span>
+											<strong>{ project.License.Name }</strong>
+											<span class="practice-map__provenance-arrow" aria-hidden="true">↗</span>
+										</a>
+									}
+								</footer>
+							}
+						</section>
+					</section>
+				</div>
+			}
+		</div>
+	</article>
+}
+
+templ ProjectImageViewer() {
+	<dialog class="project-image-viewer" data-project-image-viewer aria-labelledby="project-image-viewer-title">
+		<div class="project-image-viewer__frame">
+			<header class="project-image-viewer__header">
+				<span id="project-image-viewer-title" data-project-image-viewer-title>Imagem do projeto</span>
+				<button type="button" data-project-image-viewer-close>[FECHAR]</button>
+			</header>
+			<div class="project-image-viewer__media">
+				@ScrollArea("Imagem ampliada do projeto", "vertical") {
+					<img data-project-image-viewer-image alt=""/>
+				}
+			</div>
+		</div>
+	</dialog>
+}
+
+templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, basePath string, publicURL string) {
+	<!doctype html>
+	<html lang="pt-BR">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="description" content={ projectMetadataDescription(profile, project) }/>
+			@siteIcons(basePath)
+			@themeHead()
+			<title>{ projectMetadataTitle(profile, project) }</title>
+			<link rel="canonical" href={ externalURL(publicProjectURL(publicURL, project.Slug)) }/>
+			<meta property="og:locale" content="pt_BR"/>
+			<meta property="og:type" content="website"/>
+			<meta property="og:site_name" content={ siteMetadataTitle(profile) }/>
+			<meta property="og:title" content={ projectMetadataTitle(profile, project) }/>
+			<meta property="og:description" content={ projectMetadataDescription(profile, project) }/>
+			<meta property="og:url" content={ publicProjectURL(publicURL, project.Slug) }/>
+			<meta property="og:image" content={ socialImageURL(publicURL) }/>
+			<meta property="og:image:type" content="image/png"/>
+			<meta property="og:image:width" content="1000"/>
+			<meta property="og:image:height" content="525"/>
+			<meta property="og:image:alt" content={ profile.SEO.SocialImageAlt }/>
+			<meta name="twitter:card" content="summary_large_image"/>
+			<meta name="twitter:title" content={ projectMetadataTitle(profile, project) }/>
+			<meta name="twitter:description" content={ projectMetadataDescription(profile, project) }/>
+			<meta name="twitter:image" content={ socialImageURL(publicURL) }/>
+			<meta name="twitter:image:alt" content={ profile.SEO.SocialImageAlt }/>
+			<link rel="stylesheet" href={ siteURL(basePath, "/assets/app.css") }/>
+			<script type="module" src={ siteURL(basePath, "/assets/app.js") }></script>
+		</head>
+		<body>
+			<div class="project-page">
+				<header class="project-page__header">
+					<a href={ siteURL(basePath, "/#case") }>[VOLTAR A PROJETOS]</a>
+					<div class="project-page__actions">
+						@themeToggle()
+						<nav aria-label="Links do projeto">
+							if project.Links.Live != "" {
+								<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer">SITE [↗]</a>
+							}
+							if project.Links.Repository != "" {
+								<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer">CÓDIGO [↗]</a>
+							}
+						</nav>
+					</div>
+				</header>
+				<main>
+					@ProjectContent(project, basePath)
+				</main>
+			</div>
+			@ProjectImageViewer()
+		</body>
+	</html>
+}

@@ -1,0 +1,14 @@
+package views
+
+templ SectionHeading(id string, title string, description string, primary bool) {
+	<header class={ sectionHeadingClass(primary) }>
+		if primary {
+			<h1 id={ id }>{ title }</h1>
+		} else {
+			<h2 id={ id }>{ title }</h2>
+		}
+		if description != "" {
+			<p>{ description }</p>
+		}
+	</header>
+}
