@@ -35,5 +35,5 @@ func TestHomeRendersSourceRepositoryLink(t *testing.T) {
 		t.Fatalf("Home().Render() returned error: %v", err)
 	}
 
-	assertContains(t, output.String(), `<a href="https://github.com/example/portfolio" target="_blank" rel="noreferrer">Código-fonte ↗︎</a>`)
+	assertContains(t, output.String(), `<a href="https://github.com/example/portfolio" target="_blank" rel="noreferrer">Código-fonte <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>`)
 }

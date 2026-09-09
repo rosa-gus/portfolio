@@ -912,7 +912,7 @@ func Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePa
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, " ↗︎</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, " <span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span></a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1137,7 +1137,7 @@ func Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\">[ENVIAR E-MAIL →︎]</a><p class=\"contact-panel__status meta-text\" id=\"contact-copy-status\" data-contact-copy-status aria-live=\"polite\"></p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\">[ENVIAR E-MAIL <span class=\"ui-arrow ui-arrow--command\" aria-hidden=\"true\">↑</span>]</a><p class=\"contact-panel__status meta-text\" id=\"contact-copy-status\" data-contact-copy-status aria-live=\"polite\"></p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1160,7 +1160,7 @@ func Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePa
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\" target=\"_blank\" rel=\"me noreferrer\">GitHub ↗︎</a> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\" target=\"_blank\" rel=\"me noreferrer\">GitHub <span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span></a> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1179,7 +1179,7 @@ func Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePa
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "\" target=\"_blank\" rel=\"me noreferrer\">LinkedIn ↗︎</a> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "\" target=\"_blank\" rel=\"me noreferrer\">LinkedIn <span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span></a> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1198,7 +1198,7 @@ func Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePa
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "\" target=\"_blank\" rel=\"noreferrer\">Código-fonte ↗︎</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "\" target=\"_blank\" rel=\"noreferrer\">Código-fonte <span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span></a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

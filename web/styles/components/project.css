@@ -436,6 +436,8 @@
   grid-row: 1 / -1;
   align-self: center;
   font: 500 1rem / 1 var(--font-mono);
+  display: inline-block;
+  transform: rotate(45deg);
 }
 
 .project-page .practice-map__provenance-link:is(:hover, :focus-visible) {

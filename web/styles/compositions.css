@@ -77,3 +77,22 @@
   text-decoration: underline;
   text-underline-offset: 0.25em;
 }
+
+.ui-arrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-weight: inherit;
+  line-height: 1;
+  text-decoration: none;
+  font-variant-emoji: text;
+  user-select: none;
+}
+
+.ui-arrow--redirect {
+  transform: rotate(45deg);
+}
+
+.ui-arrow--command {
+  transform: rotate(90deg);
+}

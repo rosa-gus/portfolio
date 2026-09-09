@@ -911,7 +911,7 @@ func ProjectContent(project portfolio.Project, basePath string) templ.Component 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</strong> <span class=\"practice-map__provenance-arrow\" aria-hidden=\"true\">↗︎</span></a> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</strong> <span class=\"practice-map__provenance-arrow\" aria-hidden=\"true\">↑</span></a> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -943,7 +943,7 @@ func ProjectContent(project portfolio.Project, basePath string) templ.Component 
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</strong> <span class=\"practice-map__provenance-arrow\" aria-hidden=\"true\">↗︎</span></a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</strong> <span class=\"practice-map__provenance-arrow\" aria-hidden=\"true\">↑</span></a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1293,7 +1293,7 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "\" target=\"_blank\" rel=\"noreferrer\">SITE [↗︎]</a> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "\" target=\"_blank\" rel=\"noreferrer\">SITE [<span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span>]</a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1312,7 +1312,7 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "\" target=\"_blank\" rel=\"noreferrer\">CÓDIGO [↗︎]</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "\" target=\"_blank\" rel=\"noreferrer\">CÓDIGO [<span class=\"ui-arrow ui-arrow--redirect\" aria-hidden=\"true\">↑</span>]</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
