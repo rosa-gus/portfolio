@@ -275,6 +275,17 @@
   animation: panel-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.career-panel > .scroll-area {
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.career-panel > .scroll-area > .scroll-area__viewport {
+  display: grid;
+}
+
 .career-record {
   align-self: center;
   justify-self: center;
@@ -422,22 +433,35 @@
 }
 
 .about-panel .section-heading,
-.about-panel__copy,
+.about-panel > .scroll-area,
 .about-panel__controls {
   position: relative;
   z-index: 1;
 }
 
-.about-panel__copy {
+.about-panel > .scroll-area {
+  --scroll-area-surface: #000;
   grid-column: 2;
+  align-self: stretch;
   justify-self: end;
   width: min(100%, 48rem);
+  height: 100%;
+  overflow: hidden;
+}
+
+.about-panel > .scroll-area > .scroll-area__viewport {
+  display: grid;
+}
+
+.about-panel__copy {
+  width: 100%;
+  padding-bottom: clamp(3.5rem, 7vh, 4.5rem);
 }
 
 .about-panel__controls {
   position: fixed;
   right: var(--page-gutter);
-  bottom: 1.5rem;
+  bottom: calc(1.5rem + 2.625rem + var(--space-4));
   left: var(--page-gutter);
   display: flex;
   gap: 1.5rem;
@@ -455,6 +479,8 @@
 }
 
 .about-panel__caption {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0;
@@ -488,6 +514,14 @@
 
 .site-shell.is-about-current .identity__mark {
   color: var(--color-text-on-media);
+}
+
+.site-shell.is-about-current .identity__mark-image--light {
+  display: none;
+}
+
+.site-shell.is-about-current .identity__mark-image--dark {
+  display: block;
 }
 
 .contact-panel__body {

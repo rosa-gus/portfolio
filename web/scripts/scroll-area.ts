@@ -90,6 +90,14 @@ export const initializeScrollAreas = () => {
 
   const documentObserver = new MutationObserver((records) => {
     records.forEach((record) => {
+      if (record.type === "attributes") {
+        findScrollAreas(record.target).forEach((root) => {
+          const state = scrollAreas.get(root);
+          if (state) window.requestAnimationFrame(state.update);
+        });
+        return;
+      }
+
       record.removedNodes.forEach((node) =>
         findScrollAreas(node).forEach(disconnectScrollArea),
       );
@@ -99,5 +107,10 @@ export const initializeScrollAreas = () => {
     });
   });
 
-  documentObserver.observe(document.body, { childList: true, subtree: true });
+  documentObserver.observe(document.body, {
+    attributes: true,
+    attributeFilter: ["hidden"],
+    childList: true,
+    subtree: true,
+  });
 };

@@ -341,9 +341,11 @@ templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, b
 		<body>
 			<div class="project-page">
 				<header class="project-page__header">
-					<a href={ siteURL(basePath, "/#case") }>[VOLTAR A PROJETOS]</a>
-					<div class="project-page__actions">
+					<div class="project-page__controls">
+						<a href={ siteURL(basePath, "/#case") }>[VOLTAR]</a>
 						@themeToggle()
+					</div>
+					<div class="project-page__actions">
 						<nav aria-label="Links do projeto">
 							if project.Links.Live != "" {
 								<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer">SITE [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>

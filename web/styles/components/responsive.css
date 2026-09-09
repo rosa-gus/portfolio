@@ -22,7 +22,13 @@
     grid-template-columns: 1fr;
   }
 
+  .career-panel {
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
   .career-record {
+    align-self: start;
     justify-self: stretch;
   }
 
@@ -77,18 +83,28 @@
     font-size: clamp(1.05rem, 5vw, 1.35rem);
   }
 
-  .about-panel__copy,
   .contact-panel__body {
     align-self: end;
     width: min(100%, 29rem);
   }
 
+  .about-panel > .scroll-area {
+    grid-column: 1;
+    justify-self: end;
+    width: min(100%, 29rem);
+  }
+
   .about-panel__copy {
-    padding-bottom: clamp(3.5rem, 8vh, 5rem);
+    align-self: safe end;
+    padding-bottom: clamp(4rem, 10vh, 5rem);
+  }
+
+  .about-panel__caption {
+    display: none;
   }
 
   .about-panel .section-heading,
-  .about-panel__copy,
+  .about-panel > .scroll-area,
   .about-panel__controls {
     text-shadow:
       0 1px 2px rgba(0, 0, 0, 0.9),
@@ -104,8 +120,9 @@
 
   .about-panel__controls {
     right: 0.75rem;
-    bottom: 5.25rem;
+    bottom: calc(0.75rem + 2.625rem + var(--space-4));
     left: 0.75rem;
+    justify-content: flex-end;
   }
 
   .projects-panel {
@@ -199,6 +216,10 @@
     grid-template-rows: auto minmax(0, 1fr);
   }
 
+  .project-card:not(.is-active) .project-card__media {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
   .project-card.is-active .project-card__cover-frame {
     aspect-ratio: auto;
   }
@@ -208,6 +229,7 @@
     inset: auto;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
+    align-content: center;
     gap: 0.65rem;
     height: 100%;
     min-height: 0;
@@ -284,6 +306,10 @@
 
   .career-entry__period {
     padding-top: 0;
+  }
+
+  .career-record {
+    padding-bottom: 1rem;
   }
 
   .project-content {
@@ -376,6 +402,10 @@
 
   .project-content__prose {
     margin-block: 0;
+  }
+
+  .project-content__prose > :last-child {
+    margin-bottom: 0;
   }
 
   .project-content__standfirst {
@@ -569,6 +599,7 @@
   }
 
   .project-page__header nav,
+  .project-page__controls,
   .project-page__actions {
     gap: 0.7rem;
   }

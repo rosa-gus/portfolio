@@ -129,44 +129,46 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 					</section>
 					<section class="content-panel information-panel career-panel" id="career" data-panel data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
 						@SectionHeading("career-title", profile.Career.Heading, "", false)
-						<div class="career-record">
-							<header class="career-record__header meta-text">
-								<p>Percurso selecionado</p>
-								<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
-							</header>
-							<ol class="career-record__list">
-								for _, entry := range profile.Career.Entries {
-									<li class="career-entry">
-										<p class="career-entry__period meta-text">{ entry.Period }</p>
-										<article class="career-entry__body">
-											<h3>{ entry.Title }</h3>
-											<p class="career-entry__context meta-text">{ entry.Context }</p>
-											<p class="career-entry__description">{ entry.Description }</p>
-											<div class="career-entry__meta meta-text">
-												<p>{ entry.DetailLabel }</p>
+						@ScrollArea("Percurso profissional", "vertical") {
+							<div class="career-record">
+								<header class="career-record__header meta-text">
+									<p>Percurso selecionado</p>
+									<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
+								</header>
+								<ol class="career-record__list">
+									for _, entry := range profile.Career.Entries {
+										<li class="career-entry">
+											<p class="career-entry__period meta-text">{ entry.Period }</p>
+											<article class="career-entry__body">
+												<h3>{ entry.Title }</h3>
+												<p class="career-entry__context meta-text">{ entry.Context }</p>
+												<p class="career-entry__description">{ entry.Description }</p>
+												<div class="career-entry__meta meta-text">
+													<p>{ entry.DetailLabel }</p>
 												if len(entry.EvidenceSlugs) > 0 {
 													<div class="evidence-links">
 														for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
-										<a href={ projectURL(basePath, project.Slug) }>{ project.Title } <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+															<a href={ projectURL(basePath, project.Slug) }>{ project.Title } <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
 														}
-													</div>
-												} else {
-													<p>{ entry.Detail }</p>
-												}
-											</div>
-										</article>
-									</li>
-								}
-							</ol>
-							<footer class="career-record__practice meta-text">
-								<p>Prática</p>
-								<p class="career-capabilities">
-									for _, capability := range careerCapabilities(projects) {
-										<span>{ capability }</span>
+														</div>
+													} else {
+														<p>{ entry.Detail }</p>
+													}
+												</div>
+											</article>
+										</li>
 									}
-								</p>
-							</footer>
-						</div>
+								</ol>
+								<footer class="career-record__practice meta-text">
+									<p>Prática</p>
+									<p class="career-capabilities">
+										for _, capability := range careerCapabilities(projects) {
+											<span>{ capability }</span>
+										}
+									</p>
+								</footer>
+							</div>
+						}
 					</section>
 					<section class="content-panel information-panel about-panel" id="about" data-panel data-panel-title="Perfil" hidden aria-labelledby="about-title">
 						<div class="about-panel__media" data-fish-media data-fish-state="loading" aria-hidden="true">
@@ -176,11 +178,13 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 							</video>
 						</div>
 						@SectionHeading("about-title", profile.About.Heading, "", false)
-						<div class="about-panel__copy prose prose--intro">
-							for _, paragraph := range profile.About.Paragraphs {
-								<p>{ paragraph }</p>
-							}
-						</div>
+						@ScrollArea("Sobre Luis Gustavo", "vertical", ScrollAreaShadowNone) {
+							<div class="about-panel__copy prose prose--intro">
+								for _, paragraph := range profile.About.Paragraphs {
+									<p>{ paragraph }</p>
+								}
+							</div>
+						}
 						<div class="about-panel__controls">
 							<p class="about-panel__caption"><span>{ profile.About.Media.Label }</span><span>{ profile.About.Media.Description }</span><span>{ profile.About.Media.Technique }</span></p>
 							<button class="about-panel__play" data-fish-play type="button" aria-label="Reproduzir o vídeo do peixe desde o início" aria-pressed="false">[ ] REPRODUZIR</button>

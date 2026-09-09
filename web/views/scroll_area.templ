@@ -1,7 +1,22 @@
 package views
 
-templ ScrollArea(label string, axis string) {
-	<div class="scroll-area" data-scroll-area data-axis={ axis }>
+type ScrollAreaShadowMode string
+
+const (
+	ScrollAreaShadowAuto ScrollAreaShadowMode = "auto"
+	ScrollAreaShadowNone ScrollAreaShadowMode = "none"
+)
+
+func scrollAreaClass(modes []ScrollAreaShadowMode) string {
+	if len(modes) > 0 && modes[0] == ScrollAreaShadowNone {
+		return "scroll-area scroll-area--no-shadow"
+	}
+
+	return "scroll-area"
+}
+
+templ ScrollArea(label string, axis string, shadowMode ...ScrollAreaShadowMode) {
+	<div class={ scrollAreaClass(shadowMode) } data-scroll-area data-axis={ axis }>
 		<div
 			class="scroll-area__viewport"
 			data-scroll-area-viewport

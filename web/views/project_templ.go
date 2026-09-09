@@ -1254,20 +1254,20 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "\"></script></head><body><div class=\"project-page\"><header class=\"project-page__header\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "\"></script></head><body><div class=\"project-page\"><header class=\"project-page__header\"><div class=\"project-page__controls\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var81 templ.SafeURL
 		templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinURLErrs(siteURL(basePath, "/#case"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 344, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 345, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\">[VOLTAR A PROJETOS]</a><div class=\"project-page__actions\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "\">[VOLTAR]</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1275,7 +1275,7 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "<nav aria-label=\"Links do projeto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</div><div class=\"project-page__actions\"><nav aria-label=\"Links do projeto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1287,7 +1287,7 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 			var templ_7745c5c3_Var82 templ.SafeURL
 			templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinURLErrs(externalURL(project.Links.Live))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 349, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 351, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
 			if templ_7745c5c3_Err != nil {
@@ -1306,7 +1306,7 @@ func ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, ba
 			var templ_7745c5c3_Var83 templ.SafeURL
 			templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinURLErrs(externalURL(project.Links.Repository))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 352, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/views/project.templ`, Line: 354, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
 			if templ_7745c5c3_Err != nil {

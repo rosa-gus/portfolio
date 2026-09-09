@@ -62,6 +62,11 @@
   transition: opacity var(--transition-fast);
 }
 
+.scroll-area--no-shadow::before,
+.scroll-area--no-shadow::after {
+  display: none;
+}
+
 .scroll-area[data-axis="horizontal"]::before,
 .scroll-area[data-axis="horizontal"]::after {
   top: 0;
