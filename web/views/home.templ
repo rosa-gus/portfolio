@@ -147,7 +147,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 												if len(entry.EvidenceSlugs) > 0 {
 													<div class="evidence-links">
 														for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
-															<a href={ projectURL(basePath, project.Slug) }>{ project.Title } ↗</a>
+										<a href={ projectURL(basePath, project.Slug) }>{ project.Title } ↗︎</a>
 														}
 													</div>
 												} else {
@@ -202,19 +202,19 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 										hidden
 									>[COPIAR]</button>
 								</div>
-								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>[ENVIAR E-MAIL →]</a>
+								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>[ENVIAR E-MAIL →︎]</a>
 								<p class="contact-panel__status meta-text" id="contact-copy-status" data-contact-copy-status aria-live="polite"></p>
 							</div>
 							if profile.Contact.GitHubURL != "" || profile.Contact.LinkedInURL != "" || profile.Contact.SourceURL != "" {
 								<nav class="contact-panel__channels meta-text" aria-label="Outros canais de contato">
 									if profile.Contact.GitHubURL != "" {
-										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">GitHub ↗</a>
+										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">GitHub ↗︎</a>
 									}
 									if profile.Contact.LinkedInURL != "" {
-										<a href={ externalURL(profile.Contact.LinkedInURL) } target="_blank" rel="me noreferrer">LinkedIn ↗</a>
+										<a href={ externalURL(profile.Contact.LinkedInURL) } target="_blank" rel="me noreferrer">LinkedIn ↗︎</a>
 									}
 									if profile.Contact.SourceURL != "" {
-										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">Código-fonte ↗</a>
+										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">Código-fonte ↗︎</a>
 									}
 								</nav>
 							}

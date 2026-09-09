@@ -117,7 +117,7 @@ func writeMarkdownLinkStart(
 
 func writeMarkdownLinkEnd(writer util.BufWriter, link resolvedMarkdownLink) {
 	if link.externalTab {
-		_, _ = writer.WriteString(`<span class="project-content__external-marker" aria-hidden="true"> [↗]</span><span class="visually-hidden"> (abre em nova aba)</span>`)
+		_, _ = writer.WriteString(`<span class="project-content__external-marker" aria-hidden="true"> [↗︎]</span><span class="visually-hidden"> (abre em nova aba)</span>`)
 	}
 	_, _ = writer.WriteString(`</a>`)
 }
