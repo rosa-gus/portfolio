@@ -212,21 +212,8 @@
   opacity: 1;
 }
 
-@media (hover: hover) {
-  .carousel:hover
-    .project-card.is-active
-    .project-card__technology-tab {
-    transform: translateY(calc(-1 * var(--technology-tab-lift)));
-  }
-
-  .carousel:hover
-    .project-card.is-active
-    .project-card__technology-tab::after {
-    height: calc(0.42rem + var(--technology-tab-lift) + 1px);
-  }
-}
-
 .project-card__status,
+.project-card__details-stack,
 .carousel__controls {
   font: var(--type-font-control-compact);
   letter-spacing: var(--type-tracking-meta);
@@ -234,14 +221,37 @@
 }
 
 .project-card__status {
+  justify-self: start;
   color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.project-card__details-stack {
+  display: flex;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  margin-left: clamp(0.45rem, 1vw, 0.9rem);
+  overflow: hidden;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.project-card__details-stack abbr {
+  text-decoration: none;
+}
+
+.project-card__details .text-action {
+  grid-column: 3;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .project-card__details {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(0.4rem, 1.2vw, 1rem);
   max-height: 0;
   padding: 0 1rem;
   overflow: hidden;
@@ -358,6 +368,43 @@
 
   .project-card.is-active .project-card__cover-frame {
     aspect-ratio: auto;
+  }
+
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:hover
+    .project-card,
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:has(:focus-visible)
+    .project-card {
+    height: 100%;
+  }
+
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:hover
+    .project-card__editorial-header,
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:has(:focus-visible)
+    .project-card__editorial-header {
+    border-bottom-color: transparent;
+  }
+
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:hover
+    .project-card__cover-frame,
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:has(:focus-visible)
+    .project-card__cover-frame {
+    border-top-color: transparent;
+    opacity: 0;
+  }
+
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:hover
+    .project-card__cover,
+  .carousel[data-carousel-ready]
+    .carousel__slide.is-visible-next:has(:focus-visible)
+    .project-card__cover {
+    transform: scale(1.025);
   }
 }
 

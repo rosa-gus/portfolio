@@ -91,6 +91,8 @@ func TestHomeRendersProjectImageSequence(t *testing.T) {
 	assertContains(t, html, `data-src="/portfolio/projects/example/detail.png"`)
 	assertNotContains(t, html, ` src="/portfolio/projects/example/detail.png"`)
 	assertContains(t, html, `loading="lazy" decoding="async" aria-hidden="true"`)
-	assertContains(t, html, `<span class="project-card__technology-tab" aria-label="Tecnologias em destaque"><abbr title="TypeScript">[TS]</abbr><abbr title="Cloudflare Workers">[Workers]</abbr></span>`)
+	assertContains(t, html, `data-project-index="01"`)
+	assertContains(t, html, `class="project-card__previous-tab" type="button" data-carousel-previous-tab aria-label="Projeto anterior" aria-hidden="true" tabindex="-1" disabled hidden`)
+	assertContains(t, html, `<span class="project-card__details-stack" aria-label="Tecnologias em destaque"><abbr title="TypeScript">[TS]</abbr><abbr title="Cloudflare Workers">[Workers]</abbr></span>`)
 	assertContains(t, html, `<span class="project-card__technology-list" aria-label="Tecnologias em destaque"><abbr title="TypeScript">[TS]</abbr><abbr title="Cloudflare Workers">[Workers]</abbr></span>`)
 }

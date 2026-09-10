@@ -143,6 +143,12 @@ if (carouselRoot) {
   const playButton = carouselRoot.querySelector<HTMLButtonElement>(
     "[data-carousel-play]",
   );
+  const previousButton = carouselRoot.querySelector<HTMLButtonElement>(
+    "[data-carousel-prev]",
+  );
+  const nextButton = carouselRoot.querySelector<HTMLButtonElement>(
+    "[data-carousel-next]",
+  );
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   );
@@ -201,6 +207,8 @@ if (carouselRoot) {
         "data-scroll-end",
         carousel.canScrollNext(),
       );
+      previousButton?.toggleAttribute("disabled", !carousel.canScrollPrev());
+      nextButton?.toggleAttribute("disabled", !carousel.canScrollNext());
     };
 
     const projectImages = (slideIndex: number) =>
@@ -323,9 +331,39 @@ if (carouselRoot) {
       activeIndex = index;
       slides.forEach((slide, slideIndex) => {
         const active = slideIndex === index;
+        const next = slideIndex === index + 1;
+        const visibleNext = slideIndex > index && slideIndex <= index + 2;
         const card = slide.querySelector<HTMLElement>("[data-project]");
         slide.classList.toggle("is-active", active);
+        slide.classList.toggle("is-next", next);
+        slide.classList.toggle("is-visible-next", visibleNext);
         card?.classList.toggle("is-active", active);
+        const previousTab = card?.querySelector<HTMLButtonElement>(
+          "[data-carousel-previous-tab]",
+        );
+        const hasPrevious = active && index > 0;
+        if (previousTab) {
+          const previousCard = slides[index - 1]?.querySelector<HTMLElement>(
+            "[data-project]",
+          );
+          const previousIndex = previousCard?.dataset.projectIndex ?? "";
+          const previousTitle =
+            previousCard?.dataset.projectTitle ?? "projeto anterior";
+          previousTab.hidden = !hasPrevious;
+          previousTab.disabled = !hasPrevious;
+          previousTab.tabIndex = hasPrevious ? 0 : -1;
+          previousTab.setAttribute("aria-hidden", String(!hasPrevious));
+          previousTab.setAttribute(
+            "aria-label",
+            hasPrevious
+              ? `Voltar ao case ${previousIndex}: ${previousTitle}`
+              : "Projeto anterior",
+          );
+          const previousIndexLabel = previousTab.querySelector<HTMLElement>(
+            "[data-carousel-previous-index]",
+          );
+          if (previousIndexLabel) previousIndexLabel.textContent = previousIndex;
+        }
         const selectLink = card?.querySelector<HTMLAnchorElement>(
           "[data-project-select]",
         );
@@ -345,6 +383,11 @@ if (carouselRoot) {
       if (counter) {
         counter.textContent = `${String(index + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
       }
+      carouselRoot.setAttribute(
+        "data-visible-next",
+        String(Math.min(2, slides.length - index - 1)),
+      );
+      carouselRoot.setAttribute("data-carousel-ready", "");
       updateCarouselEdges();
       activeImageIndex = 0;
       phaseRemaining = imageInterval;
@@ -372,18 +415,23 @@ if (carouselRoot) {
     selectSlide(carousel.selectedScrollSnap());
     updatePlayLabel();
 
-    carouselRoot
-      .querySelector("[data-carousel-prev]")
-      ?.addEventListener("click", () => {
-        pauseCarousel();
-        carousel.scrollPrev(true);
-      });
+    previousButton?.addEventListener("click", () => {
+      pauseCarousel();
+      carousel.scrollPrev(true);
+    });
+
+    nextButton?.addEventListener("click", () => {
+      pauseCarousel();
+      carousel.scrollNext(true);
+    });
 
     carouselRoot
-      .querySelector("[data-carousel-next]")
-      ?.addEventListener("click", () => {
-        pauseCarousel();
-        carousel.scrollNext(true);
+      .querySelectorAll<HTMLButtonElement>("[data-carousel-previous-tab]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          pauseCarousel();
+          carousel.scrollPrev(true);
+        });
       });
 
     let wheelDelta = 0;
