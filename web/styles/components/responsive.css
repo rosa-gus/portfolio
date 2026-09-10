@@ -460,10 +460,10 @@
   }
 
   .practice-map__root::after {
-    top: var(--practice-map-eyebrow-center);
+    top: 100%;
     left: 0.16rem;
     width: 1px;
-    height: calc(100% + 1.5rem - var(--practice-map-eyebrow-center));
+    height: 1.5rem;
   }
 
   .practice-map__branches {

@@ -265,7 +265,6 @@
 
 .practice-map {
   --practice-map-gap: clamp(2.5rem, 5vw, 5rem);
-  --practice-map-eyebrow-center: 0.5075rem;
   display: grid;
   grid-template-rows: auto auto minmax(min-content, 1fr);
   align-content: start;
@@ -301,7 +300,7 @@
 
 .practice-map__root::after {
   position: absolute;
-  top: var(--practice-map-eyebrow-center);
+  top: 50%;
   left: 100%;
   width: var(--practice-map-gap);
   height: 1px;
