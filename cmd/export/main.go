@@ -141,6 +141,9 @@ func copyStatic(source fs.FS, destination string) error {
 		if name == "." {
 			return nil
 		}
+		if name == web.AssetManifestFilename {
+			return nil
+		}
 
 		target := filepath.Join(destination, filepath.FromSlash(name))
 		if entry.IsDir() {

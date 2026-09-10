@@ -7,14 +7,15 @@ export default defineConfig({
   build: {
     outDir: resolve(import.meta.dirname, "web/dist"),
     emptyOutDir: true,
+    manifest: "vite-manifest.json",
     rollupOptions: {
-      input: resolve(import.meta.dirname, "web/scripts/main.ts"),
+      input: {
+        app: resolve(import.meta.dirname, "web/scripts/main.ts"),
+      },
       output: {
-        entryFileNames: "assets/app.js",
-        assetFileNames: (assetInfo) =>
-          assetInfo.names?.some((name) => name.endsWith(".css"))
-            ? "assets/app.css"
-            : "assets/[name][extname]",
+        entryFileNames: "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]",
       },
     },
   },

@@ -10,6 +10,7 @@ import (
 	"github.com/a-h/templ"
 	"portfolio/internal/portfolio"
 	"portfolio/internal/sitepath"
+	"portfolio/web"
 )
 
 func projectCardClass(active bool) string {
@@ -205,6 +206,14 @@ func availableProjects(projects []portfolio.Project) []portfolio.Project {
 
 func siteURL(basePath, target string) templ.SafeURL {
 	return templ.URL(sitepath.Resolve(basePath, target))
+}
+
+func appStylesheets() []string {
+	return web.Assets().Stylesheets
+}
+
+func appScript() string {
+	return web.Assets().Script
 }
 
 func projectURL(basePath, slug string) templ.SafeURL {

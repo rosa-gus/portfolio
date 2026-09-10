@@ -29,8 +29,10 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 			<meta name="twitter:description" content={ profile.SEO.Description }/>
 			<meta name="twitter:image" content={ socialImageURL(publicURL) }/>
 			<meta name="twitter:image:alt" content={ profile.SEO.SocialImageAlt }/>
-			<link rel="stylesheet" href={ siteURL(basePath, "/assets/app.css") }/>
-			<script type="module" src={ siteURL(basePath, "/assets/app.js") }></script>
+			for _, stylesheet := range appStylesheets() {
+				<link rel="stylesheet" href={ siteURL(basePath, stylesheet) }/>
+			}
+			<script type="module" src={ siteURL(basePath, appScript()) }></script>
 		</head>
 		<body>
 			<div class="site-shell">
