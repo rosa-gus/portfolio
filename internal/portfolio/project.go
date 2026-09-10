@@ -82,6 +82,7 @@ func (document *MarkdownDocument) UnmarshalJSON(data []byte) error {
 type ProjectLinks struct {
 	CaseStudy  string `json:"caseStudy"`
 	Repository string `json:"repository"`
+	Releases   string `json:"releases"`
 	Live       string `json:"live"`
 }
 

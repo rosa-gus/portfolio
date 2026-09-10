@@ -107,7 +107,10 @@ func TestProjectContentRendersRelocatedDetails(t *testing.T) {
 			Name: "GPL-3.0",
 			URL:  "https://www.gnu.org/licenses/gpl-3.0.html",
 		},
-		Links: portfolio.ProjectLinks{Repository: "https://github.com/example/coleoptera-identifier"},
+		Links: portfolio.ProjectLinks{
+			Repository: "https://github.com/example/coleoptera-identifier",
+			Releases:   "https://github.com/example/coleoptera-identifier/releases",
+		},
 	}
 
 	var output bytes.Buffer
@@ -121,6 +124,10 @@ func TestProjectContentRendersRelocatedDetails(t *testing.T) {
 	assertContains(t, html, `class="practice-map__tree"`)
 	assertContains(t, html, `Applied research and full-stack development`)
 	assertContains(t, html, `<li>[Go]</li>`)
+	assertContains(t, html, `class="practice-map__resources"`)
+	assertContains(t, html, `class="practice-map__release-link"`)
+	assertContains(t, html, `Releases estáveis e experimentais do Coleoptera Identifier`)
+	assertContains(t, html, `https://github.com/example/coleoptera-identifier/releases`)
 	assertContains(t, html, `class="practice-map__provenance"`)
 	assertContains(t, html, `github.com/example/coleoptera-identifier`)
 	assertContains(t, html, `GPL-3.0`)

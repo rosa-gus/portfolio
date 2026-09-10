@@ -266,21 +266,33 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 									}
 								</ul>
 							</div>
-							if project.Links.Repository != "" || project.License.Name != "" {
-								<footer class="practice-map__provenance" aria-label="Código-fonte e licença">
-									if project.Links.Repository != "" {
-										<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
-											<span class="meta-text">Código-fonte</span>
-											<strong>{ repositoryLabel(project.Links.Repository) }</strong>
-											<span class="practice-map__provenance-arrow" aria-hidden="true">↑</span>
+							if project.Links.Releases != "" || project.Links.Repository != "" || project.License.Name != "" {
+								<footer class="practice-map__resources" aria-label="Versões, código-fonte e licença">
+									if project.Links.Releases != "" {
+										<a class="practice-map__release-link" href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener">
+											<span class="meta-text">Versões</span>
+											<strong>{ "Releases estáveis e experimentais do " + project.Title }</strong>
+											<span class="practice-map__release-action">Abrir</span>
+											<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
 										</a>
 									}
-									if project.License.Name != "" {
-										<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
-											<span class="meta-text">Licença</span>
-											<strong>{ project.License.Name }</strong>
-											<span class="practice-map__provenance-arrow" aria-hidden="true">↑</span>
-										</a>
+									if project.Links.Repository != "" || project.License.Name != "" {
+										<div class="practice-map__provenance" aria-label="Código-fonte e licença">
+											if project.Links.Repository != "" {
+												<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
+													<span class="meta-text">Código-fonte</span>
+													<strong>{ repositoryLabel(project.Links.Repository) }</strong>
+													<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+												</a>
+											}
+											if project.License.Name != "" {
+												<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
+													<span class="meta-text">Licença</span>
+													<strong>{ project.License.Name }</strong>
+													<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+												</a>
+											}
+										</div>
 									}
 								</footer>
 							}

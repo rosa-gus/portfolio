@@ -460,10 +460,10 @@
   }
 
   .practice-map__root::after {
-    top: 100%;
+    top: var(--practice-map-eyebrow-center);
     left: 0.16rem;
     width: 1px;
-    height: 1.5rem;
+    height: calc(100% + 1.5rem - var(--practice-map-eyebrow-center));
   }
 
   .practice-map__branches {
@@ -490,9 +490,22 @@
     grid-template-columns: 1fr;
   }
 
+  .practice-map__release-link,
   .practice-map__provenance-link {
     min-height: 5rem;
     padding: 1rem;
+  }
+
+  .practice-map__release-link {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .practice-map__release-link strong {
+    overflow-wrap: anywhere;
+  }
+
+  .practice-map__release-action {
+    display: none;
   }
 
   .practice-map__provenance-link + .practice-map__provenance-link {

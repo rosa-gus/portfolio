@@ -312,6 +312,7 @@
     "links": {
       "caseStudy": "/case/mondo-send",
       "repository": "https://github.com/rosa-gus/mondo-send",
+      "releases": "https://github.com/rosa-gus/mondo-send/releases",
       "live": ""
     },
     "featured": false,
