@@ -13,20 +13,6 @@ import (
 	"portfolio/web"
 )
 
-func projectCardClass(active bool) string {
-	if active {
-		return "project-card is-active"
-	}
-	return "project-card"
-}
-
-func carouselSlideClass(active bool) string {
-	if active {
-		return "carousel__slide is-active"
-	}
-	return "carousel__slide"
-}
-
 func sectionHeadingClass(primary bool) string {
 	if primary {
 		return "section-heading section-heading--primary"
@@ -37,7 +23,7 @@ func sectionHeadingClass(primary bool) string {
 func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	for _, image := range project.Media.Items {
 		if image.ID == project.Media.Cover {
-			image.Src = "/projects/carousel/" + url.PathEscape(project.Slug) + ".webp"
+			image.Src = "/projects/covers/" + url.PathEscape(project.Slug) + ".webp"
 			image.Width = 1200
 			image.Height = 800
 			return image
@@ -46,42 +32,11 @@ func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	return portfolio.ProjectImage{}
 }
 
-const projectCarouselImageLimit = 3
-
-func projectCarouselImages(project portfolio.Project) []portfolio.ProjectImage {
-	cover := projectCover(project)
-	if cover.Src == "" {
-		if len(project.Media.Items) <= projectCarouselImageLimit {
-			return project.Media.Items
-		}
-		return project.Media.Items[:projectCarouselImageLimit]
-	}
-
-	images := make([]portfolio.ProjectImage, 0, projectCarouselImageLimit)
-	images = append(images, cover)
-	for _, image := range project.Media.Items {
-		if image.ID != project.Media.Cover {
-			images = append(images, image)
-			if len(images) == projectCarouselImageLimit {
-				break
-			}
-		}
-	}
-	return images
-}
-
-func carouselImageLoading(projectIndex, imageIndex int) string {
-	if projectIndex == 0 && imageIndex == 0 {
+func archiveCoverLoading(projectIndex int) string {
+	if projectIndex == 0 {
 		return "eager"
 	}
 	return "lazy"
-}
-
-func carouselImageClass(index int) string {
-	if index == 0 {
-		return "project-card__cover is-current"
-	}
-	return "project-card__cover"
 }
 
 func featuredTechnologyLabel(technology string) string {
@@ -202,6 +157,44 @@ func availableProjects(projects []portfolio.Project) []portfolio.Project {
 		}
 	}
 	return available
+}
+
+type archiveFolder struct {
+	Key      string
+	Label    string
+	Projects []portfolio.Project
+}
+
+func archiveFolders(projects []portfolio.Project) []archiveFolder {
+	folders := []archiveFolder{
+		{Key: "interfaces", Label: "Interfaces"},
+		{Key: "systems", Label: "Sistemas & APIs"},
+		{Key: "data", Label: "Dados & IA"},
+		{Key: "design", Label: "Design Systems"},
+	}
+	capabilityFolder := map[string]int{
+		"interfaces":          0,
+		"systems-and-apis":    1,
+		"data-and-automation": 2,
+		"design-systems":      3,
+	}
+	other := archiveFolder{Key: "other", Label: "Outros"}
+	for _, project := range availableProjects(projects) {
+		assigned := false
+		for _, capability := range project.Capabilities {
+			if folderIndex, ok := capabilityFolder[capability]; ok {
+				folders[folderIndex].Projects = append(folders[folderIndex].Projects, project)
+				assigned = true
+			}
+		}
+		if !assigned {
+			other.Projects = append(other.Projects, project)
+		}
+	}
+	if len(other.Projects) > 0 {
+		folders = append(folders, other)
+	}
+	return folders
 }
 
 func siteURL(basePath, target string) templ.SafeURL {

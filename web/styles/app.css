@@ -10,3 +10,4 @@
 @import "./components/project.css" layer(components);
 @import "./components/home-controls.css" layer(components);
 @import "./components/responsive.css" layer(components);
+@import "./components/project-archive.css" layer(components);

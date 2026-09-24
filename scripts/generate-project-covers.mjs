@@ -6,9 +6,35 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
+// Match the widest archive cover at the 900px layout breakpoint. Keep these
+// values aligned with tokens.css and project-archive.css when the card changes.
+const coverLayout = {
+  viewportWidth: 900,
+  pixelsPerRem: 16,
+  archiveMaxWidthRem: 53,
+  folderWidthRem: 12.5,
+  archiveGapVw: 2,
+  coverMarginVw: 1.4,
+  caseBorderPx: 1,
+  aspectWidth: 3,
+  aspectHeight: 2,
+  pixelDensity: 2,
+  exportStepPx: 100,
+};
+
+const coverContainerWidth =
+  coverLayout.archiveMaxWidthRem * coverLayout.pixelsPerRem -
+  coverLayout.folderWidthRem * coverLayout.pixelsPerRem -
+  coverLayout.viewportWidth * coverLayout.archiveGapVw / 100 -
+  2 * coverLayout.caseBorderPx -
+  2 * coverLayout.viewportWidth * coverLayout.coverMarginVw / 100;
+const coverWidth =
+  Math.round(coverContainerWidth * coverLayout.pixelDensity / coverLayout.exportStepPx) *
+  coverLayout.exportStepPx;
+
 const DEFAULTS = {
-  width: 1200,
-  height: 800,
+  width: coverWidth,
+  height: coverWidth * coverLayout.aspectHeight / coverLayout.aspectWidth,
   quality: 88,
   gravity: "center",
   fit: "contain",
@@ -25,10 +51,10 @@ const projectsFile = join(
   "projects.json",
 );
 const assetsRoot = join(projectRoot, "web", "assets");
-const outputDirectory = join(assetsRoot, "projects", "carousel");
+const outputDirectory = join(assetsRoot, "projects", "covers");
 
 function usage() {
-  console.log(`Generate normalized WebP covers for the project carousel.
+  console.log(`Generate normalized WebP covers for the project archive.
 
 Usage:
   npm run images:covers

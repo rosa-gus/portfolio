@@ -24,13 +24,12 @@
       "interfaces",
       "systems-and-apis",
       "data-and-automation",
-      "design-systems",
       "security"
     ],
     "practiceMap": [
       {
         "capability": "interfaces",
-        "technologies": ["React", "TypeScript", "Vite"]
+        "technologies": ["React", "TypeScript", "Vite", "Vitest"]
       },
       {
         "capability": "systems-and-apis",
@@ -39,10 +38,6 @@
       {
         "capability": "data-and-automation",
         "technologies": ["Cloudflare Workers", "Cloudflare KV", "Firestore"]
-      },
-      {
-        "capability": "design-systems",
-        "technologies": ["React", "TypeScript", "Vitest"]
       },
       {
         "capability": "security",
@@ -112,7 +107,7 @@
     "category": "Pesquisa em IA aplicada",
     "year": "2026",
     "status": "prototype",
-    "briefDescription": "Uma experiência de terminal que transforma fotografias de besouros em hipóteses taxonômicas com IA — sem fingir que substitui um especialista.",
+    "briefDescription": "Uma experiência de terminal que transforma fotografias de besouros em hipóteses taxonômicas com IA.",
     "summary": "Curiosidade por besouros virou um protótipo full-stack: uma TUI em Go envia imagens para uma API FastAPI, o BioCLIP procura parentes na árvore da vida e o sistema responde somente com o nível taxonômico que seus limiares permitem sustentar.",
     "role": "Pesquisa aplicada, arquitetura e desenvolvimento full-stack",
     "stack": [
@@ -164,7 +159,7 @@
       "items": [
         {
           "id": "coleoptera-experiment-cover",
-          "src": "/projects/carousel/coleoptera-identifier.webp",
+          "src": "/projects/covers/coleoptera-identifier.webp",
           "width": 1200,
           "height": 800,
           "alt": "Ilustração verde e preta de um besouro observado por uma lupa, com o título Coleoptera Identifier Experiment.",
@@ -264,7 +259,7 @@
       "items": [
         {
           "id": "cover",
-          "src": "/projects/carousel/mondo-send.webp",
+          "src": "/projects/covers/mondo-send.webp",
           "width": 1200,
           "height": 800,
           "alt": "Janela inicial do Mondó em tema escuro, com opções para escolher arquivos e um dispositivo Bluetooth favorito.",
@@ -366,7 +361,7 @@
       "items": [
         {
           "id": "jaci-moon-cover",
-          "src": "/projects/carousel/jaci-ui.webp",
+          "src": "/projects/covers/jaci-ui.webp",
           "width": 1200,
           "height": 800,
           "alt": "Lua cheia em dois tons, com textura 'dithering' duotone bayer com matriz 4x4.",

@@ -9,7 +9,7 @@ the home page and project case studies as a static site.
 
 ## Features
 
-- Responsive project carousel with progressive TypeScript enhancements.
+- Responsive project archive with draggable folders and progressive TypeScript enhancements.
 - Dedicated case-study pages backed by JSON and Markdown content.
 - Embedded profile, project, and static assets in a self-contained Go binary.
 - Safe Markdown link handling for internal, external, and email links.
@@ -97,7 +97,7 @@ To add a project:
 2. Add the four Markdown documents under `data/cases/<slug>/`.
 3. Add its media to `web/assets/projects/<slug>/` and reference each item from
    the project entry.
-4. Select a media item as `media.cover` and generate its carousel cover.
+4. Select a media item as `media.cover` and generate its archive cover.
 
 ## Development commands
 
@@ -107,7 +107,7 @@ To add a project:
 | `npm run assets:build`  | Creates a production asset bundle in `web/dist`.               |
 | `npm run generate`      | Regenerates Go files from all `.templ` sources.                |
 | `npm run check`         | Runs TypeScript type checking without emitting files.          |
-| `npm run images:covers` | Generates normalized carousel covers.                          |
+| `npm run images:covers` | Generates normalized project covers.                           |
 | `npm run build`         | Builds assets, checks TypeScript, and creates `bin/portfolio`. |
 | `npm run site:build`    | Builds and exports the complete static site to `public`.       |
 
@@ -172,8 +172,12 @@ removed.
 
 ## Project covers
 
-Carousel covers are generated as 1200×800 WebP files in
-`web/assets/projects/carousel/`:
+Project covers are generated as 1200×800 WebP files in
+`web/assets/projects/covers/`:
+
+The size comes from the widest cover container (about 603 CSS px at the 900 px
+breakpoint), doubled for high-density screens, rounded to the nearest 100 px,
+and kept at the mobile 3:2 ratio.
 
 ```sh
 npm run images:covers
@@ -182,7 +186,7 @@ npm run images:covers
 The generator resolves each project's selected `media.cover`, normalizes its
 orientation and color space, strips metadata, and either contains or crops the
 image. It skips a project when its selected cover already points to the expected
-carousel output file.
+cover output file.
 
 Generate a single cover with custom framing:
 
@@ -224,7 +228,7 @@ npm run check
 ```
 
 The Go tests cover content loading, path validation, URL handling, Markdown
-security policy, rendering, project metadata, carousel media, and dithering.
+security policy, rendering, project metadata, project covers, and dithering.
 
 ## Credits
 
