@@ -134,6 +134,13 @@ func projectFolioMeta(project portfolio.Project) string {
 	return strings.ToUpper(strings.Join(parts, " / "))
 }
 
+func archiveImageLoading(initial bool) string {
+	if initial {
+		return "eager"
+	}
+	return "lazy"
+}
+
 func galleryCounter(index, total int) string {
 	return fmt.Sprintf("%02d / %02d", index+1, total)
 }

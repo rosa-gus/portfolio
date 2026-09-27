@@ -39,7 +39,7 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 												alt={ image.Alt }
 												width={ imageDimension(image.Width) }
 												height={ imageDimension(image.Height) }
-												loading="lazy"
+												loading={ archiveImageLoading(index == 0 && imageIndex == 0) }
 												decoding="async"
 												if index == 0 && imageIndex == 0 {
 													src={ siteURL(basePath, image.Src) }
