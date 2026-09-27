@@ -592,6 +592,7 @@
 
   .project-archive__folder {
     position: relative;
+    z-index: auto;
     top: auto;
     left: auto;
     width: 100%;
