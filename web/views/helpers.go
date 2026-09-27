@@ -32,11 +32,27 @@ func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	return portfolio.ProjectImage{}
 }
 
-func archiveCoverLoading(projectIndex int) string {
-	if projectIndex == 0 {
-		return "eager"
+func projectArchiveImages(project portfolio.Project) []portfolio.ProjectImage {
+	images := make([]portfolio.ProjectImage, 0, 3)
+	cover := projectCover(project)
+	if cover.Src == "" && len(project.Media.Items) > 0 {
+		cover = project.Media.Items[0]
 	}
-	return "lazy"
+	if cover.Src != "" {
+		images = append(images, cover)
+	}
+
+	for _, image := range project.Media.Items {
+		if image.ID == cover.ID || image.Src == "" {
+			continue
+		}
+		images = append(images, image)
+		if len(images) == 3 {
+			break
+		}
+	}
+
+	return images
 }
 
 func featuredTechnologyLabel(technology string) string {

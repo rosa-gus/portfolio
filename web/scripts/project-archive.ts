@@ -1,3 +1,5 @@
+import EmblaCarousel from "embla-carousel";
+
 type DragState = {
   pointerId: number;
   offsetX: number;
@@ -12,12 +14,10 @@ export const initializeProjectArchive = () => {
   const closeButton = floating?.querySelector<HTMLButtonElement>(
     "[data-archive-close]",
   );
-  const title = floating?.querySelector<HTMLElement>(
-    "[data-archive-floating-title]",
-  );
   const count = floating?.querySelector<HTMLElement>(
     "[data-archive-floating-count]",
   );
+  const dividerTitle = floating?.querySelector<HTMLElement>("[data-archive-divider-title]");
   const closedTitle = floating?.querySelector<HTMLElement>(
     "[data-archive-closed-title]",
   );
@@ -25,7 +25,7 @@ export const initializeProjectArchive = () => {
     "[data-archive-closed-count]",
   );
 
-  if (!archive || !floating || !handle || !sheet || !closeButton || !title || !count || !closedTitle || !closedCount) {
+  if (!archive || !floating || !handle || !sheet || !closeButton || !count || !dividerTitle || !closedTitle || !closedCount) {
     return { close: (_restoreFocus = true, _immediate = false) => {} };
   }
 
@@ -38,9 +38,76 @@ export const initializeProjectArchive = () => {
   const groups = Array.from(
     floating.querySelectorAll<HTMLElement>("[data-archive-files]"),
   );
+  const resetArchiveCarousels = new Map<string, () => void>();
   const stack = archive.querySelector<HTMLElement>(".project-archive__stack");
-  const firstCase = cases[0]?.dataset.archiveCase ?? "";
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const initializeArchiveCarousel = (caseCard: HTMLElement) => {
+    const slug = caseCard.dataset.archiveCase;
+    const root = caseCard.querySelector<HTMLElement>("[data-archive-carousel]");
+    const viewport = root?.querySelector<HTMLElement>(
+      "[data-archive-carousel-viewport]",
+    );
+    const slides = Array.from(
+      viewport?.querySelectorAll<HTMLElement>(
+        ".project-archive__case-cover-slide",
+      ) ?? [],
+    );
+    const previousButton = caseCard.querySelector<HTMLButtonElement>(
+      "[data-archive-carousel-prev]",
+    );
+    const nextButton = caseCard.querySelector<HTMLButtonElement>(
+      "[data-archive-carousel-next]",
+    );
+    if (
+      !slug ||
+      !viewport ||
+      slides.length === 0 ||
+      resetArchiveCarousels.has(slug)
+    )
+      return;
+
+    const carousel = EmblaCarousel(viewport, {
+      align: "start",
+      containScroll: "trimSnaps",
+      direction: "ltr",
+      duration: reducedMotion.matches ? 0 : 24,
+      loop: false,
+      watchFocus: false,
+    });
+
+    const updateCarousel = () => {
+      const selectedIndex = carousel.selectedScrollSnap();
+      slides.forEach((slide, index) => {
+        const active = index === selectedIndex;
+        const image = slide.querySelector<HTMLImageElement>(
+          "[data-archive-carousel-image]",
+        );
+        if (active && image && !image.hasAttribute("src")) {
+          image.src = image.dataset.src ?? "";
+        }
+        slide.setAttribute("aria-hidden", String(!active));
+        slide.inert = !active;
+      });
+      if (previousButton) previousButton.disabled = !carousel.canScrollPrev();
+      if (nextButton) nextButton.disabled = !carousel.canScrollNext();
+    };
+
+    carousel.on("select", updateCarousel);
+    carousel.on("reInit", updateCarousel);
+    previousButton?.addEventListener("click", () => {
+      carousel.scrollPrev();
+    });
+    nextButton?.addEventListener("click", () => {
+      carousel.scrollNext();
+    });
+    resetArchiveCarousels.set(slug, () => carousel.scrollTo(0));
+    updateCarousel();
+  };
+
+  cases
+    .filter((caseCard) => caseCard.classList.contains("is-current"))
+    .forEach(initializeArchiveCarousel);
 
   archive.querySelectorAll<HTMLButtonElement>("[data-archive-jump]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -62,7 +129,12 @@ export const initializeProjectArchive = () => {
   const selectProject = (slug: string) => {
     if (!cases.some((card) => card.dataset.archiveCase === slug)) return;
     cases.forEach((card) => {
-      card.classList.toggle("is-current", card.dataset.archiveCase === slug);
+      const active = card.dataset.archiveCase === slug;
+      card.classList.toggle("is-current", active);
+      if (active) {
+        initializeArchiveCarousel(card);
+        resetArchiveCarousels.get(slug)?.();
+      }
     });
     floating
       .querySelectorAll<HTMLButtonElement>("[data-archive-file]")
@@ -170,8 +242,8 @@ export const initializeProjectArchive = () => {
     source.classList.add("is-lifted");
     source.setAttribute("aria-expanded", "true");
     groups.forEach((item) => { item.hidden = item !== group; });
-    title.textContent = source.dataset.folderLabel ?? "PASTA";
-    count.textContent = `${source.dataset.folderCount ?? "00"} ARQ.`;
+    dividerTitle.textContent = source.dataset.folderLabel ?? "PASTA";
+    count.textContent = `[${source.dataset.folderCount ?? "00"}] ARQ.`;
     closedTitle.textContent = `${source.dataset.folderIndex ?? "00"} / ${source.dataset.folderLabel ?? "PASTA"}`;
     closedCount.textContent = source.dataset.folderCount ?? "00";
     floating.setAttribute("aria-label", `Pasta ${source.dataset.folderLabel ?? ""} aberta`);

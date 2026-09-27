@@ -334,6 +334,11 @@
     right: calc(100% + 1.25rem - 0.18rem);
   }
 
+  .practice-map__cover-credit-row {
+    min-height: 5rem;
+    padding: 1rem;
+  }
+
   .practice-map__provenance {
     grid-template-columns: 1fr;
   }

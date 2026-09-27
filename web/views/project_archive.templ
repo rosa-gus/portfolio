@@ -20,15 +20,47 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 						<p class="project-archive__case-description">{ project.BriefDescription }</p>
 						<div class="project-archive__case-meta project-archive__case-category"><span>{ projectCategoryLabel(project.Category) }</span></div>
 					</header>
-					<div class="project-archive__case-cover">
-						if cover := projectCover(project); cover.Src != "" {
-							<img src={ siteURL(basePath, cover.Src) } alt={ cover.Alt } width={ imageDimension(cover.Width) } height={ imageDimension(cover.Height) } loading={ archiveCoverLoading(index) } decoding="async"/>
+					<div class="project-archive__case-cover" data-archive-carousel role="group" aria-roledescription="carrossel" aria-label={ "Imagens de " + project.Title }>
+						if images := projectArchiveImages(project); len(images) > 0 {
+							<div class="project-archive__case-carousel-viewport" id={ "case-carousel-" + project.Slug } data-archive-carousel-viewport>
+								<div class="project-archive__case-carousel-track">
+									for imageIndex, image := range images {
+										<a
+											class="project-archive__case-cover-slide"
+											href={ projectURL(basePath, project.Slug) }
+											aria-label={ "Abrir case de " + project.Title }
+											aria-hidden={ imageIndex != 0 }
+											inert?={ imageIndex != 0 }
+										>
+											<img
+												class="project-archive__case-cover-image"
+												data-archive-carousel-image
+												data-src={ siteURL(basePath, image.Src) }
+												alt={ image.Alt }
+												width={ imageDimension(image.Width) }
+												height={ imageDimension(image.Height) }
+												loading="lazy"
+												decoding="async"
+												if index == 0 && imageIndex == 0 {
+													src={ siteURL(basePath, image.Src) }
+												}
+											/>
+										</a>
+									}
+								</div>
+							</div>
 						} else {
 							<span class="project-archive__case-fallback">{ project.Title }</span>
 						}
 					</div>
 					<div class="project-archive__case-caption">
 						<a class="text-action" data-archive-case-link data-project-slug={ project.Slug } href={ projectURL(basePath, project.Slug) }>[ABRIR CASE]</a>
+						if len(projectArchiveImages(project)) > 1 {
+							<div class="project-archive__case-carousel-controls" aria-label="Navegação das imagens">
+								<button type="button" data-archive-carousel-prev aria-controls={ "case-carousel-" + project.Slug } aria-label="Imagem anterior" disabled><span class="ui-arrow ui-arrow--left" aria-hidden="true">↑</span></button>
+								<button type="button" data-archive-carousel-next aria-controls={ "case-carousel-" + project.Slug } aria-label="Próxima imagem"><span class="ui-arrow ui-arrow--right" aria-hidden="true">↑</span></button>
+							</div>
+						}
 					</div>
 					<footer class="project-archive__case-footer">
 						<span class="project-archive__case-stack">
@@ -76,8 +108,9 @@ func archiveCaseClass(active bool) string {
 
 templ ProjectArchiveFloating(projects []portfolio.Project) {
 	<section class="project-archive__floating" id="project-archive-floating" data-archive-floating aria-label="Pasta aberta" hidden>
+		<span class="project-archive__floating-divider" aria-hidden="true"><span data-archive-divider-title></span></span>
 		<div class="project-archive__floating-head" data-archive-handle>
-			<div class="project-archive__floating-heading"><span data-archive-floating-title>PASTA</span><small data-archive-floating-count>00 ARQ.</small></div>
+			<span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
 			<button type="button" data-archive-close aria-label="Fechar pasta">[FECHAR]</button>
 			<div class="project-archive__folder-line project-archive__floating-closed-line" aria-hidden="true">
 				<span data-archive-closed-title></span><span data-archive-closed-count></span>

@@ -46,8 +46,14 @@ type ProjectLicense struct {
 }
 
 type ProjectMedia struct {
-	Cover string         `json:"cover"`
-	Items []ProjectImage `json:"items"`
+	Cover       string             `json:"cover"`
+	CoverCredit ProjectCoverCredit `json:"coverCredit"`
+	Items       []ProjectImage     `json:"items"`
+}
+
+type ProjectCoverCredit struct {
+	Name      string `json:"name"`
+	AuthorURL string `json:"author_url"`
 }
 
 type ProjectImage struct {

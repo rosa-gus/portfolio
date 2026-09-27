@@ -1,11 +1,8 @@
-# Luis Gustavo (rosa gus) Portfolio
+# rosa gus Portolio
 
 A Portuguese-language software engineering portfolio built with Go, `templ`,
 TypeScript, and Vite. The same application can run as an HTTP server or export
 the home page and project case studies as a static site.
-
-- Website: [rosa-gus.github.io/portfolio](https://rosa-gus.github.io/portfolio)
-- Source: [github.com/rosa-gus/portfolio](https://github.com/rosa-gus/portfolio)
 
 ## Features
 
@@ -14,14 +11,14 @@ the home page and project case studies as a static site.
 - Embedded profile, project, and static assets in a self-contained Go binary.
 - Safe Markdown link handling for internal, external, and email links.
 - Static export with canonical URLs and support for subpath deployments.
-- Build-time project cover generation and ordered dithering tools.
+- Offline project cover preparation with Bayer 4×4 duotone dithering.
 
 ## Requirements
 
 - Go 1.26 or newer.
 - Node.js 20.19 or newer, or Node.js 22.12 or newer.
 - npm.
-- ImageMagick with the `magick` command, only when generating project covers.
+- Python 3.10 or newer and Pillow 10–12, only when preparing project covers.
 
 ## Getting started
 
@@ -65,15 +62,13 @@ web/assets/ ───────────────> Vite ──> web/dist
 | -------------------- | ------------------------------------------------------------- |
 | `cmd/portfolio`      | Runs the HTTP server and application routes.                  |
 | `cmd/export`         | Renders the site to a repository-relative output directory.   |
-| `cmd/dither`         | Produces two-color ordered-dither PNG images.                 |
 | `internal/portfolio` | Loads and validates embedded portfolio content.               |
 | `internal/sitepath`  | Normalizes origins, base paths, and internal URLs.            |
-| `internal/dither`    | Implements resizing and Bayer ordered dithering.              |
 | `web/views`          | Contains `templ` views, Markdown rendering, and view helpers. |
 | `web/scripts`        | Contains progressive browser interactions.                    |
 | `web/styles`         | Contains the CSS architecture and component styles.           |
 | `web/assets`         | Contains source assets copied by Vite.                        |
-| `scripts`            | Contains build-time asset utilities.                          |
+| `tools/dither.py`    | Prepares project covers and other offline image assets.       |
 
 ## Content model
 
@@ -101,15 +96,15 @@ To add a project:
 
 ## Development commands
 
-| Command                 | Purpose                                                        |
-| ----------------------- | -------------------------------------------------------------- |
-| `npm run assets:dev`    | Rebuilds Vite assets when front-end files change.              |
-| `npm run assets:build`  | Creates a production asset bundle in `web/dist`.               |
-| `npm run generate`      | Regenerates Go files from all `.templ` sources.                |
-| `npm run check`         | Runs TypeScript type checking without emitting files.          |
-| `npm run images:covers` | Generates normalized project covers.                           |
-| `npm run build`         | Builds assets, checks TypeScript, and creates `bin/portfolio`. |
-| `npm run site:build`    | Builds and exports the complete static site to `public`.       |
+| Command                                             | Purpose                                                        |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| `npm run assets:dev`                                | Rebuilds Vite assets when front-end files change.              |
+| `npm run assets:build`                              | Creates a production asset bundle in `web/dist`.               |
+| `npm run generate`                                  | Regenerates Go files from all `.templ` sources.                |
+| `npm run check`                                     | Runs TypeScript type checking without emitting files.          |
+| `npm run images:covers -- <input> <output> --cover` | Prepares one dithered project cover.                           |
+| `npm run build`                                     | Builds assets, checks TypeScript, and creates `bin/portfolio`. |
+| `npm run site:build`                                | Builds and exports the complete static site to `public`.       |
 
 Files ending in `_templ.go` are generated. Edit the corresponding `.templ`
 source and run `npm run generate` instead of changing generated files directly.
@@ -172,51 +167,41 @@ removed.
 
 ## Project covers
 
-Project covers are generated as 1200×800 WebP files in
-`web/assets/projects/covers/`:
-
-The size comes from the widest cover container (about 603 CSS px at the 900 px
-breakpoint), doubled for high-density screens, rounded to the nearest 100 px,
-and kept at the mobile 3:2 ratio.
+Archive covers are 1200×800 WebP files in `web/assets/projects/covers/`, named
+`<project-slug>.webp`. Several selected `media.cover` items in
+`internal/portfolio/data/projects.json` also reference those files. Prepare
+each cover from its untreated source image. Keep that source separately; the
+files in `covers/` are finished assets. Install Pillow before using the tool:
 
 ```sh
-npm run images:covers
+python3 -m pip install 'Pillow>=10,<13'
 ```
 
-The generator resolves each project's selected `media.cover`, normalizes its
-orientation and color space, strips metadata, and either contains or crops the
-image. It skips a project when its selected cover already points to the expected
-cover output file.
-
-Generate a single cover with custom framing:
+For example, to prepare the Jaci UI cover from an untreated photograph:
 
 ```sh
 npm run images:covers -- \
-  --only mondo-send \
-  --fit cover \
-  --gravity north
+  path/to/jaci-original.jpg web/assets/projects/covers/jaci-ui.webp \
+  --cover --shadow '#000000' --highlight '#577142' \
+  --levels 8 --strength 0.35 --contrast 1.1
 ```
 
-Run `npm run images:covers -- --help` for every available option.
+`tools/dither.py` corrects EXIF orientation, composites transparency over the
+shadow color, frames the image at 3:2, then applies the Timbre Palette Bayer 4×4
+duotone treatment. `--fit cover` crops around the center by default;
+`--focus-x` and `--focus-y` move that position from 0 to 1. `--fit contain`
+preserves the full image and pads it with the shadow color. Cover framing can
+enlarge a small input to 1200×800. The lossless WebP has no source metadata,
+and an existing output is never overwritten. Choose another output path or
+remove the old asset explicitly when replacing a cover. The tool prepares one
+cover per invocation and does not edit `projects.json`. If the selected media
+item should use the treated cover in the case study too, set its `src`, `width`,
+and `height` to the resulting path, 1200, and 800.
 
-## Ordered dithering
-
-The dither command accepts PNG, JPEG, or GIF input and writes a paletted PNG
-with transparency plus the configured dark and light colors:
-
-```sh
-go run ./cmd/dither \
-  -input web/assets/source/portrait.jpg \
-  -output web/assets/generated/portrait-960.png \
-  -width 960 \
-  -matrix 8 \
-  -dark '#0a0a09' \
-  -light '#fffefa' \
-  -contrast 1.08
-```
-
-Generate each responsive size from the original image. Do not resize an image
-that has already been dithered.
+The original PNG and WebM modes remain available. Run
+`npm run images:covers -- --help` for all treatment parameters, including
+`--gamma`. The [Timbre Palette tool documentation](https://github.com/rosa-gus/timbre-palette/blob/main/src/palette_api/tools/README.md)
+describes the source treatment behavior.
 
 ## Verification
 
@@ -228,14 +213,16 @@ npm run check
 ```
 
 The Go tests cover content loading, path validation, URL handling, Markdown
-security policy, rendering, project metadata, project covers, and dithering.
+security policy, rendering, project metadata, and project covers.
 
 ## Credits
 
 The untreated source footage used to produce `web/assets/fish.mp4` was obtained
 from photographer **kampee_p** through [Videezy.com](https://www.videezy.com/).
+The original photograph used for the favicon is by
+[Diane Helentjaris](https://unsplash.com/@dhelentjaris).
 Credits for the other untreated photographs used in the portfolio are recorded
-in their respective media captions in
+in each project's `media.coverCredit` object in
 [`internal/portfolio/data/projects.json`](internal/portfolio/data/projects.json).
 
 ## License

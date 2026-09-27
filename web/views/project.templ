@@ -136,7 +136,10 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 					>
 						<div class="project-content__prose">
 							if project.Summary != "" {
-								<p class="project-content__standfirst">{ project.Summary }</p>
+								<div class="project-content__summary">
+									<p class="project-content__summary-label meta-text">Resumo</p>
+									<p class="project-content__standfirst">{ project.Summary }</p>
+								</div>
 							}
 							@renderMarkdown(project.CaseStudy.Context, basePath)
 						</div>
@@ -266,33 +269,58 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 									}
 								</ul>
 							</div>
-							if project.Links.Releases != "" || project.Links.Repository != "" || project.License.Name != "" {
-								<footer class="practice-map__resources" aria-label="Versões, código-fonte e licença">
-									if project.Links.Releases != "" {
-										<a class="practice-map__release-link" href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener">
-											<span class="meta-text">Versões</span>
-											<strong>{ "Releases estáveis e experimentais do " + project.Title }</strong>
-											<span class="practice-map__release-action">Abrir</span>
-											<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
-										</a>
+							if project.Media.CoverCredit.Name != "" || project.Links.Releases != "" || project.Links.Repository != "" || project.License.Name != "" {
+								<footer class="practice-map__footer">
+									if project.Media.CoverCredit.Name != "" {
+										<section class="practice-map__cover-credit" aria-label="Créditos da capa editorial">
+											<h3 class="meta-text">Créditos da capa editorial</h3>
+											<div class="practice-map__cover-credit-card">
+												<div class="practice-map__cover-credit-row">
+													<span class="meta-text">Fotografia sem tratamento</span>
+													if project.Media.CoverCredit.AuthorURL != "" {
+														<a class="practice-map__cover-credit-link" href={ externalURL(project.Media.CoverCredit.AuthorURL) } target="_blank" rel="noreferrer noopener">
+															<strong>{ project.Media.CoverCredit.Name }</strong>
+															<span>Perfil <span class="practice-map__resource-arrow" aria-hidden="true">↑</span></span>
+														</a>
+													} else {
+														<strong>{ project.Media.CoverCredit.Name }</strong>
+													}
+												</div>
+											</div>
+										</section>
 									}
-									if project.Links.Repository != "" || project.License.Name != "" {
-										<div class="practice-map__provenance" aria-label="Código-fonte e licença">
-											if project.Links.Repository != "" {
-												<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
-													<span class="meta-text">Código-fonte</span>
-													<strong>{ repositoryLabel(project.Links.Repository) }</strong>
-													<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
-												</a>
-											}
-											if project.License.Name != "" {
-												<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
-													<span class="meta-text">Licença</span>
-													<strong>{ project.License.Name }</strong>
-													<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
-												</a>
-											}
-										</div>
+									if project.Links.Releases != "" || project.Links.Repository != "" || project.License.Name != "" {
+										<section class="practice-map__resource-section" aria-label="Recursos do projeto">
+											<h3 class="meta-text">Recursos do projeto</h3>
+											<div class="practice-map__resources">
+												if project.Links.Releases != "" {
+													<a class="practice-map__release-link" href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener">
+														<span class="meta-text">Versões</span>
+														<strong>{ "Releases estáveis e experimentais do " + project.Title }</strong>
+														<span class="practice-map__release-action">Abrir</span>
+														<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+													</a>
+												}
+												if project.Links.Repository != "" || project.License.Name != "" {
+													<div class="practice-map__provenance" aria-label="Código-fonte e licença">
+														if project.Links.Repository != "" {
+															<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
+																<span class="meta-text">Código-fonte</span>
+																<strong>{ repositoryLabel(project.Links.Repository) }</strong>
+																<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+															</a>
+														}
+														if project.License.Name != "" {
+															<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
+																<span class="meta-text">Licença</span>
+																<strong>{ project.License.Name }</strong>
+																<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+															</a>
+														}
+													</div>
+												}
+											</div>
+										</section>
 									}
 								</footer>
 							}

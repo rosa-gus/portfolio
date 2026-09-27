@@ -1,5 +1,6 @@
 import "@fontsource-variable/instrument-sans/standard.css";
 import "@fontsource-variable/instrument-sans/standard-italic.css";
+import "@fontsource/instrument-serif/400.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "../styles/app.css";
