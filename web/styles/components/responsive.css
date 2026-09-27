@@ -58,6 +58,16 @@
     overflow: hidden;
   }
 
+  .site-shell:has(.projects-panel.is-current) {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .projects-panel {
+    overflow: visible;
+  }
+
   .masthead__role {
     display: none;
   }
@@ -500,6 +510,12 @@
   .command-bar a {
     padding-inline: 0.5rem;
     text-align: center;
+  }
+}
+
+@media (pointer: coarse) {
+  .projects-panel:focus-visible {
+    outline: none;
   }
 }
 
