@@ -1,0 +1,132 @@
+package views
+
+import (
+	"fmt"
+	"portfolio/internal/portfolio"
+)
+
+templ ProjectArchive(projects []portfolio.Project, basePath string) {
+	<div class="project-archive" data-project-archive aria-label="Arquivo de projetos">
+		<button class="project-archive__explore text-action" type="button" data-archive-jump>
+			{ fmt.Sprintf("EXPLORAR %d PASTAS", len(archiveFolders(projects))) } <span aria-hidden="true">↓</span>
+		</button>
+		<div class="project-archive__cases" aria-live="polite">
+			for index, project := range availableProjects(projects) {
+				<article class={ archiveCaseClass(index == 0) } data-archive-case={ project.Slug } aria-labelledby={ "archive-case-title-" + project.Slug }>
+					<div class="project-archive__case-tab" aria-hidden="true"><span>CASE</span><span>{ project.Index }</span></div>
+					<header class="project-archive__case-heading">
+						<p class="project-archive__case-meta"><span>DOCUMENTO EM CONSULTA</span><span>{ galleryCounter(index, len(availableProjects(projects))) }</span></p>
+						<h2 id={ "archive-case-title-" + project.Slug }>{ project.Title }</h2>
+						<p class="project-archive__case-description">{ project.BriefDescription }</p>
+						<div class="project-archive__case-meta project-archive__case-category"><span>{ projectCategoryLabel(project.Category) }</span></div>
+					</header>
+					<div class="project-archive__case-cover" data-archive-carousel role="group" aria-roledescription="carrossel" aria-label={ "Imagens de " + project.Title }>
+						if images := projectArchiveImages(project); len(images) > 0 {
+							<div class="project-archive__case-carousel-viewport" id={ "case-carousel-" + project.Slug } data-archive-carousel-viewport>
+								<div class="project-archive__case-carousel-track">
+									for imageIndex, image := range images {
+										<a
+											class="project-archive__case-cover-slide"
+											href={ projectURL(basePath, project.Slug) }
+											aria-label={ "Abrir case de " + project.Title }
+											aria-hidden={ imageIndex != 0 }
+											inert?={ imageIndex != 0 }
+										>
+											<img
+												class="project-archive__case-cover-image"
+												data-archive-carousel-image
+												data-src={ siteURL(basePath, image.Src) }
+												alt={ image.Alt }
+												width={ imageDimension(image.Width) }
+												height={ imageDimension(image.Height) }
+												loading="lazy"
+												decoding="async"
+												if index == 0 && imageIndex == 0 {
+													src={ siteURL(basePath, image.Src) }
+												}
+											/>
+										</a>
+									}
+								</div>
+							</div>
+						} else {
+							<span class="project-archive__case-fallback">{ project.Title }</span>
+						}
+					</div>
+					<div class="project-archive__case-caption">
+						<a class="text-action" data-archive-case-link data-project-slug={ project.Slug } href={ projectURL(basePath, project.Slug) }>[ABRIR CASE]</a>
+						if len(projectArchiveImages(project)) > 1 {
+							<div class="project-archive__case-carousel-controls" aria-label="Navegação das imagens">
+								<button type="button" data-archive-carousel-prev aria-controls={ "case-carousel-" + project.Slug } aria-label="Imagem anterior" disabled><span class="ui-arrow ui-arrow--left" aria-hidden="true">↑</span></button>
+								<button type="button" data-archive-carousel-next aria-controls={ "case-carousel-" + project.Slug } aria-label="Próxima imagem"><span class="ui-arrow ui-arrow--right" aria-hidden="true">↑</span></button>
+							</div>
+						}
+					</div>
+					<footer class="project-archive__case-footer">
+						<span class="project-archive__case-stack">
+							for _, technology := range project.FeaturedStack {
+								<abbr title={ technology }>[{ featuredTechnologyLabel(technology) }]</abbr>
+							}
+						</span>
+						<span>{ project.Year }</span>
+					</footer>
+				</article>
+			}
+		</div>
+		<div class="project-archive__stack">
+			<p class="project-archive__label">ARQUIVOS</p>
+			<div class="project-archive__folders" aria-label="Pastas fechadas">
+				for index, folder := range archiveFolders(projects) {
+					<button
+						class="project-archive__folder"
+						type="button"
+						data-archive-folder={ folder.Key }
+						data-folder-index={ fmt.Sprintf("%02d", index + 1) }
+						data-folder-label={ folder.Label }
+						data-folder-count={ fmt.Sprintf("%02d", len(folder.Projects)) }
+						aria-label={ fmt.Sprintf("Pegar pasta %s, %d projetos", folder.Label, len(folder.Projects)) }
+						aria-expanded="false"
+						aria-controls="project-archive-floating"
+					>
+						<span class="project-archive__folder-line">
+							<span>{ fmt.Sprintf("%02d / %s", index + 1, folder.Label) }</span>
+							<span>{ fmt.Sprintf("%02d", len(folder.Projects)) }</span>
+						</span>
+					</button>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+func archiveCaseClass(active bool) string {
+	if active {
+		return "project-archive__case is-current"
+	}
+	return "project-archive__case"
+}
+
+templ ProjectArchiveFloating(projects []portfolio.Project) {
+	<section class="project-archive__floating" id="project-archive-floating" data-archive-floating aria-label="Pasta aberta" hidden>
+		<span class="project-archive__floating-divider" aria-hidden="true"><span data-archive-divider-title></span></span>
+		<div class="project-archive__floating-head" data-archive-handle>
+			<span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
+			<button type="button" data-archive-close aria-label="Fechar pasta">[FECHAR]</button>
+			<div class="project-archive__folder-line project-archive__floating-closed-line" aria-hidden="true">
+				<span data-archive-closed-title></span><span data-archive-closed-count></span>
+			</div>
+		</div>
+		<div class="project-archive__floating-sheet" data-archive-sheet>
+			<p class="project-archive__floating-note">CONTEÚDO / SELECIONE UMA FICHA</p>
+			for _, folder := range archiveFolders(projects) {
+				<div class="project-archive__floating-files" data-archive-files={ folder.Key } hidden>
+					for _, project := range folder.Projects {
+						<button type="button" data-archive-file={ project.Slug } aria-current="false">
+							<span class="project-archive__file-marker" aria-hidden="true">■</span><span>{ project.Title }</span>
+						</button>
+					}
+				</div>
+			}
+		</div>
+	</section>
+}

@@ -1,0 +1,3 @@
+O desafio principal foi criar uma metodologia confiável a partir de créditos incompletos. Músicas feitas com *softwares* de produção e lançamentos de cenas *underground* frequentemente não têm instrumentação detalhada em bases públicas. Em uma pesquisa inicial com 250 faixas de cinco perfis, apenas 26 tinham créditos instrumentais diretamente atribuíveis à gravação ou à faixa.
+
+Além disso, também era preciso processar um grande volume de relações do MusicBrainz sem transferir a carga desse trabalho para cada consulta do usuário. O resultado deveria distinguir um instrumento creditado em uma faixa dos instrumentos recorrentes na obra de um artista, preservar as fontes e não mentir quando faltassem dados.

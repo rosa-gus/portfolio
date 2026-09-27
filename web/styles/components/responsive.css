@@ -13,8 +13,15 @@
 
   .projects-panel {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-    overflow: hidden;
+    grid-template-rows: auto auto;
+    align-content: start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .projects-panel::-webkit-scrollbar {
+    display: none;
   }
 
   .information-panel,
@@ -41,14 +48,6 @@
     max-width: 16ch;
   }
 
-  .carousel {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .carousel__slide {
-    min-height: 0;
-  }
 }
 
 @media (max-width: 620px) {
@@ -61,6 +60,25 @@
 
   .masthead__role {
     display: none;
+  }
+
+  .masthead {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .masthead .identity {
+    grid-column: 1;
+    min-height: 2rem;
+    line-height: 1.25rem;
+  }
+
+  .masthead__actions {
+    grid-column: 2;
+    min-height: 2rem;
+  }
+
+  .masthead .theme-toggle {
+    line-height: 1.25rem;
   }
 
   .about-panel {
@@ -126,9 +144,7 @@
   }
 
   .projects-panel {
-    grid-template-rows: auto minmax(0, 1fr);
     gap: clamp(0.75rem, 2vh, 1rem);
-    overflow: hidden;
   }
 
   .section-heading--primary {
@@ -138,174 +154,6 @@
   .section-heading--primary h1 {
     max-width: 17ch;
     font-size: clamp(1.75rem, 9vw, 2.8rem);
-  }
-
-  .carousel {
-    --folder-tab-height: 1.35rem;
-    --carousel-card-compact: clamp(2.5rem, 7vh, 3.15rem);
-    --carousel-card-active: calc(100% - var(--carousel-card-compact));
-    height: 100%;
-    min-height: 0;
-    gap: 0.55rem;
-  }
-
-  .carousel__viewport {
-    min-height: 0;
-    padding-top: 0;
-    overflow: hidden;
-    touch-action: pan-x pinch-zoom;
-  }
-
-  .carousel__track {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--carousel-gap);
-    height: 100%;
-    min-height: 0;
-  }
-
-  .carousel__slide {
-    flex: 0 0 var(--carousel-card-compact);
-    width: min(92%, 30rem);
-    min-height: 0;
-    height: auto;
-  }
-
-  .carousel__slide:last-child {
-    margin-right: 0;
-  }
-
-  .carousel__slide:not(.is-active) {
-    height: auto;
-  }
-
-  .carousel__slide.is-active {
-    flex-basis: var(--carousel-card-active);
-    width: min(100%, 30rem);
-    max-height: none;
-    padding-top: calc(
-      var(--folder-tab-height) + var(--previous-tab-lift) + 0.16rem
-    );
-  }
-
-  .carousel__slide,
-  .project-card,
-  .project-card__folder-tab,
-  .project-card__previous-tab,
-  .project-card__cover,
-  .project-card__details {
-    transition: none;
-  }
-
-  .project-card:not(.is-active),
-  .project-card.is-active {
-    height: 100%;
-  }
-
-  .project-card.is-active {
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .project-card.is-active .project-card__select,
-  .project-card.is-active .project-card__media,
-  .project-card.is-active .project-card__cover-frame,
-  .project-card.is-active .project-card__cover {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .project-card.is-active .project-card__media {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .project-card:not(.is-active) .project-card__media {
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  .project-card.is-active .project-card__cover-frame {
-    aspect-ratio: auto;
-  }
-
-  .project-card:not(.is-active) .project-card__editorial-header {
-    position: relative;
-    inset: auto;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-content: center;
-    gap: 0.65rem;
-    height: 100%;
-    min-height: 0;
-    padding: 0.55rem 0.65rem;
-    border-bottom: 0;
-  }
-
-  .project-card:not(.is-active) .project-card__editorial-header span:nth-child(4) {
-    display: none;
-  }
-
-  .project-card:not(.is-active) .project-card__editorial-header span:first-child {
-    order: initial;
-  }
-
-  .project-card:not(.is-active) .project-card__editorial-header span:nth-child(2) {
-    display: block;
-    max-height: none;
-    writing-mode: initial;
-    transform: none;
-  }
-
-  .project-card:not(.is-active) .project-card__cover-frame {
-    display: none;
-  }
-
-  .project-card__editorial-header {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 0.6rem;
-    min-height: 2.5rem;
-    padding: 0.6rem 0.65rem;
-    font-size: clamp(0.62rem, 2.7vw, 0.7rem);
-  }
-
-  .project-card.is-active {
-    --folder-tab-width: min(48vw, 10.5rem);
-  }
-
-  .project-card.is-active .project-card__folder-tab {
-    gap: 0.4rem;
-    padding-inline: 0.55rem;
-    font-size: 0.52rem;
-  }
-
-  .project-card.is-active .project-card__previous-tab {
-    padding-inline: 0.55rem;
-    font-size: 0.52rem;
-  }
-
-  .project-card__editorial-header span:nth-child(3) {
-    display: none;
-  }
-
-  .project-card.is-active .project-card__details {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    max-height: 2.75rem;
-    gap: 0.35rem;
-    padding: 0.65rem 0.7rem;
-  }
-
-  .project-card__status,
-  .project-card__details-stack,
-  .project-card__details .text-action {
-    font-size: clamp(0.48rem, 2.15vw, 0.58rem);
-  }
-
-  .project-card__details-stack {
-    justify-content: center;
-    gap: 0.25rem;
-    margin-left: 0;
-  }
-
-  .project-card__details .text-action {
-    grid-column: auto;
   }
 
   .career-panel .section-heading h2 {
@@ -484,6 +332,11 @@
 
   .practice-map__branch::after {
     right: calc(100% + 1.25rem - 0.18rem);
+  }
+
+  .practice-map__cover-credit-row {
+    min-height: 5rem;
+    padding: 1rem;
   }
 
   .practice-map__provenance {

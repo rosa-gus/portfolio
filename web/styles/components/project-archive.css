@@ -1,0 +1,667 @@
+.project-archive {
+  display: grid;
+  grid-template-columns: minmax(0, 12.5rem) minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.75rem);
+  justify-self: end;
+  align-self: center;
+  width: min(100%, 53rem);
+  height: min(100%, 40rem);
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-archive__stack {
+  display: flex;
+  grid-column: 1;
+  grid-row: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-archive__explore {
+  display: none;
+}
+
+.project-archive__label,
+.project-archive__folder,
+.project-archive__case-tab,
+.project-archive__case-meta,
+.project-archive__case-footer,
+.project-archive__floating {
+  font: var(--type-font-control-compact);
+  letter-spacing: var(--type-tracking-meta);
+  text-transform: uppercase;
+}
+
+.project-archive__label {
+  margin-bottom: 1.25rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.project-archive__folders {
+  position: relative;
+  height: 17rem;
+  min-height: 0;
+}
+
+.project-archive__folders:has(> :nth-child(5)) {
+  height: 20rem;
+}
+
+.project-archive__folder {
+  --folder-order: 0;
+  position: absolute;
+  z-index: calc(1 + var(--folder-order));
+  top: calc(var(--folder-order) * 3.25rem);
+  left: calc(var(--folder-order) * 0.25rem);
+  display: flex;
+  width: calc(100% - var(--folder-order) * 0.25rem);
+  height: 6.25rem;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  text-align: left;
+  touch-action: none;
+  transition: transform var(--transition-fast);
+}
+
+.project-archive__folder:nth-child(2) {
+  --folder-order: 1;
+}
+.project-archive__folder:nth-child(3) {
+  --folder-order: 2;
+}
+.project-archive__folder:nth-child(4) {
+  --folder-order: 3;
+}
+.project-archive__folder:nth-child(5) {
+  --folder-order: 4;
+}
+
+.project-archive__folder::before {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  width: 42%;
+  height: 0.75rem;
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 0;
+  background: var(--color-surface-raised);
+  content: "";
+}
+
+.project-archive__folder:hover {
+  transform: translateY(-0.25rem);
+}
+
+.project-archive__folder.is-lifted {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.project-archive__folder-line {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: max-content;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.65rem 0.55rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.project-archive__folder-line span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-archive__cases {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-archive__case {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+}
+
+.project-archive__case:not(.is-current) {
+  display: none;
+}
+
+.project-archive__case-tab {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  display: flex;
+  width: 10rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.65rem;
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 0;
+  background: var(--color-surface-raised);
+}
+
+.project-archive__case-heading {
+  min-width: 0;
+  padding: clamp(0.75rem, 2vh, 1.25rem) clamp(0.75rem, 1.5vw, 1.2rem) 0.9rem;
+}
+
+.project-archive__case-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.project-archive__case-heading > .project-archive__case-meta:first-child {
+  margin-bottom: 0.75rem;
+}
+
+.project-archive__case-heading h2 {
+  font-size: clamp(1.8rem, 2.7vw, 2.9rem);
+  font-weight: 440;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.project-archive__case-description {
+  max-width: 52ch;
+  margin-top: 0.55rem;
+  color: var(--color-text-muted);
+  font-size: clamp(0.9rem, 1.15vw, 1.08rem);
+  line-height: 1.35;
+}
+
+.project-archive__case-category {
+  margin-top: 0.9rem;
+}
+
+.project-archive__case-category span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-archive__case-cover {
+  position: relative;
+  min-height: 0;
+  margin-inline: clamp(0.55rem, 1.4vw, 1.1rem);
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-canvas);
+}
+
+.project-archive__case-carousel-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y pinch-zoom;
+}
+
+.project-archive__case-carousel-viewport:active {
+  cursor: grabbing;
+}
+
+.project-archive__case-carousel-track {
+  display: flex;
+  height: 100%;
+}
+
+.project-archive__case-cover-slide {
+  position: relative;
+  display: block;
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  color: inherit;
+}
+
+.project-archive__case-cover-slide:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.project-archive__case-cover-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-archive__case-fallback {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.project-archive__case-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.95rem clamp(0.75rem, 1.5vw, 1.2rem) 1.1rem;
+}
+
+.project-archive__case-caption a {
+  white-space: nowrap;
+}
+
+.project-archive__case-carousel-controls {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  font: var(--type-font-control-compact);
+  letter-spacing: var(--type-tracking-meta);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.project-archive__case-carousel-controls button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  padding: 0;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+  transition: color var(--transition-fast);
+}
+
+.project-archive__case-carousel-controls button:not(:disabled):is(:hover, :focus-visible) {
+  color: var(--color-text-muted);
+}
+
+.project-archive__case-carousel-controls .ui-arrow {
+  font-size: 1.2em;
+}
+
+.project-archive__case-carousel-controls button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.project-archive__case-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem clamp(0.75rem, 1.5vw, 1.2rem);
+  border-top: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.project-archive__case-stack {
+  display: flex;
+  gap: 0.45rem;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.project-archive__case-stack abbr {
+  text-decoration: none;
+}
+
+.project-archive__floating {
+  position: fixed;
+  z-index: 20;
+  width: min(16rem, calc(100vw - 1.5rem));
+  border: 1px solid var(--color-border-strong);
+  border-top: 0;
+  background: var(--color-surface-raised);
+}
+
+.project-archive__floating.is-returning {
+  transition:
+    left 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-archive__floating.is-closing {
+  pointer-events: none;
+  transition:
+    width 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-archive__floating.is-closing.is-returning {
+  transition:
+    left 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-archive__floating.is-closed {
+  border-top: 1px solid var(--color-border-strong);
+}
+
+.project-archive__floating.is-closed::before {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  width: 42%;
+  height: 0.75rem;
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 0;
+  background: var(--color-surface-raised);
+  content: "";
+}
+
+.project-archive__floating.is-closed .project-archive__floating-head {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  cursor: default;
+  touch-action: auto;
+  user-select: auto;
+}
+
+.project-archive__floating.is-closed .project-archive__floating-count,
+.project-archive__floating.is-closed .project-archive__floating-head > button {
+  display: none;
+}
+
+.project-archive__floating.is-closed .project-archive__floating-sheet {
+  display: none;
+}
+
+.project-archive__floating-closed-line {
+  display: none;
+}
+
+.project-archive__floating.is-closed .project-archive__floating-closed-line {
+  display: flex;
+}
+
+.project-archive__floating[hidden],
+.project-archive__floating-files[hidden] {
+  display: none;
+}
+
+.project-archive__floating-divider {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: -1px;
+  display: flex;
+  width: calc(100% + 2px);
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-primary);
+  font: var(--type-font-control-compact);
+  letter-spacing: var(--type-tracking-meta);
+  text-transform: uppercase;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.project-archive__floating-divider::before,
+.project-archive__floating-divider::after {
+  border-top: 1px solid var(--color-border-strong);
+  content: "";
+}
+
+.project-archive__floating-divider::before {
+  flex: 0 0 0.3rem;
+}
+
+.project-archive__floating-divider::after {
+  flex: 1;
+}
+
+.project-archive__floating-divider span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-archive__floating.is-closed .project-archive__floating-divider {
+  display: none;
+}
+
+.project-archive__floating-head {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.project-archive__floating-head:active {
+  cursor: grabbing;
+}
+
+.project-archive__floating-count {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.project-archive__floating-head button {
+  flex: none;
+  padding: 0;
+}
+
+.project-archive__floating-head button:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.project-archive__floating-sheet {
+  max-height: 0;
+  overflow: auto;
+  border-top: 1px solid var(--color-border-strong);
+  transition: max-height 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-archive__floating.is-open .project-archive__floating-sheet {
+  max-height: min(19rem, calc(100dvh - 6rem));
+}
+
+.project-archive__floating-note {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-muted);
+  font-size: 0.56rem;
+}
+
+.project-archive__floating-files button {
+  display: grid;
+  grid-template-columns: 0.65rem minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: center;
+  width: 100%;
+  min-height: 2.3rem;
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+}
+
+.project-archive__floating-files button:hover {
+  background: var(--color-surface-canvas);
+}
+
+.project-archive__file-marker {
+  visibility: hidden;
+  color: var(--color-text-primary);
+  font-size: 0.65rem;
+}
+
+.project-archive__floating-files
+  button[aria-current="true"]
+  .project-archive__file-marker {
+  visibility: visible;
+}
+
+.project-archive__floating-files button span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.64rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 900px) {
+  .project-archive {
+    align-self: start;
+    height: auto;
+  }
+
+  .project-archive__case {
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+  }
+
+  .project-archive__case-cover {
+    aspect-ratio: 3 / 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .project-archive {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 0;
+    width: min(100%, 30rem);
+  }
+
+  .project-archive__explore {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    min-height: 2.75rem;
+    text-align: left;
+  }
+
+  .project-archive__cases {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 1.2rem;
+  }
+
+  .project-archive__stack {
+    grid-column: 1;
+    grid-row: 3;
+    justify-content: start;
+    margin-top: 2rem;
+  }
+
+  .project-archive__label {
+    margin-bottom: 0.6rem;
+    font-size: 0.58rem;
+  }
+
+  .project-archive__folders {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem 0.4rem;
+    height: auto;
+    padding-top: 0.5rem;
+  }
+
+  .project-archive__folders:has(> :nth-child(5)) {
+    height: auto;
+  }
+
+  .project-archive__folder {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: 2.75rem;
+  }
+
+  .project-archive__folder::before {
+    height: 0.5rem;
+  }
+
+  .project-archive__floating.is-closed::before {
+    height: 0.5rem;
+  }
+
+  .project-archive__folder-line {
+    padding: 0.7rem 0.4rem 0.35rem;
+    font-size: 0.625rem;
+  }
+
+  .project-archive__case-tab {
+    width: 7rem;
+    height: 1.15rem;
+    font-size: 0.55rem;
+  }
+
+  .project-archive__case-heading {
+    padding: 0.55rem 0.65rem 0.5rem;
+  }
+
+  .project-archive__case-heading > .project-archive__case-meta:first-child {
+    margin-bottom: 0.3rem;
+  }
+
+  .project-archive__case-heading h2 {
+    font-size: clamp(1.35rem, 5.5vw, 1.7rem);
+  }
+
+  .project-archive__case-description {
+    margin-top: 0.4rem;
+    font-size: 0.875rem;
+  }
+
+  .project-archive__case-meta {
+    font-size: 0.5rem;
+  }
+
+  .project-archive__case-category {
+    margin-top: 0.4rem;
+  }
+
+  .project-archive__case-cover {
+    margin-inline: 0.55rem;
+  }
+
+  .project-archive__case-caption {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .project-archive__case-caption a {
+    font-size: 0.54rem;
+  }
+
+  .project-archive__case-footer {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .project-archive__folder-line {
+    font-size: 0.55rem;
+  }
+}

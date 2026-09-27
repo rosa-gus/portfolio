@@ -52,85 +52,8 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 				</header>
 				<main class="stage" id="content">
 					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ profile.Introduction.Availability } aria-labelledby="projects-title">
-						@SectionHeading(
-							"projects-title",
-							profile.Introduction.Heading,
-							profile.Introduction.Summary,
-							true,
-						)
-						<div class="carousel" data-carousel aria-roledescription="carrossel" aria-label="Arquivo de projetos">
-							<div class="carousel__viewport">
-								<div class="carousel__track">
-									for index, project := range availableProjects(projects) {
-										<div class={ carouselSlideClass(index == 0) }>
-											<article class={ projectCardClass(index == 0) } data-project={ project.Slug } data-project-index={ project.Index } data-project-title={ project.Title }>
-												<button class="project-card__previous-tab" type="button" data-carousel-previous-tab aria-label="Projeto anterior" aria-hidden="true" tabindex="-1" disabled hidden>
-													<span aria-hidden="true">[↑] <span class="project-card__previous-copy">Case </span><span data-carousel-previous-index>00</span></span>
-												</button>
-												<span class="project-card__folder-tab" aria-hidden="true">
-													<span>Case</span>
-													<span>{ project.Index }</span>
-												</span>
-												<a class="project-card__select" data-project-select href={ projectURL(basePath, project.Slug) } aria-label={ "Abrir projeto " + project.Title }>
-													<span class="project-card__media" aria-hidden="true">
-														if images := projectCarouselImages(project); len(images) > 0 {
-															<span class="project-card__editorial-header">
-																<span>{ project.Index }</span>
-																<span>{ project.Title }</span>
-																<span>{ projectCategoryLabel(project.Category) }</span>
-																<span>{ project.Year }</span>
-																<span class="project-card__technology-list" aria-label="Tecnologias em destaque">
-																	for _, technology := range project.FeaturedStack {
-																		<abbr title={ technology }>[{ featuredTechnologyLabel(technology) }]</abbr>
-																	}
-																</span>
-															</span>
-															<span class="project-card__cover-frame" data-project-images>
-																for imageIndex, image := range images {
-																	<img
-																		class={ carouselImageClass(imageIndex) }
-																		data-project-image
-																		data-src={ siteURL(basePath, image.Src) }
-																		if index == 0 && imageIndex == 0 {
-																			src={ siteURL(basePath, image.Src) }
-																		}
-																		alt=""
-																		width={ imageDimension(image.Width) }
-																		height={ imageDimension(image.Height) }
-																		loading={ carouselImageLoading(index, imageIndex) }
-																		decoding="async"
-																		aria-hidden={ imageIndex != 0 }
-																	/>
-																}
-															</span>
-														} else {
-															<span class="project-card__matrix"></span>
-														}
-													</span>
-												</a>
-												<div class="project-card__details" aria-hidden={ index != 0 }>
-													<p class="project-card__status">[{ projectStatusLabel(project.Status) }]</p>
-													<span class="project-card__details-stack" aria-label="Tecnologias em destaque">
-														for _, technology := range project.FeaturedStack {
-															<abbr title={ technology }>[{ featuredTechnologyLabel(technology) }]</abbr>
-														}
-													</span>
-													<a class="text-action" data-project-link href={ projectURL(basePath, project.Slug) }>[ABRIR CASE]</a>
-												</div>
-											</article>
-										</div>
-									}
-								</div>
-							</div>
-							<div class="carousel__controls" aria-label="Controles do carrossel">
-								<button type="button" data-carousel-play>[*] REPRODUZINDO</button>
-								<div class="carousel__navigation">
-									<button type="button" data-carousel-prev aria-label="Projeto anterior">[↑]</button>
-									<span class="carousel__counter" data-carousel-counter>{ galleryCounter(0, len(availableProjects(projects))) }</span>
-									<button type="button" data-carousel-next aria-label="Próximo projeto">[↓]</button>
-								</div>
-							</div>
-						</div>
+						@SectionHeading("projects-title", profile.Introduction.Heading, "", true)
+						@ProjectArchive(projects, basePath)
 					</section>
 					<section class="content-panel information-panel career-panel" id="career" data-panel data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
 						@SectionHeading("career-title", profile.Career.Heading, "", false)
@@ -230,6 +153,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 						</div>
 					</section>
 				</main>
+				@ProjectArchiveFloating(projects)
 				<nav class="command-bar" aria-label="Seções principais">
 					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Projetos</a>
 					<a data-panel-target="career" href="#career">Carreira</a>

@@ -10,6 +10,7 @@
   --color-chrome: rgba(238, 233, 222, 0.92);
   --color-shadow: rgba(54, 48, 37, 0.16);
   --font-display: "Instrument Sans Variable", "Helvetica Neue", sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "IBM Plex Mono", monospace;
 
   /* Semantic color roles */

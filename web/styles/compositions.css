@@ -93,6 +93,11 @@
   transform: rotate(45deg);
 }
 
+.ui-arrow--left {
+  transform: rotate(-90deg);
+}
+
+.ui-arrow--right,
 .ui-arrow--command {
   transform: rotate(90deg);
 }

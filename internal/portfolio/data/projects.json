@@ -24,13 +24,12 @@
       "interfaces",
       "systems-and-apis",
       "data-and-automation",
-      "design-systems",
       "security"
     ],
     "practiceMap": [
       {
         "capability": "interfaces",
-        "technologies": ["React", "TypeScript", "Vite"]
+        "technologies": ["React", "TypeScript", "Vite", "Vitest"]
       },
       {
         "capability": "systems-and-apis",
@@ -39,10 +38,6 @@
       {
         "capability": "data-and-automation",
         "technologies": ["Cloudflare Workers", "Cloudflare KV", "Firestore"]
-      },
-      {
-        "capability": "design-systems",
-        "technologies": ["React", "TypeScript", "Vitest"]
       },
       {
         "capability": "security",
@@ -112,7 +107,7 @@
     "category": "Pesquisa em IA aplicada",
     "year": "2026",
     "status": "prototype",
-    "briefDescription": "Uma experiência de terminal que transforma fotografias de besouros em hipóteses taxonômicas com IA — sem fingir que substitui um especialista.",
+    "briefDescription": "Uma experiência de terminal que transforma fotografias de besouros em hipóteses taxonômicas com IA.",
     "summary": "Curiosidade por besouros virou um protótipo full-stack: uma TUI em Go envia imagens para uma API FastAPI, o BioCLIP procura parentes na árvore da vida e o sistema responde somente com o nível taxonômico que seus limiares permitem sustentar.",
     "role": "Pesquisa aplicada, arquitetura e desenvolvimento full-stack",
     "stack": [
@@ -161,15 +156,19 @@
     },
     "media": {
       "cover": "coleoptera-experiment-cover",
+      "coverCredit": {
+        "name": "Weronika Romanowska",
+        "author_url": "https://unsplash.com/@weronikam"
+      },
       "items": [
         {
           "id": "coleoptera-experiment-cover",
-          "src": "/projects/carousel/coleoptera-identifier.webp",
+          "src": "/projects/covers/coleoptera-identifier.webp",
           "width": 1200,
           "height": 800,
-          "alt": "Ilustração verde e preta de um besouro observado por uma lupa, com o título Coleoptera Identifier Experiment.",
+          "alt": "Besouro preto sobre um tronco com musgo, em tons de verde e preto com dithering Bayer.",
           "label": "Coleoptera Identifier · Capa Editorial",
-          "caption": "Créditos a foto sem tratamento a Tao Yuan, via Unsplash."
+          "caption": "Fotografia de besouro tratada em verde e preto."
         },
         {
           "id": "terminal-analysis",
@@ -261,15 +260,19 @@
     },
     "media": {
       "cover": "cover",
+      "coverCredit": {
+        "name": "Sue Hughes",
+        "author_url": "https://unsplash.com/@suehughes"
+      },
       "items": [
         {
           "id": "cover",
-          "src": "/projects/carousel/mondo-send.webp",
+          "src": "/projects/covers/mondo-send.webp",
           "width": 1200,
           "height": 800,
-          "alt": "Janela inicial do Mondó em tema escuro, com opções para escolher arquivos e um dispositivo Bluetooth favorito.",
+          "alt": "Cartas e envelopes postais espalhados, em tons de azul e preto com dithering Bayer.",
           "label": "Mondó · Capa editorial",
-          "caption": "Créditos a foto sem tratamento a Sue Hughes, via Unsplash."
+          "caption": "Composição de cartas e envelopes tratada em azul e preto."
         },
         {
           "id": "initial-screen",
@@ -319,8 +322,91 @@
     "tone": "#2270d7"
   },
   {
-    "slug": "jaci-ui",
+    "slug": "timbre-palette",
     "index": "04",
+    "title": "Timbre Palette",
+    "category": "Visualização musical",
+    "year": "2026",
+    "status": "pilot",
+    "briefDescription": "Um retrato visual dos instrumentos documentados nas músicas mais ouvidas de um perfil público do Last.fm.",
+    "summary": "O Timbre Palette cruza o histórico público do Last.fm com créditos instrumentais do MusicBrainz para mostrar famílias sonoras, fontes acústicas e eletrônicas, cobertura das evidências e uma paleta compartilhável.",
+    "role": "Pesquisa e desenvolvimento full-stack",
+    "stack": [
+      "Svelte",
+      "TypeScript",
+      "Vite",
+      "Bits UI",
+      "Cloudflare Workers",
+      "Cloudflare D1",
+      "Cloudflare R2",
+      "Rust",
+      "Last.fm API",
+      "MusicBrainz"
+    ],
+    "featuredStack": ["TypeScript", "Rust"],
+    "capabilities": ["interfaces", "systems-and-apis", "data-and-automation"],
+    "practiceMap": [
+      {
+        "capability": "interfaces",
+        "technologies": ["Svelte", "TypeScript", "Vite", "Bits UI"]
+      },
+      {
+        "capability": "systems-and-apis",
+        "technologies": ["Cloudflare Workers", "Cloudflare D1", "Last.fm API"]
+      },
+      {
+        "capability": "data-and-automation",
+        "technologies": ["Rust", "TypeScript", "MusicBrainz", "Cloudflare R2", "Cloudflare D1"]
+      }
+    ],
+    "license": {
+      "name": "GPL-3.0",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.html"
+    },
+    "caseStudy": {
+      "context": "cases/timbre-palette/context.md",
+      "challenge": "cases/timbre-palette/challenge.md",
+      "decision": "cases/timbre-palette/decision.md",
+      "result": "cases/timbre-palette/result.md"
+    },
+    "media": {
+      "cover": "editorial-cover",
+      "coverCredit": {
+        "name": "João Henrique",
+        "author_url": "https://unsplash.com/@nightingale1917"
+      },
+      "items": [
+        {
+          "id": "editorial-cover",
+          "src": "/projects/covers/timbre-palette.webp",
+          "width": 1200,
+          "height": 800,
+          "alt": "Capa de um disco de Jorge Ben ao lado de um toca-discos, em rosa e preto com dithering Bayer.",
+          "label": "Timbre Palette · Capa editorial",
+          "caption": "Capa de disco e toca-discos tratados em rosa e preto."
+        },
+        {
+          "id": "promotional-cover",
+          "src": "/projects/timbre-palette/og-image.png",
+          "width": 1200,
+          "height": 630,
+          "alt": "Capa de divulgação do Timbre Palette com título em destaque, desenho de instrumentos em caracteres e seis cores sobre fundo preto.",
+          "label": "Timbre Palette · Capa de divulgação",
+          "caption": "Imagem de divulgação do projeto para prévias de links compartilhados."
+        }
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/timbre-palette",
+      "repository": "https://github.com/rosa-gus/timbre-palette",
+      "live": "https://rosa-gus.github.io/timbre-palette/"
+    },
+    "featured": false,
+    "tone": "#d66f77"
+  },
+  {
+    "slug": "jaci-ui",
+    "index": "05",
     "title": "Jaci UI",
     "category": "Design system",
     "year": "2026",
@@ -363,15 +449,19 @@
     },
     "media": {
       "cover": "jaci-moon-cover",
+      "coverCredit": {
+        "name": "Julia Reushenova",
+        "author_url": "https://unsplash.com/@jreush"
+      },
       "items": [
         {
           "id": "jaci-moon-cover",
-          "src": "/projects/carousel/jaci-ui.webp",
+          "src": "/projects/covers/jaci-ui.webp",
           "width": 1200,
           "height": 800,
-          "alt": "Lua cheia em dois tons, com textura 'dithering' duotone bayer com matriz 4x4.",
+          "alt": "Campo de pequenas flores sobre folhagem, em tons de verde e preto com dithering Bayer.",
           "label": "Jaci UI · Capa editorial",
-          "caption": "Créditos a foto sem tratamento a Julia Reushenova, via Unsplash."
+          "caption": "Campo de flores e folhagem tratado em verde e preto."
         },
         {
           "id": "actions-dark",
