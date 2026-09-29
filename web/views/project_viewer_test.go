@@ -15,6 +15,6 @@ func TestProjectImageViewerUsesVerticalScrollArea(t *testing.T) {
 	}
 
 	html := output.String()
-	assertContains(t, html, `class="project-image-viewer__media"><div class="scroll-area" data-scroll-area data-axis="vertical">`)
+	assertContains(t, html, `class="project-image-viewer__media"><div class="scroll-area scroll-area--no-shadow" data-scroll-area data-axis="vertical">`)
 	assertContains(t, html, `aria-label="Imagem ampliada do projeto"`)
 }

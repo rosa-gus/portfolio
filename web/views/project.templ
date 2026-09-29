@@ -164,7 +164,7 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 											}
 											<div class="project-gallery__image-frame">
 												<img
-													class="project-gallery__image"
+													class={ galleryImageClass(image) }
 													src={ siteURL(basePath, image.Src) }
 													alt={ image.Alt }
 													width={ imageDimension(image.Width) }
@@ -340,7 +340,7 @@ templ ProjectImageViewer() {
 				<button type="button" data-project-image-viewer-close>[FECHAR]</button>
 			</header>
 			<div class="project-image-viewer__media">
-				@ScrollArea("Imagem ampliada do projeto", "vertical") {
+				@ScrollArea("Imagem ampliada do projeto", "vertical", ScrollAreaShadowNone) {
 					<img data-project-image-viewer-image alt=""/>
 				}
 			</div>
