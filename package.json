@@ -1,7 +1,7 @@
 {
-  "name": "luis-gustavo-portfolio",
+  "name": "rosagus-portfolio",
   "private": true,
-  "version": "1.1.2",
+  "version": "1.2.2",
   "license": "AGPL-3.0-only",
   "homepage": "https://rosa-gus.github.io/portfolio",
   "repository": {
@@ -15,7 +15,7 @@
     "assets:build": "vite build",
     "generate": "go run github.com/a-h/templ/cmd/templ@v0.3.1020 generate",
     "check": "tsc --noEmit",
-    "build": "npm run assets:build && npm run check && mkdir -p bin && go build -o bin/portfolio ./cmd/portfolio",
+    "build": "npm run assets:build && npm run check && npm run generate && mkdir -p bin && go build -o bin/portfolio ./cmd/portfolio",
     "site:build": "npm run assets:build && npm run check && npm run generate && go run ./cmd/export"
   },
   "dependencies": {

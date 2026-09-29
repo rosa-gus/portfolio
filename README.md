@@ -103,19 +103,17 @@ To add a project:
 | `npm run generate`                                  | Regenerates Go files from all `.templ` sources.                |
 | `npm run check`                                     | Runs TypeScript type checking without emitting files.          |
 | `npm run images:covers -- <input> <output> --cover` | Prepares one dithered project cover.                           |
-| `npm run build`                                     | Builds assets, checks TypeScript, and creates `bin/portfolio`. |
+| `npm run build`                                     | Builds assets, checks TypeScript, generates templates, and creates `bin/portfolio`. |
 | `npm run site:build`                                | Builds and exports the complete static site to `public`.       |
 
-Files ending in `_templ.go` are generated. Edit the corresponding `.templ`
-source and run `npm run generate` instead of changing generated files directly.
+Files ending in `_templ.go` are generated and ignored by Git. Edit the
+corresponding `.templ` source and run `npm run generate` during development.
 
 ## Building the server
 
-Generate templates before producing a release build if any `.templ` source has
-changed:
+The release build generates templates automatically:
 
 ```sh
-npm run generate
 npm run build
 ./bin/portfolio
 ```

@@ -51,44 +51,53 @@
       "result": "cases/abrigo-do-wlad/result.md"
     },
     "media": {
-      "cover": "public-home-desktop",
+      "cover": "public-home-mobile",
       "items": [
         {
-          "id": "public-home-desktop",
-          "src": "/projects/wlad/image01.png",
-          "width": 1341,
-          "height": 933,
-          "alt": "Página inicial do Abrigo do Wlad em uma tela desktop, com a cadela Teka em destaque.",
-          "label": "Site público · Página inicial",
-          "caption": "Destaque diário e caminhos para adoção, apadrinhamento e apoio ao abrigo."
-        },
-        {
-          "id": "private-dashboard",
-          "src": "/projects/wlad/image02.png",
-          "width": 1290,
-          "height": 865,
-          "alt": "Visão geral do painel privado do Abrigo do Wlad com indicadores e atividade recente.",
-          "label": "Painel privado · Visão geral",
-          "caption": "Animais, pontos de coleta e candidaturas reunidos em uma visão operacional."
-        },
-        {
-          "id": "private-application-review",
-          "src": "/projects/wlad/image03.png",
-          "width": 1163,
-          "height": 947,
-          "alt": "Tela do painel privado para avaliação de uma candidatura de adoção.",
-          "label": "Painel privado · Revisão de candidatura",
-          "caption": "Fluxo interno de avaliação e acompanhamento de uma solicitação de adoção.",
-          "note": "Dados fictícios utilizados exclusivamente para demonstração."
-        },
-        {
           "id": "public-home-mobile",
+          "src": "/projects/wlad/image01.png",
+          "width": 1179,
+          "height": 2556,
+          "alt": "Página inicial mobile do Abrigo do Wlad com fotos do cão David Bowie e apresentação do projeto.",
+          "label": "Site público · Página inicial",
+          "caption": "Apresentação do abrigo com David Bowie em destaque e navegação para cães, tampinhas e doações."
+        },
+        {
+          "id": "public-dogs-mobile",
+          "src": "/projects/wlad/image02.png",
+          "width": 1179,
+          "height": 2556,
+          "alt": "Lista mobile de cães para adoção do Abrigo do Wlad, com o cartão de Francisco aberto e o de Bob abaixo.",
+          "label": "Site público · Cães para adoção",
+          "caption": "Cartões apresentam fotos e informações dos cães disponíveis para adoção."
+        },
+        {
+          "id": "private-dashboard-mobile",
+          "src": "/projects/wlad/image03.png",
+          "width": 1179,
+          "height": 2556,
+          "alt": "Visão geral mobile do painel administrativo do Abrigo do Wlad com indicadores de pontos de coleta, solicitações de adoção e cães adotados.",
+          "label": "Painel privado · Visão geral",
+          "caption": "Indicadores e atalhos reúnem pontos de coleta, candidaturas e adoções."
+        },
+        {
+          "id": "private-dogs-mobile",
           "src": "/projects/wlad/image04.png",
-          "width": 374,
-          "height": 665,
-          "alt": "Página inicial do Abrigo do Wlad em uma tela de celular, com a cadela Teka em destaque.",
-          "label": "Site público · Experiência mobile",
-          "caption": "Apresentação do abrigo e de seus principais caminhos adaptada a telas menores."
+          "width": 1179,
+          "height": 2556,
+          "alt": "Tela mobile de gestão de cães no painel administrativo do Abrigo do Wlad, com busca, botão Novo e cartão de Snoopy.",
+          "label": "Painel privado · Gestão de cães",
+          "caption": "Consulta, busca e cadastro dos animais disponíveis para adoção."
+        },
+        {
+          "id": "private-application-review-mobile",
+          "src": "/projects/wlad/image05.png",
+          "width": 1179,
+          "height": 2556,
+          "alt": "Revisão mobile de candidatura para adotar Simba, com dados pessoais fictícios da candidata e ações para aprovar ou reprovar.",
+          "label": "Painel privado · Revisão de candidatura",
+          "caption": "Fluxo interno de avaliação de uma solicitação de adoção.",
+          "note": "Dados fictícios utilizados exclusivamente para demonstração."
         }
       ]
     },
