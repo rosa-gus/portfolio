@@ -14,6 +14,16 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 			for index, project := range availableProjects(projects) {
 				<article class={ archiveCaseClass(index == 0) } data-archive-case={ project.Slug } aria-labelledby={ "archive-case-title-" + project.Slug }>
 					<div class="project-archive__case-tab" aria-hidden="true"><span>CASE</span><span>{ project.Index }</span></div>
+					if project.Links.Live != "" || project.Links.Repository != "" {
+						<div class="project-archive__case-links">
+							if project.Links.Live != "" {
+								<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer noopener" aria-label={ "Ver site de " + project.Title + " (abre em nova aba)" }>VER SITE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+							}
+							if project.Links.Repository != "" {
+								<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener" aria-label={ "Ver código fonte de " + project.Title + " (abre em nova aba)" }>CÓDIGO <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+							}
+						</div>
+					}
 					<header class="project-archive__case-heading">
 						<p class="project-archive__case-meta"><span>DOCUMENTO EM CONSULTA</span><span>{ galleryCounter(index, len(availableProjects(projects))) }</span></p>
 						<h2 id={ "archive-case-title-" + project.Slug }>{ project.Title }</h2>
@@ -33,7 +43,7 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 											inert?={ imageIndex != 0 }
 										>
 											<img
-												class="project-archive__case-cover-image"
+												class={ archiveImageClass(image) }
 												data-archive-carousel-image
 												data-src={ siteURL(basePath, image.Src) }
 												alt={ image.Alt }

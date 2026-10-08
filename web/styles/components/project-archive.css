@@ -27,6 +27,7 @@
 .project-archive__label,
 .project-archive__folder,
 .project-archive__case-tab,
+.project-archive__case-links,
 .project-archive__case-meta,
 .project-archive__case-footer,
 .project-archive__floating {
@@ -163,6 +164,25 @@
   padding: clamp(0.75rem, 2vh, 1.25rem) clamp(0.75rem, 1.5vw, 1.2rem) 0.9rem;
 }
 
+.project-archive__case-links {
+  position: absolute;
+  bottom: 100%;
+  left: calc(10rem + 0.75rem);
+  display: flex;
+  height: 1.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.project-archive__case-links a {
+  white-space: nowrap;
+}
+
+.project-archive__case-links a:is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
 .project-archive__case-meta {
   display: flex;
   justify-content: space-between;
@@ -232,6 +252,7 @@
   min-width: 0;
   height: 100%;
   color: inherit;
+  background: var(--color-surface-raised);
 }
 
 .project-archive__case-cover-slide:focus-visible {
@@ -246,6 +267,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.project-archive__case-cover-image--portrait {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  max-width: calc(100% - 1rem);
+  height: auto;
+  max-height: calc(100% - 1rem);
+  border: 1px solid var(--color-border-subtle);
+  object-fit: contain;
+  object-position: center;
+  transform: translate(-50%, -50%);
 }
 
 .project-archive__case-fallback {
@@ -434,6 +469,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow:
+    -1px 0 1px var(--color-surface-raised),
+    1px 0 1px var(--color-surface-raised),
+    0 -1px 1px var(--color-surface-raised),
+    0 1px 1px var(--color-surface-raised);
 }
 
 .project-archive__floating.is-closed .project-archive__floating-divider {
@@ -615,6 +655,13 @@
   .project-archive__case-tab {
     width: 7rem;
     height: 1.15rem;
+    font-size: 0.55rem;
+  }
+
+  .project-archive__case-links {
+    left: calc(7rem + 0.5rem);
+    height: 1.15rem;
+    gap: 0.75rem;
     font-size: 0.55rem;
   }
 

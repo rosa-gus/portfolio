@@ -169,10 +169,21 @@ func galleryMediaClass(hasNote bool) string {
 }
 
 func galleryImageClass(image portfolio.ProjectImage) string {
-	if image.Height > image.Width {
+	if projectImageIsPortrait(image) {
 		return "project-gallery__image project-gallery__image--portrait"
 	}
 	return "project-gallery__image"
+}
+
+func projectImageIsPortrait(image portfolio.ProjectImage) bool {
+	return image.Height > image.Width
+}
+
+func archiveImageClass(image portfolio.ProjectImage) string {
+	if projectImageIsPortrait(image) {
+		return "project-archive__case-cover-image project-archive__case-cover-image--portrait"
+	}
+	return "project-archive__case-cover-image"
 }
 
 func isProjectAvailable(project portfolio.Project) bool {

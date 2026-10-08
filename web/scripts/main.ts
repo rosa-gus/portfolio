@@ -127,6 +127,17 @@ const fishPlayButton =
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let fishAutoplayAttempted = false;
 let fishHasEnded = false;
+let fishMediaActive = false;
+let fishPlayRequest = 0;
+let fishIntroTimer: number | undefined;
+let fishRevealTimer: number | undefined;
+
+const clearFishIntro = () => {
+  window.clearTimeout(fishIntroTimer);
+  window.clearTimeout(fishRevealTimer);
+  fishIntroTimer = undefined;
+  fishRevealTimer = undefined;
+};
 
 const updateFishControl = (playing: boolean) => {
   if (!fishPlayButton) return;
@@ -143,12 +154,25 @@ const updateFishControl = (playing: boolean) => {
 };
 
 const showFishImage = () => {
+  fishPlayRequest += 1;
+  clearFishIntro();
   if (fishMedia) fishMedia.dataset.fishState = "image";
+  updateFishControl(false);
+};
+
+const showPausedFishVideo = () => {
+  fishPlayRequest += 1;
+  clearFishIntro();
+  if (fishMedia && fishMedia.dataset.fishState !== "image") {
+    fishMedia.dataset.fishState = "paused";
+  }
   updateFishControl(false);
 };
 
 const playFishVideo = async (restart = false) => {
   if (!fishMedia || !fishVideo) return;
+  clearFishIntro();
+  const request = ++fishPlayRequest;
   if (restart) {
     fishHasEnded = false;
     fishVideo.currentTime = 0;
@@ -157,47 +181,62 @@ const playFishVideo = async (restart = false) => {
   fishVideo.muted = true;
   fishMedia.dataset.fishState = "loading";
   try {
+    // Confirm playback permission before committing to the opening effect.
     await fishVideo.play();
+    if (request !== fishPlayRequest || !fishMediaActive) return;
+    updateFishControl(true);
+    if (reducedMotion.matches) {
+      fishMedia.dataset.fishState = "video";
+      return;
+    }
+
+    fishMedia.dataset.fishState = "intro";
+    fishIntroTimer = window.setTimeout(() => {
+      fishMedia.dataset.fishState = "revealing";
+      fishRevealTimer = window.setTimeout(() => {
+        fishMedia.dataset.fishState = "video";
+        clearFishIntro();
+      }, 400);
+    }, 250);
   } catch {
-    showFishImage();
+    if (request === fishPlayRequest) showFishImage();
   }
 };
 
 const activateFishMedia = () => {
   if (!fishMedia || !fishVideo) return;
+  fishMediaActive = true;
   if (fishHasEnded || reducedMotion.matches) {
-    showFishImage();
+    showPausedFishVideo();
     return;
   }
 
   if (!fishAutoplayAttempted) {
     fishAutoplayAttempted = true;
     void playFishVideo();
-    return;
-  }
-
-  if (fishMedia.dataset.fishState === "video" && fishVideo.paused) {
-    void playFishVideo();
   }
 };
 
 const deactivateFishMedia = () => {
+  fishMediaActive = false;
   if (fishVideo && !fishVideo.paused) fishVideo.pause();
-  showFishImage();
+  showPausedFishVideo();
 };
 
 fishVideo?.addEventListener("playing", () => {
-  if (fishMedia) fishMedia.dataset.fishState = "video";
-  updateFishControl(true);
+  if (!fishMediaActive) {
+    fishVideo.pause();
+    showPausedFishVideo();
+  }
 });
 
 fishVideo?.addEventListener("pause", () => {
-  if (!fishVideo.ended) showFishImage();
+  if (!fishVideo.ended) showPausedFishVideo();
 });
 
 fishVideo?.addEventListener("ended", () => {
   fishHasEnded = true;
-  showFishImage();
+  showPausedFishVideo();
 });
 
 fishVideo?.addEventListener("error", showFishImage);
@@ -205,7 +244,7 @@ fishVideo?.addEventListener("error", showFishImage);
 fishPlayButton?.addEventListener("click", () => {
   if (fishVideo && !fishVideo.paused) {
     fishVideo.pause();
-    showFishImage();
+    showPausedFishVideo();
     return;
   }
   void playFishVideo(true);
@@ -213,8 +252,8 @@ fishPlayButton?.addEventListener("click", () => {
 
 reducedMotion.addEventListener("change", () => {
   if (!reducedMotion.matches) return;
-  deactivateFishMedia();
-  showFishImage();
+  if (fishVideo && !fishVideo.paused) fishVideo.pause();
+  showPausedFishVideo();
 });
 
 function showPanel(panelID: string, updateHistory = true) {
