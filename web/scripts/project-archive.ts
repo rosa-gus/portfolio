@@ -18,6 +18,7 @@ export const initializeProjectArchive = () => {
     "[data-archive-floating-count]",
   );
   const dividerTitle = floating?.querySelector<HTMLElement>("[data-archive-divider-title]");
+  const closedSymbol = floating?.querySelector<HTMLElement>("[data-archive-closed-symbol]");
   const closedTitle = floating?.querySelector<HTMLElement>(
     "[data-archive-closed-title]",
   );
@@ -25,7 +26,7 @@ export const initializeProjectArchive = () => {
     "[data-archive-closed-count]",
   );
 
-  if (!archive || !floating || !handle || !sheet || !closeButton || !count || !dividerTitle || !closedTitle || !closedCount) {
+  if (!archive || !floating || !handle || !sheet || !closeButton || !count || !dividerTitle || !closedSymbol || !closedTitle || !closedCount) {
     return { close: (_restoreFocus = true, _immediate = false) => {} };
   }
 
@@ -193,7 +194,7 @@ export const initializeProjectArchive = () => {
       returnTimer = 0;
       if (activeFolder !== source || !floating.classList.contains("is-closing")) return;
       const sourceRect = source.getBoundingClientRect();
-      closedTitle.textContent = `${source.dataset.folderIndex ?? "00"} / ${source.dataset.folderLabel ?? "PASTA"}`;
+      closedTitle.textContent = source.dataset.folderLabel ?? "PASTA";
       closedCount.textContent = source.dataset.folderCount ?? "00";
       const closedRect = floating.getBoundingClientRect();
       floating.style.width = `${closedRect.width}px`;
@@ -242,9 +243,11 @@ export const initializeProjectArchive = () => {
     source.classList.add("is-lifted");
     source.setAttribute("aria-expanded", "true");
     groups.forEach((item) => { item.hidden = item !== group; });
-    dividerTitle.textContent = source.dataset.folderLabel ?? "PASTA";
+    closedSymbol.textContent = source.dataset.folderSymbol ?? "+";
+    closedSymbol.dataset.symbol = source.dataset.folderSymbol ?? "+";
+    dividerTitle.textContent = `${source.dataset.folderSymbol ?? "+"} ${source.dataset.folderLabel ?? "PASTA"}`;
     count.textContent = `[${source.dataset.folderCount ?? "00"}] ARQ.`;
-    closedTitle.textContent = `${source.dataset.folderIndex ?? "00"} / ${source.dataset.folderLabel ?? "PASTA"}`;
+    closedTitle.textContent = source.dataset.folderLabel ?? "PASTA";
     closedCount.textContent = source.dataset.folderCount ?? "00";
     floating.setAttribute("aria-label", `Pasta ${source.dataset.folderLabel ?? ""} aberta`);
     floating.hidden = false;

@@ -55,6 +55,14 @@ type ProfileAbout struct {
 }
 
 type ProfileMediaStudy struct {
+	Name        string `json:"name"`
+	Author      string `json:"author"`
+	AuthorURL   string `json:"authorURL"`
+	Summary     string `json:"summary"`
+	Palette     string `json:"palette"`
+	Version     string `json:"version"`
+	ExploreURL  string `json:"exploreURL"`
+	SourceURL   string `json:"sourceURL"`
 	Label       string `json:"label"`
 	Description string `json:"description"`
 	Technique   string `json:"technique"`

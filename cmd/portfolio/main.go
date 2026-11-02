@@ -36,11 +36,17 @@ func main() {
 	mux.HandleFunc("GET /about.jpeg", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, web.Static(), "about.jpeg")
 	})
-	mux.HandleFunc("GET /fish.mp4", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFileFS(w, r, web.Static(), "fish.mp4")
+	mux.HandleFunc("GET /about-reticula.webm", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFileFS(w, r, web.Static(), "about-reticula.webm")
 	})
-	mux.HandleFunc("GET /fish.png", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFileFS(w, r, web.Static(), "fish.png")
+	mux.HandleFunc("GET /about-reticula-poster.webp", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFileFS(w, r, web.Static(), "about-reticula-poster.webp")
+	})
+	mux.HandleFunc("GET /about-reticula-mobile.webm", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFileFS(w, r, web.Static(), "about-reticula-mobile.webm")
+	})
+	mux.HandleFunc("GET /about-reticula-mobile-poster.webp", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFileFS(w, r, web.Static(), "about-reticula-mobile-poster.webp")
 	})
 	mux.HandleFunc("GET /og-image.png", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, web.Static(), "og-image.png")

@@ -18,6 +18,11 @@
   }
 }
 
+/* The navigation controller animates children, preserving fixed media layers. */
+.site-shell[data-panel-navigation] .content-panel.is-current {
+  animation: none;
+}
+
 @keyframes project-panel-in {
   from {
     opacity: 0;

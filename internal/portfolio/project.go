@@ -59,8 +59,8 @@ type ProjectCoverCredit struct {
 type ProjectImage struct {
 	ID      string `json:"id"`
 	Src     string `json:"src"`
-	Width   int    `json:"width"`
-	Height  int    `json:"height"`
+	Width   int    `json:"-"`
+	Height  int    `json:"-"`
 	Alt     string `json:"alt"`
 	Label   string `json:"label"`
 	Caption string `json:"caption"`
@@ -95,6 +95,25 @@ type ProjectLinks struct {
 //go:embed data/profile.json data/projects.json data/cases
 var contentFiles embed.FS
 
+//go:embed data/image-dimensions.json
+var imageDimensionsJSON []byte
+
+var imageDimensions = mustLoadImageDimensions()
+
+func mustLoadImageDimensions() map[string]struct{ Width, Height int } {
+	var dimensions map[string]struct{ Width, Height int }
+	if err := json.Unmarshal(imageDimensionsJSON, &dimensions); err != nil {
+		panic(fmt.Errorf("load generated image dimensions: %w", err))
+	}
+	return dimensions
+}
+
+// ProjectImageDimensions returns dimensions extracted from assets during the build.
+func ProjectImageDimensions(src string) (width, height int, ok bool) {
+	dimensions, ok := imageDimensions[src]
+	return dimensions.Width, dimensions.Height, ok
+}
+
 var Projects = mustLoadProjects()
 
 func mustLoadProjects() []Project {
@@ -108,6 +127,14 @@ func mustLoadProjects() []Project {
 		panic(fmt.Errorf("load projects: %w", err))
 	}
 	for index := range projects {
+		for imageIndex := range projects[index].Media.Items {
+			image := &projects[index].Media.Items[imageIndex]
+			width, height, ok := ProjectImageDimensions(image.Src)
+			if !ok || width <= 0 || height <= 0 {
+				panic(fmt.Errorf("missing dimensions for %q; run npm run assets:build", image.Src))
+			}
+			image.Width, image.Height = width, height
+		}
 		if err := validateProjectTone(projects[index].Tone); err != nil {
 			panic(fmt.Errorf("load tone for %q: %w", projects[index].Slug, err))
 		}

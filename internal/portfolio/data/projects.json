@@ -56,8 +56,6 @@
         {
           "id": "public-home-mobile",
           "src": "/projects/wlad/image01.png",
-          "width": 1179,
-          "height": 2556,
           "alt": "Página inicial mobile do Abrigo do Wlad com fotos do cão David Bowie e apresentação do projeto.",
           "label": "Site público · Página inicial",
           "caption": "Apresentação do abrigo com David Bowie em destaque e navegação para cães, tampinhas e doações."
@@ -65,8 +63,6 @@
         {
           "id": "public-dogs-mobile",
           "src": "/projects/wlad/image02.png",
-          "width": 1179,
-          "height": 2556,
           "alt": "Lista mobile de cães para adoção do Abrigo do Wlad, com o cartão de Francisco aberto e o de Bob abaixo.",
           "label": "Site público · Cães para adoção",
           "caption": "Cartões apresentam fotos e informações dos cães disponíveis para adoção."
@@ -74,8 +70,6 @@
         {
           "id": "private-dashboard-mobile",
           "src": "/projects/wlad/image03.png",
-          "width": 1179,
-          "height": 2556,
           "alt": "Visão geral mobile do painel administrativo do Abrigo do Wlad com indicadores de pontos de coleta, solicitações de adoção e cães adotados.",
           "label": "Painel privado · Visão geral",
           "caption": "Indicadores e atalhos reúnem pontos de coleta, candidaturas e adoções."
@@ -83,8 +77,6 @@
         {
           "id": "private-dogs-mobile",
           "src": "/projects/wlad/image04.png",
-          "width": 1179,
-          "height": 2556,
           "alt": "Tela mobile de gestão de cães no painel administrativo do Abrigo do Wlad, com busca, botão Novo e cartão de Snoopy.",
           "label": "Painel privado · Gestão de cães",
           "caption": "Consulta, busca e cadastro dos animais disponíveis para adoção."
@@ -92,8 +84,6 @@
         {
           "id": "private-application-review-mobile",
           "src": "/projects/wlad/image05.png",
-          "width": 1179,
-          "height": 2556,
           "alt": "Revisão mobile de candidatura para adotar Simba, com dados pessoais fictícios da candidata e ações para aprovar ou reprovar.",
           "label": "Painel privado · Revisão de candidatura",
           "caption": "Fluxo interno de avaliação de uma solicitação de adoção.",
@@ -173,8 +163,6 @@
         {
           "id": "coleoptera-experiment-cover",
           "src": "/projects/covers/coleoptera-identifier.webp",
-          "width": 1200,
-          "height": 800,
           "alt": "Besouro preto sobre um tronco com musgo, em tons de verde e preto com dithering Bayer.",
           "label": "Coleoptera Identifier · Capa Editorial",
           "caption": "Fotografia de besouro tratada em verde e preto."
@@ -182,8 +170,6 @@
         {
           "id": "terminal-analysis",
           "src": "/projects/coleoptera-identifier/image01.png",
-          "width": 879,
-          "height": 333,
           "alt": "Interface do Coleoptera Identifier no terminal durante a análise do arquivo test_beetle.jpg.",
           "label": "TUI · Análise em andamento",
           "caption": "O cliente em Go envia a imagem enquanto o modelo permanece isolado no servidor."
@@ -191,8 +177,6 @@
         {
           "id": "taxonomic-suggestion",
           "src": "/projects/coleoptera-identifier/image02.png",
-          "width": 1020,
-          "height": 955,
           "alt": "Resultado no terminal com prévia pixelada de um besouro, score do modelo, árvore taxonômica e candidatos alternativos.",
           "label": "TUI · Hipótese taxonômica",
           "caption": "Prévia pixelada, nível taxonômico sugerido e alternativas reunidos sem esconder as limitações do modelo."
@@ -200,8 +184,6 @@
         {
           "id": "outside-coleoptera",
           "src": "/projects/coleoptera-identifier/image03.png",
-          "width": 909,
-          "height": 486,
           "alt": "Resultado no terminal para uma imagem que o modelo classificou como não pertencente à ordem Coleoptera.",
           "label": "TUI · Fora de Coleoptera",
           "caption": "Quando a sugestão sai do universo dos besouros, a interface interrompe a árvore taxonômica e sinaliza o limite."
@@ -209,8 +191,6 @@
         {
           "id": "project-cover",
           "src": "/projects/coleoptera-identifier/image04.webp",
-          "width": 909,
-          "height": 486,
           "alt": "Um besouro com uma lupa e dentro um asterisco, representando a logo externa do projeto.",
           "label": "Coleoptera Identifier · Capa Externa",
           "caption": "Capa utilizada no Github e em outros meios externos."
@@ -277,8 +257,6 @@
         {
           "id": "cover",
           "src": "/projects/covers/mondo-send.webp",
-          "width": 1200,
-          "height": 800,
           "alt": "Cartas e envelopes postais espalhados, em tons de azul e preto com dithering Bayer.",
           "label": "Mondó · Capa editorial",
           "caption": "Composição de cartas e envelopes tratada em azul e preto."
@@ -286,8 +264,6 @@
         {
           "id": "initial-screen",
           "src": "/projects/mondo-send/image01.png",
-          "width": 684,
-          "height": 724,
           "alt": "Tela inicial do Mondó com botões para escolher arquivos ou definir um dispositivo favorito.",
           "label": "Aplicativo · Estado inicial",
           "caption": "O fluxo também pode começar no aplicativo, pela seleção de arquivos ou do destino favorito."
@@ -295,8 +271,6 @@
         {
           "id": "nautilus-context-action",
           "src": "/projects/mondo-send/image02.png",
-          "width": 457,
-          "height": 578,
           "alt": "Menu de contexto do Nautilus sobre um arquivo, com a ação para enviá-lo ao smartphone de Luis destacada.",
           "label": "Nautilus · Ação contextual",
           "caption": "O dispositivo favorito aparece ao lado das ações do próprio arquivo."
@@ -304,8 +278,6 @@
         {
           "id": "send-confirmation",
           "src": "/projects/mondo-send/image03.png",
-          "width": 740,
-          "height": 780,
           "alt": "Janela do Mondó com uma caixa de confirmação para enviar um arquivo ao smartphone de Luis.",
           "label": "Envio rápido · Confirmação",
           "caption": "Uma última confirmação preserva o controle sem devolver o usuário ao caminho longo das Configurações."
@@ -313,8 +285,6 @@
         {
           "id": "file-and-device",
           "src": "/projects/mondo-send/image04.png",
-          "width": 740,
-          "height": 780,
           "alt": "Janela do Mondó mostrando o arquivo snoopy.png pronto para envio e o smartphone de Luis marcado como favorito.",
           "label": "Aplicativo · Arquivo e dispositivo",
           "caption": "Arquivo selecionado e destino favorito reunidos antes de iniciar a transferência."
@@ -388,8 +358,6 @@
         {
           "id": "editorial-cover",
           "src": "/projects/covers/timbre-palette.webp",
-          "width": 1200,
-          "height": 800,
           "alt": "Capa de um disco de Jorge Ben ao lado de um toca-discos, em rosa e preto com dithering Bayer.",
           "label": "Timbre Palette · Capa editorial",
           "caption": "Capa de disco e toca-discos tratados em rosa e preto."
@@ -397,8 +365,6 @@
         {
           "id": "promotional-cover",
           "src": "/projects/timbre-palette/og-image.png",
-          "width": 1200,
-          "height": 630,
           "alt": "Capa de divulgação do Timbre Palette com título em destaque, desenho de instrumentos em caracteres e seis cores sobre fundo preto.",
           "label": "Timbre Palette · Capa de divulgação",
           "caption": "Imagem de divulgação do projeto para prévias de links compartilhados."
@@ -466,8 +432,6 @@
         {
           "id": "jaci-moon-cover",
           "src": "/projects/covers/jaci-ui.webp",
-          "width": 1200,
-          "height": 800,
           "alt": "Campo de pequenas flores sobre folhagem, em tons de verde e preto com dithering Bayer.",
           "label": "Jaci UI · Capa editorial",
           "caption": "Campo de flores e folhagem tratado em verde e preto."
@@ -475,8 +439,6 @@
         {
           "id": "actions-dark",
           "src": "/projects/jaci/image01.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Painel da Jaci UI em tema escuro com botões de ação principal, variações de suporte e marcadores de status.",
           "label": "Ações · Tema escuro",
           "caption": "Hierarquia, intenção e feedback reunidos em botões e marcadores para diferentes contextos."
@@ -484,8 +446,6 @@
         {
           "id": "actions-light",
           "src": "/projects/jaci/image02.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Painel da Jaci UI em tema claro com botões de ação principal, variações de suporte e marcadores de status.",
           "label": "Ações · Tema claro",
           "caption": "A mesma hierarquia de ações preservada sobre superfícies claras."
@@ -493,8 +453,6 @@
         {
           "id": "surfaces-dark",
           "src": "/projects/jaci/image03.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Composição da Jaci UI em tema escuro com dois cartões sobre adoção responsável e cuidado contínuo, além de uma faixa informativa.",
           "label": "Superfícies · Tema escuro",
           "caption": "Cards combinam tom, hierarquia e propósito sem perder a identidade visual."
@@ -502,8 +460,6 @@
         {
           "id": "surfaces-light",
           "src": "/projects/jaci/image04.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Composição da Jaci UI em tema claro com dois cartões sobre adoção responsável e cuidado contínuo, além de uma faixa informativa.",
           "label": "Superfícies · Tema claro",
           "caption": "Contraste, elevação e cores semânticas adaptados às superfícies claras."
@@ -511,8 +467,6 @@
         {
           "id": "destructive-dialog-dark",
           "src": "/projects/jaci/image05.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Diálogo modal da Jaci UI em tema escuro solicitando confirmação antes de remover um cadastro.",
           "label": "Feedback · Diálogo destrutivo escuro",
           "caption": "Contexto, consequência e próxima ação permanecem próximos em uma decisão irreversível."
@@ -520,8 +474,6 @@
         {
           "id": "destructive-dialog-light",
           "src": "/projects/jaci/image06.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Diálogo modal da Jaci UI em tema claro solicitando confirmação antes de remover um cadastro.",
           "label": "Feedback · Diálogo destrutivo claro",
           "caption": "O mesmo diálogo semântico com sobreposição e foco visual ajustados ao tema claro."
@@ -529,8 +481,6 @@
         {
           "id": "form-dark",
           "src": "/projects/jaci/image07.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Formulário da Jaci UI em tema escuro com campos de texto, seleção, mensagem de validação, opções de moradia e preferência de porte.",
           "label": "Formulários · Tema escuro",
           "caption": "Campos, textos de apoio, validação e seletores organizam uma coleta de dados extensa."
@@ -538,8 +488,6 @@
         {
           "id": "form-light",
           "src": "/projects/jaci/image08.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Formulário da Jaci UI em tema claro com campos de texto, seleção, mensagem de validação, opções de moradia e preferência de porte.",
           "label": "Formulários · Tema claro",
           "caption": "Controles e estados de validação mantêm ritmo e legibilidade sobre a superfície clara."
@@ -547,8 +495,6 @@
         {
           "id": "progressive-flow",
           "src": "/projects/jaci/image09.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Exemplo da Jaci UI com progresso de cadastro na etapa três de quatro, aviso contextual, seção expansível e paginação.",
           "label": "Fluxos · Progresso visível",
           "caption": "Navegação, progresso e divulgação gradual orientam jornadas mais longas."
@@ -556,8 +502,6 @@
         {
           "id": "discovery-dark",
           "src": "/projects/jaci/image10.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Interface de descoberta da Jaci UI em tema escuro com busca de cães, sugestões, filtros ativos e opções de visualização.",
           "label": "Descoberta · Tema escuro",
           "caption": "Busca, sugestões, filtros e seleção trabalham juntos para reduzir o esforço de descoberta."
@@ -565,8 +509,6 @@
         {
           "id": "discovery-light",
           "src": "/projects/jaci/image11.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Interface de descoberta da Jaci UI em tema claro com busca de cães, sugestões, filtros ativos e opções de visualização.",
           "label": "Descoberta · Tema claro",
           "caption": "Os controles de descoberta preservam agrupamento e destaque no tema claro."
@@ -574,8 +516,6 @@
         {
           "id": "async-states-dark",
           "src": "/projects/jaci/image12.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Exemplos da Jaci UI em tema escuro com estado sem resultados, ação para limpar filtros e cartão de carregamento com conteúdo esqueleto.",
           "label": "Estados · Tema escuro",
           "caption": "Vazio, carregamento e orientação dão uma resposta clara enquanto o conteúdo não está disponível."
@@ -583,8 +523,6 @@
         {
           "id": "async-states-light",
           "src": "/projects/jaci/image13.webp",
-          "width": 2400,
-          "height": 1800,
           "alt": "Exemplos da Jaci UI em tema claro com estado sem resultados, ação para limpar filtros e cartão de carregamento com conteúdo esqueleto.",
           "label": "Estados · Tema claro",
           "caption": "Mensagens, ações de recuperação e esqueletos de carregamento adaptados ao tema claro."

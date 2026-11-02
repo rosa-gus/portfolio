@@ -1,14 +1,40 @@
 package views
 
-templ SectionHeading(id string, title string, description string, primary bool) {
-	<header class={ sectionHeadingClass(primary) }>
+templ EditorialHeading(id string, title string, eyebrow string, primary bool) {
+	<header class="editorial-heading">
+		if eyebrow != "" {
+			<p class="editorial-heading__eyebrow">{ eyebrow }</p>
+		}
 		if primary {
 			<h1 id={ id }>{ title }</h1>
 		} else {
 			<h2 id={ id }>{ title }</h2>
 		}
+	</header>
+}
+
+templ SectionHeading(id string, title string, description string, primary bool, breakAfter ...string) {
+	<header class={ sectionHeadingClass(primary) }>
+		if primary {
+			<h1 id={ id }>@headingText(title, breakAfter)</h1>
+		} else {
+			<h2 id={ id }>@headingText(title, breakAfter)</h2>
+		}
 		if description != "" {
 			<p>{ description }</p>
 		}
 	</header>
+}
+
+templ headingText(title string, breakAfter []string) {
+	if len(breakAfter) == 0 {
+		{ title }
+	} else {
+		for index, line := range sectionHeadingLines(title, breakAfter) {
+			if index > 0 {
+				{ " " }
+			}
+			<span class="section-heading__line">{ line }</span>
+		}
+	}
 }

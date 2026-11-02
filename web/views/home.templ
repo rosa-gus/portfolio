@@ -52,11 +52,11 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 				</header>
 				<main class="stage" id="content">
 					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ profile.Introduction.Availability } aria-labelledby="projects-title">
-						@SectionHeading("projects-title", profile.Introduction.Heading, "", true)
+						@EditorialHeading("projects-title", "Cases", profile.Introduction.Heading, true)
 						@ProjectArchive(projects, basePath)
 					</section>
 					<section class="content-panel information-panel career-panel" id="career" data-panel data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
-						@SectionHeading("career-title", profile.Career.Heading, "", false)
+						@EditorialHeading("career-title", "Carreira", profile.Career.Heading, false)
 						@ScrollArea("Percurso profissional", "vertical") {
 							<div class="career-record">
 								<header class="career-record__header meta-text">
@@ -99,13 +99,17 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 						}
 					</section>
 					<section class="content-panel information-panel about-panel" id="about" data-panel data-panel-title="Perfil" hidden aria-labelledby="about-title">
-						<div class="about-panel__media" data-fish-media data-fish-state="loading" aria-hidden="true">
-							<img data-fish-image src={ siteURL(basePath, "/fish.png") } alt="" decoding="async" loading="lazy"/>
-							<video data-fish-video muted playsinline preload="auto">
-								<source src={ siteURL(basePath, "/fish.mp4") } type="video/mp4"/>
+						<div class="about-panel__media" data-panel-background data-about-media data-about-state="image" aria-hidden="true">
+							<picture>
+								<source media="(max-width: 620px)" srcset={ siteURL(basePath, "/about-reticula-mobile-poster.webp") }/>
+								<img data-about-image src={ siteURL(basePath, "/about-reticula-poster.webp") } alt="" decoding="async" loading="lazy"/>
+							</picture>
+							<video data-about-video muted playsinline preload="none">
+								<source src={ siteURL(basePath, "/about-reticula-mobile.webm") } media="(max-width: 620px)" type="video/webm"/>
+								<source src={ siteURL(basePath, "/about-reticula.webm") } type="video/webm"/>
 							</video>
 						</div>
-						@SectionHeading("about-title", profile.About.Heading, "", false)
+						@EditorialHeading("about-title", "Sobre", profile.About.Heading, false)
 						@ScrollArea("Sobre Luis Gustavo", "vertical", ScrollAreaShadowNone) {
 							<div class="about-panel__copy prose prose--intro">
 								for _, paragraph := range profile.About.Paragraphs {
@@ -114,12 +118,37 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 							</div>
 						}
 						<div class="about-panel__controls">
-							<p class="about-panel__caption"><span>{ profile.About.Media.Label }</span><span>{ profile.About.Media.Description }</span><span>{ profile.About.Media.Technique }</span></p>
-							<button class="about-panel__play" data-fish-play type="button" aria-label="Reproduzir o vídeo do peixe desde o início" aria-pressed="false">[ ] REPRODUZIR</button>
+							<details class="about-study">
+								<summary class="about-study__summary">
+									<span>{ profile.About.Media.Label }{ " / " }{ profile.About.Media.Name }</span>
+									<span class="about-study__toggle"><span class="about-study__plus" aria-hidden="true">+</span><span class="about-study__minus" aria-hidden="true">−</span>{ " DETALHES" }</span>
+								</summary>
+								<div class="about-study__body">
+									<p class="about-study__description">{ profile.About.Media.Summary }</p>
+									<dl class="about-study__metadata">
+										<dt>Técnica</dt><dd>{ profile.About.Media.Technique }</dd>
+										<dt>Paleta</dt><dd>{ profile.About.Media.Palette }</dd>
+										<dt>Versão</dt><dd>{ profile.About.Media.Version }</dd>
+										if profile.About.Media.Author != "" {
+											<dt>Autor</dt><dd><a href={ externalURL(profile.About.Media.AuthorURL) } target="_blank" rel="noreferrer">{ profile.About.Media.Author }</a></dd>
+										}
+									</dl>
+									<nav class="about-study__links" aria-label="Rosa-retícula">
+										<a href={ externalURL(profile.About.Media.ExploreURL) } target="_blank" rel="noreferrer">[EXPLORAR ↗]</a>
+										<a href={ externalURL(profile.About.Media.SourceURL) } target="_blank" rel="noreferrer">[CÓDIGO-FONTE ↗]</a>
+									</nav>
+								</div>
+							</details>
+							<button class="about-panel__play" data-about-play type="button" aria-label="Reproduzir o vídeo ensaio desde o início" aria-pressed="false">[ ] REPRODUZIR</button>
 						</div>
 					</section>
 					<section class="content-panel information-panel contact-panel" id="contact" data-panel data-panel-title="Contato" hidden aria-labelledby="contact-title">
-						@SectionHeading("contact-title", profile.Contact.Heading, "", false)
+						<div class="contact-panel__media" data-panel-background aria-hidden="true">
+						</div>
+						<header class="editorial-heading">
+							<p class="editorial-heading__eyebrow">{ profile.Contact.Heading }</p>
+							<h2 id="contact-title"><span class="contact-panel__name-accent">Rosa</span>{ " Gus" }</h2>
+						</header>
 						<div class="contact-panel__body">
 							<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
 							<div class="contact-panel__primary">
@@ -155,7 +184,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 				</main>
 				@ProjectArchiveFloating(projects)
 				<nav class="command-bar" aria-label="Seções principais">
-					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Projetos</a>
+					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
 					<a data-panel-target="career" href="#career">Carreira</a>
 					<a data-panel-target="about" href="#about">Sobre</a>
 					<a data-panel-target="contact" href="#contact">Contato</a>

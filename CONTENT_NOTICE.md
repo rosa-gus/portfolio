@@ -48,8 +48,8 @@ Dependency names and versions are recorded in `go.mod`, `go.sum`,
 applicable license texts and metadata. Preserve the required third-party
 notices when redistributing generated bundles or binaries.
 
-The untreated source footage used to produce `web/assets/fish.mp4` was obtained
-from photographer **kampee_p** through [Videezy.com](https://www.videezy.com/).
+The original About video (`web/assets/about.mp4`) is by
+[brixiv on Pexels](https://www.pexels.com/@brixiv/).
 Credits for the other untreated photographs used in the portfolio are recorded
 in their respective media captions in
 [`internal/portfolio/data/projects.json`](internal/portfolio/data/projects.json).

@@ -18,7 +18,7 @@ the home page and project case studies as a static site.
 - Go 1.26 or newer.
 - Node.js 20.19 or newer, or Node.js 22.12 or newer.
 - npm.
-- Python 3.10 or newer and Pillow 10–12, only when preparing project covers.
+- Python 3.10 or newer and Pillow 10–12, for image dimensions during builds and for preparing project covers.
 
 ## Getting started
 
@@ -27,6 +27,7 @@ and start the server:
 
 ```sh
 npm install
+python3 -m pip install -r tools/requirements.txt
 npm run assets:build
 npm run generate
 go run ./cmd/portfolio
@@ -35,7 +36,7 @@ go run ./cmd/portfolio
 The site is available at `http://localhost:8080` by default.
 
 The asset build must run before the Go application is compiled because
-`web/dist` is embedded into the binary.
+`web/dist` and the generated image dimensions are embedded into the binary.
 
 For front-end work, run the asset watcher in one terminal and restart the Go
 server when required:
@@ -94,12 +95,14 @@ To add a project:
    the project entry.
 4. Select a media item as `media.cover` and generate its archive cover.
 
+Image dimensions are extracted automatically from gallery files and archive covers during `npm run assets:build` (also included in `build` and `site:build`). Do not add `width` or `height` to `projects.json`. The generated `internal/portfolio/data/image-dimensions.json` is ignored by Git; rebuild assets after replacing images. Missing or invalid images fail the build.
+
 ## Development commands
 
 | Command                                             | Purpose                                                        |
 | --------------------------------------------------- | -------------------------------------------------------------- |
 | `npm run assets:dev`                                | Rebuilds Vite assets when front-end files change.              |
-| `npm run assets:build`                              | Creates a production asset bundle in `web/dist`.               |
+| `npm run assets:build`                              | Creates a production asset bundle in `web/dist` and extracts project image dimensions.               |
 | `npm run generate`                                  | Regenerates Go files from all `.templ` sources.                |
 | `npm run check`                                     | Runs TypeScript type checking without emitting files.          |
 | `npm run images:covers -- <input> <output> --cover` | Prepares one dithered project cover.                           |
@@ -163,6 +166,56 @@ then replaces the configured output path after a successful render. Always use
 a dedicated output directory because existing contents at that path are
 removed.
 
+## About video
+
+The About section uses `about-reticula.webm`, prepared from `web/assets/about.mp4`
+at its native 1920×1080 and 24 fps. The `black` profile removes dark background
+haze without blur and retains Rosa-reticle screening on the fish and highlights.
+VP9 at CRF 18 balances size and screening detail. Delivery is grayscale,
+with black shadows and white highlights. The source is preserved. The video loads when About plays; the still remains visible during
+loading and for reduced motion.
+
+To reproduce (requires FFmpeg with `libvpx-vp9` and Pillow):
+
+```sh
+job_dir=$(mktemp -d /tmp/rosa-about.XXXXXX)
+python3 tools/rosa_reticula_video.py \
+  web/assets/about.mp4 "$job_dir/about-reticula.webm" \
+  --work-dir "$job_dir/frames" \
+  --profile black --width 1920 --fps 24 \
+  --shadow '#000000' --highlight '#ffffff' \
+  --preset vp9 --crf 18 --encoder-speed 4
+```
+
+Use a fresh work directory and output path. Copy the resulting WebM and
+`about-reticula-poster.webp` to `web/assets/`. The poster is extracted from the
+**last decoded frame of the delivered video** and saved as lossless WebP,
+without resizing or additional treatment. The JSON manifest records the
+parameters and checksums; it is a preparation artifact.
+
+At viewport widths up to 620 px, the page selects a separate 640×360 video
+and its final-frame poster. Generate this directly from the untreated original:
+the exporter scales before applying the reticle, preserving its pixel pattern.
+Do not resize the finished desktop video to create the mobile version.
+
+```sh
+job_dir=$(mktemp -d /tmp/rosa-about-mobile.XXXXXX)
+python3 tools/rosa_reticula_video.py \
+  web/assets/about.mp4 "$job_dir/about-reticula-mobile.webm" \
+  --work-dir "$job_dir/frames" \
+  --profile black --width 640 --fps 24 \
+  --shadow '#000000' --highlight '#ffffff' \
+  --preset vp9 --crf 18 --encoder-speed 4 \
+&& cp \
+  "$job_dir/about-reticula-mobile.webm" \
+  "$job_dir/about-reticula-mobile-poster.webp" \
+  "$job_dir/about-reticula-mobile.json" \
+  web/assets/
+```
+
+Rebuild assets after generating either version. The mobile source is listed
+first with a media condition; the desktop source remains the fallback.
+
 ## Project covers
 
 Archive covers are 1200×800 WebP files in `web/assets/projects/covers/`, named
@@ -215,8 +268,8 @@ security policy, rendering, project metadata, and project covers.
 
 ## Credits
 
-The untreated source footage used to produce `web/assets/fish.mp4` was obtained
-from photographer **kampee_p** through [Videezy.com](https://www.videezy.com/).
+The original About video (`web/assets/about.mp4`) is by
+[brixiv on Pexels](https://www.pexels.com/@brixiv/).
 The original photograph used for the favicon is by
 [Diane Helentjaris](https://unsplash.com/@dhelentjaris).
 Credits for the other untreated photographs used in the portfolio are recorded

@@ -10,11 +10,14 @@ import {
   initializeProjectImageViewer,
 } from "./project-gallery";
 import { initializeContactCopy } from "./contact";
+import { initializeAboutStudy } from "./about-study";
 import { initializeProjectStories } from "./project-story";
 import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
+import { initializePanelNavigation } from "./panel-navigation";
 
 initializeContactCopy();
+initializeAboutStudy();
 initializeProjectImageViewer();
 initializeProjectGalleries();
 initializeProjectStories();
@@ -37,11 +40,14 @@ const themeIcons = Array.from(
   document.querySelectorAll<HTMLLinkElement>("[data-theme-icon]"),
 );
 
-const isThemePreference = (value: string | undefined | null): value is ThemePreference =>
+const isThemePreference = (
+  value: string | undefined | null,
+): value is ThemePreference =>
   value === "system" || value === "light" || value === "dark";
 
 const readSavedThemePreference = (): ThemePreference => {
-  const initializedPreference = document.documentElement.dataset.themePreference;
+  const initializedPreference =
+    document.documentElement.dataset.themePreference;
   if (isThemePreference(initializedPreference)) return initializedPreference;
   try {
     const savedPreference = localStorage.getItem(themeStorageKey);
@@ -81,7 +87,8 @@ const applyTheme = (preference: ThemePreference) => {
     );
   }
 
-  if (themeColor) themeColor.content = theme === "light" ? "#eee9de" : "#0a0a09";
+  if (themeColor)
+    themeColor.content = theme === "light" ? "#eee9de" : "#0a0a09";
   themeIcons.forEach((icon) => {
     icon.media = icon.dataset.themeIcon === theme ? "all" : "not all";
   });
@@ -111,41 +118,31 @@ systemTheme.addEventListener("change", () => {
   if (activeThemePreference === "system") applyTheme(activeThemePreference);
 });
 
-const panelLinks = Array.from(
-  document.querySelectorAll<HTMLAnchorElement>("[data-panel-target]"),
-);
-const panels = Array.from(
-  document.querySelectorAll<HTMLElement>("[data-panel]"),
-);
-const pageTitle = document.querySelector<HTMLElement>("[data-page-title]");
-const siteShell = document.querySelector<HTMLElement>(".site-shell");
-const fishMedia = document.querySelector<HTMLElement>("[data-fish-media]");
-const fishVideo =
-  fishMedia?.querySelector<HTMLVideoElement>("[data-fish-video]");
-const fishPlayButton =
-  document.querySelector<HTMLButtonElement>("[data-fish-play]");
+const aboutMedia = document.querySelector<HTMLElement>("[data-about-media]");
+const aboutVideo =
+  aboutMedia?.querySelector<HTMLVideoElement>("[data-about-video]");
+const aboutPlayButton =
+  document.querySelector<HTMLButtonElement>("[data-about-play]");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-let fishAutoplayAttempted = false;
-let fishHasEnded = false;
-let fishMediaActive = false;
-let fishPlayRequest = 0;
-let fishIntroTimer: number | undefined;
-let fishRevealTimer: number | undefined;
+let aboutAutoplayAttempted = false;
+let aboutHasEnded = false;
+let aboutMediaActive = false;
+let aboutPlayRequest = 0;
+let aboutIntroTimer: number | undefined;
+let aboutRevealTimer: number | undefined;
 
-const clearFishIntro = () => {
-  window.clearTimeout(fishIntroTimer);
-  window.clearTimeout(fishRevealTimer);
-  fishIntroTimer = undefined;
-  fishRevealTimer = undefined;
+const clearAboutIntro = () => {
+  window.clearTimeout(aboutIntroTimer);
+  window.clearTimeout(aboutRevealTimer);
+  aboutIntroTimer = undefined;
+  aboutRevealTimer = undefined;
 };
 
-const updateFishControl = (playing: boolean) => {
-  if (!fishPlayButton) return;
-  fishPlayButton.textContent = playing
-    ? "[*] REPRODUZINDO"
-    : "[ ] REPRODUZIR";
-  fishPlayButton.setAttribute("aria-pressed", String(playing));
-  fishPlayButton.setAttribute(
+const updateAboutControl = (playing: boolean) => {
+  if (!aboutPlayButton) return;
+  aboutPlayButton.textContent = playing ? "[*] REPRODUZINDO" : "[ ] REPRODUZIR";
+  aboutPlayButton.setAttribute("aria-pressed", String(playing));
+  aboutPlayButton.setAttribute(
     "aria-label",
     playing
       ? "Pausar o vídeo ensaio"
@@ -153,141 +150,120 @@ const updateFishControl = (playing: boolean) => {
   );
 };
 
-const showFishImage = () => {
-  fishPlayRequest += 1;
-  clearFishIntro();
-  if (fishMedia) fishMedia.dataset.fishState = "image";
-  updateFishControl(false);
+const showAboutImage = () => {
+  aboutPlayRequest += 1;
+  clearAboutIntro();
+  if (aboutMedia) aboutMedia.dataset.aboutState = "image";
+  updateAboutControl(false);
 };
 
-const showPausedFishVideo = () => {
-  fishPlayRequest += 1;
-  clearFishIntro();
-  if (fishMedia && fishMedia.dataset.fishState !== "image") {
-    fishMedia.dataset.fishState = "paused";
+const showPausedAboutVideo = () => {
+  aboutPlayRequest += 1;
+  clearAboutIntro();
+  if (aboutMedia && aboutMedia.dataset.aboutState !== "image") {
+    aboutMedia.dataset.aboutState =
+      aboutVideo && aboutVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+        ? "paused"
+        : "image";
   }
-  updateFishControl(false);
+  updateAboutControl(false);
 };
 
-const playFishVideo = async (restart = false) => {
-  if (!fishMedia || !fishVideo) return;
-  clearFishIntro();
-  const request = ++fishPlayRequest;
+const playAboutVideo = async (restart = false) => {
+  if (!aboutMedia || !aboutVideo) return;
+  clearAboutIntro();
+  const request = ++aboutPlayRequest;
   if (restart) {
-    fishHasEnded = false;
-    fishVideo.currentTime = 0;
+    aboutHasEnded = false;
+    aboutVideo.currentTime = 0;
   }
 
-  fishVideo.muted = true;
-  fishMedia.dataset.fishState = "loading";
+  aboutVideo.muted = true;
+  aboutMedia.dataset.aboutState = "loading";
   try {
     // Confirm playback permission before committing to the opening effect.
-    await fishVideo.play();
-    if (request !== fishPlayRequest || !fishMediaActive) return;
-    updateFishControl(true);
+    await aboutVideo.play();
+    if (request !== aboutPlayRequest || !aboutMediaActive) return;
+    updateAboutControl(true);
     if (reducedMotion.matches) {
-      fishMedia.dataset.fishState = "video";
+      aboutMedia.dataset.aboutState = "video";
       return;
     }
 
-    fishMedia.dataset.fishState = "intro";
-    fishIntroTimer = window.setTimeout(() => {
-      fishMedia.dataset.fishState = "revealing";
-      fishRevealTimer = window.setTimeout(() => {
-        fishMedia.dataset.fishState = "video";
-        clearFishIntro();
+    aboutMedia.dataset.aboutState = "intro";
+    aboutIntroTimer = window.setTimeout(() => {
+      aboutMedia.dataset.aboutState = "revealing";
+      aboutRevealTimer = window.setTimeout(() => {
+        aboutMedia.dataset.aboutState = "video";
+        clearAboutIntro();
       }, 400);
     }, 250);
   } catch {
-    if (request === fishPlayRequest) showFishImage();
+    if (request === aboutPlayRequest) showAboutImage();
   }
 };
 
-const activateFishMedia = () => {
-  if (!fishMedia || !fishVideo) return;
-  fishMediaActive = true;
-  if (fishHasEnded || reducedMotion.matches) {
-    showPausedFishVideo();
+const activateAboutMedia = () => {
+  if (!aboutMedia || !aboutVideo) return;
+  aboutMediaActive = true;
+  if (reducedMotion.matches) {
+    showAboutImage();
+    return;
+  }
+  if (aboutHasEnded) {
+    showPausedAboutVideo();
     return;
   }
 
-  if (!fishAutoplayAttempted) {
-    fishAutoplayAttempted = true;
-    void playFishVideo();
+  if (!aboutAutoplayAttempted) {
+    aboutAutoplayAttempted = true;
+    void playAboutVideo();
   }
 };
 
-const deactivateFishMedia = () => {
-  fishMediaActive = false;
-  if (fishVideo && !fishVideo.paused) fishVideo.pause();
-  showPausedFishVideo();
+const deactivateAboutMedia = () => {
+  aboutMediaActive = false;
+  if (aboutVideo && !aboutVideo.paused) aboutVideo.pause();
+  showPausedAboutVideo();
 };
 
-fishVideo?.addEventListener("playing", () => {
-  if (!fishMediaActive) {
-    fishVideo.pause();
-    showPausedFishVideo();
+aboutVideo?.addEventListener("playing", () => {
+  if (!aboutMediaActive) {
+    aboutVideo.pause();
+    showPausedAboutVideo();
   }
 });
 
-fishVideo?.addEventListener("pause", () => {
-  if (!fishVideo.ended) showPausedFishVideo();
+aboutVideo?.addEventListener("pause", () => {
+  if (!aboutVideo.ended) showPausedAboutVideo();
 });
 
-fishVideo?.addEventListener("ended", () => {
-  fishHasEnded = true;
-  showPausedFishVideo();
+aboutVideo?.addEventListener("ended", () => {
+  aboutHasEnded = true;
+  showPausedAboutVideo();
 });
 
-fishVideo?.addEventListener("error", showFishImage);
+aboutVideo?.addEventListener("error", showAboutImage);
 
-fishPlayButton?.addEventListener("click", () => {
-  if (fishVideo && !fishVideo.paused) {
-    fishVideo.pause();
-    showPausedFishVideo();
+aboutPlayButton?.addEventListener("click", () => {
+  if (aboutVideo && !aboutVideo.paused) {
+    aboutVideo.pause();
+    showPausedAboutVideo();
     return;
   }
-  void playFishVideo(true);
+  void playAboutVideo(true);
 });
 
 reducedMotion.addEventListener("change", () => {
   if (!reducedMotion.matches) return;
-  if (fishVideo && !fishVideo.paused) fishVideo.pause();
-  showPausedFishVideo();
+  if (aboutVideo && !aboutVideo.paused) aboutVideo.pause();
+  showAboutImage();
 });
 
-function showPanel(panelID: string, updateHistory = true) {
-  const selectedPanel = panels.find((panel) => panel.id === panelID);
-  if (!selectedPanel) return;
-  if (panelID !== "case") projectArchive.close(false, true);
-  panelID === "about" ? activateFishMedia() : deactivateFishMedia();
-  siteShell?.classList.toggle("is-about-current", panelID === "about");
-  if (pageTitle)
-    pageTitle.textContent = selectedPanel.dataset.panelTitle ?? "Portfólio";
-
-  panels.forEach((panel) => {
-    const active = panel === selectedPanel;
-    panel.hidden = !active;
-    panel.classList.toggle("is-current", active);
-  });
-
-  panelLinks.forEach((link) => {
-    const active = link.dataset.panelTarget === panelID;
-    link.classList.toggle("is-current", active);
-    active
-      ? link.setAttribute("aria-current", "page")
-      : link.removeAttribute("aria-current");
-  });
-
-  if (updateHistory) history.replaceState(null, "", `#${panelID}`);
-}
-
-panelLinks.forEach((link) => {
-  link.addEventListener("click", (event) => {
-    event.preventDefault();
-    showPanel(link.dataset.panelTarget ?? "case");
-  });
+initializePanelNavigation({
+  onChange: (panelID) => {
+    if (panelID !== "case") projectArchive.close(false, true);
+    if (panelID === "about") activateAboutMedia();
+    else deactivateAboutMedia();
+  },
 });
-
-const initialPanel = window.location.hash.slice(1);
-if (initialPanel) showPanel(initialPanel, false);

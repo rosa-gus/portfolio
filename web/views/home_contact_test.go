@@ -21,6 +21,18 @@ func TestHomeOmitsContactEditionMark(t *testing.T) {
 	assertNotContains(t, html, `<span>L</span><span>U I S</span><span>G U S T A</span>`)
 }
 
+func TestHomeContactBackgroundOmitsImage(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	if err := Home(portfolio.ProfileContent{}, nil, "/portfolio", "https://example.com/portfolio").Render(context.Background(), &output); err != nil {
+		t.Fatalf("Home().Render() returned error: %v", err)
+	}
+
+	assertContains(t, output.String(), `class="contact-panel__media" data-panel-background aria-hidden="true"`)
+	assertNotContains(t, output.String(), `contact-light-reticle.webp`)
+}
+
 func TestHomeRendersSourceRepositoryLink(t *testing.T) {
 	t.Parallel()
 
