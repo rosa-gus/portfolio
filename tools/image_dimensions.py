@@ -12,14 +12,16 @@ def generate(root: Path) -> None:
     assets = (root / "web/assets").resolve()
     data = root / "internal/portfolio/data"
     projects = json.loads((data / "projects.json").read_text())
-    sources = {
-        src
-        for project in projects
-        for src in [
-            f"/projects/covers/{project['slug']}.webp",
-            *(image["src"] for image in project["media"]["items"]),
-        ]
-    }
+    sources = set()
+    for project in projects:
+        media = project["media"]
+        sources.update(image["src"] for image in media["items"])
+        cover = next(image for image in media["items"] if image["id"] == media["cover"])
+        sources.add(
+            cover["src"]
+            if cover["src"].startswith("/projects/covers/")
+            else f"/projects/covers/{project['slug']}.webp"
+        )
     dimensions = {}
     for src in sorted(sources):
         filename = (assets / src.lstrip("/")).resolve()

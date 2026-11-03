@@ -51,8 +51,15 @@
       "result": "cases/abrigo-do-wlad/result.md"
     },
     "media": {
-      "cover": "public-home-mobile",
+      "cover": "public-home-cover",
       "items": [
+        {
+          "id": "public-home-cover",
+          "src": "/projects/covers/abrigo-do-wlad.png",
+          "alt": "Página inicial do Abrigo do Wlad com apresentação do projeto e fotografia de um cão em destaque.",
+          "label": "Site público · Capa",
+          "caption": "Página inicial do abrigo em layout desktop."
+        },
         {
           "id": "public-home-mobile",
           "src": "/projects/wlad/image01.png",

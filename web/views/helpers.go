@@ -40,7 +40,9 @@ func sectionHeadingLines(title string, breakAfter []string) []string {
 func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	for _, image := range project.Media.Items {
 		if image.ID == project.Media.Cover {
-			image.Src = "/projects/covers/" + url.PathEscape(project.Slug) + ".webp"
+			if !strings.HasPrefix(image.Src, "/projects/covers/") {
+				image.Src = "/projects/covers/" + url.PathEscape(project.Slug) + ".webp"
+			}
 			if width, height, ok := portfolio.ProjectImageDimensions(image.Src); ok {
 				image.Width, image.Height = width, height
 			}
@@ -281,12 +283,19 @@ func socialImageURL(publicURL string) string {
 	return publicURL + "/og-image.png"
 }
 
+func availabilityLabel(profile portfolio.ProfileContent) string {
+	if !profile.Introduction.ShowAvailability {
+		return ""
+	}
+	return profile.Introduction.Availability
+}
+
 func siteMetadataTitle(profile portfolio.ProfileContent) string {
 	return profile.SEO.Title
 }
 
 func projectMetadataTitle(profile portfolio.ProfileContent, project portfolio.Project) string {
-	return project.Title + " — " + siteMetadataTitle(profile)
+	return project.Title + " / " + siteMetadataTitle(profile)
 }
 
 func projectMetadataDescription(profile portfolio.ProfileContent, project portfolio.Project) string {

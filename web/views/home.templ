@@ -44,14 +44,14 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 						</span>
 						<span>{ profile.Identity.DisplayName }</span>
 					</a>
-					<p class="masthead__role" data-page-title aria-live="polite">{ profile.Introduction.Availability }</p>
+					<p class="masthead__role" data-page-title aria-live="polite">{ availabilityLabel(profile) }</p>
 					<div class="masthead__actions">
 						<p class="masthead__profession">{ profile.Identity.Profession }</p>
 						@themeToggle()
 					</div>
 				</header>
 				<main class="stage" id="content">
-					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ profile.Introduction.Availability } aria-labelledby="projects-title">
+					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ availabilityLabel(profile) } aria-labelledby="projects-title">
 						@EditorialHeading("projects-title", "Cases", profile.Introduction.Heading, true)
 						@ProjectArchive(projects, basePath)
 					</section>
@@ -147,7 +147,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 						</div>
 						<header class="editorial-heading">
 							<p class="editorial-heading__eyebrow">{ profile.Contact.Heading }</p>
-							<h2 id="contact-title"><span class="contact-panel__name-accent">Rosa</span>{ " Gus" }</h2>
+							<h2 id="contact-title">Também assino como <span class="contact-panel__name-accent">rosa</span>{ " gus" }</h2>
 						</header>
 						<div class="contact-panel__body">
 							<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>

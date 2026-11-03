@@ -30,7 +30,7 @@ func TestProjectPageRendersSocialMetadata(t *testing.T) {
 	assertContains(t, html, `<link rel="apple-touch-icon" sizes="180x180" href="/portfolio/favicon/apple-touch-icon-180x180.png">`)
 	assertContains(t, html, `<meta name="color-scheme" content="light dark">`)
 	assertContains(t, html, `data-theme-toggle`)
-	assertContains(t, html, `<meta property="og:title" content="Example Project — Example Person · Portfolio">`)
+	assertContains(t, html, `<meta property="og:title" content="Example Project / Example Person · Portfolio">`)
 	assertContains(t, html, `<meta property="og:image" content="https://rosa-gus.github.io/portfolio/og-image.png">`)
 	assertContains(t, html, `<meta name="twitter:card" content="summary_large_image">`)
 }
@@ -45,7 +45,7 @@ func TestProjectMetadata(t *testing.T) {
 		Summary: "A complete digital experience.",
 	}
 
-	if got, want := projectMetadataTitle(profile, project), "Example Project — Example Person · Portfolio"; got != want {
+	if got, want := projectMetadataTitle(profile, project), "Example Project / Example Person · Portfolio"; got != want {
 		t.Errorf("projectMetadataTitle() = %q, want %q", got, want)
 	}
 	if got, want := projectMetadataDescription(profile, project), "A complete digital experience. Projeto de Example Person, Software Developer."; got != want {

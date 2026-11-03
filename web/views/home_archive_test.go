@@ -9,6 +9,21 @@ import (
 	"portfolio/internal/portfolio"
 )
 
+func TestProjectCoverPreservesExplicitCoverAsset(t *testing.T) {
+	project := portfolio.Project{
+		Slug: "example-project",
+		Media: portfolio.ProjectMedia{
+			Cover: "cover",
+			Items: []portfolio.ProjectImage{
+				{ID: "cover", Src: "/projects/covers/example-project.png"},
+			},
+		},
+	}
+	if got := projectCover(project).Src; got != project.Media.Items[0].Src {
+		t.Errorf("cover source = %q, want %q", got, project.Media.Items[0].Src)
+	}
+}
+
 func TestHomeRendersProjectArchive(t *testing.T) {
 	t.Parallel()
 

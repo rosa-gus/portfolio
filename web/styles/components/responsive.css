@@ -61,7 +61,7 @@
     overflow: hidden;
   }
 
-  .site-shell:has(.projects-panel.is-current) {
+  .site-shell:has(:is(.projects-panel, .career-panel, .about-panel).is-current) {
     height: auto;
     min-height: 100dvh;
     overflow: visible;
@@ -69,6 +69,46 @@
 
   .projects-panel {
     overflow: visible;
+  }
+
+  .stage .content-panel.is-home-swipe-preview {
+    top: var(--home-preview-top, 0px);
+    bottom: auto;
+    height: auto;
+    min-height: var(--home-preview-height, 0px);
+  }
+
+  .stage .contact-panel.is-home-swipe-preview {
+    height: var(--home-preview-height);
+  }
+
+  .career-panel {
+    grid-template-rows: max-content max-content;
+    overflow: visible;
+  }
+
+  .career-panel,
+  .about-panel,
+  :is(.career-panel, .about-panel) > .editorial-heading {
+    align-content: start;
+  }
+
+  :is(.career-panel, .about-panel) > .scroll-area {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  :is(.career-panel, .about-panel) > .scroll-area[data-axis="vertical"] > .scroll-area__viewport {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    overscroll-behavior-block: auto;
+  }
+
+  :is(.career-panel, .about-panel) > .scroll-area::before,
+  :is(.career-panel, .about-panel) > .scroll-area::after {
+    display: none;
   }
 
   .masthead__role {
@@ -98,8 +138,9 @@
     background: #000;
   }
 
-  .about-panel.is-current {
-    grid-template-rows: auto clamp(7rem, 22dvh, 12rem) minmax(0, 1fr) auto;
+  .about-panel.is-current,
+  .about-panel.is-home-swipe-preview {
+    grid-template-rows: auto clamp(7rem, 22dvh, 12rem) auto auto;
     gap: 1rem;
   }
 
@@ -445,7 +486,31 @@
 
   .project-content__panels.is-swiping {
     position: relative;
+    isolation: isolate;
     overflow: clip;
+  }
+
+  .project-content__panel.is-swipe-active,
+  .project-content__panel.is-swipe-preview {
+    --swipe-inset: calc(clamp(1rem, 4vw, 1.5rem) * min(1, var(--swipe-progress) * 8, (1 - var(--swipe-progress)) * 8));
+    padding: calc(clamp(1rem, 4vw, 1.5rem) + var(--swipe-inset))
+      calc(0.75rem + var(--swipe-inset));
+    overflow: clip;
+    isolation: isolate;
+    background: var(--color-surface-canvas);
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .project-content__panel.is-swipe-active::after,
+  .project-content__panel.is-swipe-preview::after {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    border: 1px solid var(--color-border-strong);
+    content: "";
+    pointer-events: none;
+    opacity: min(1, calc(var(--swipe-progress) * 8), calc((1 - var(--swipe-progress)) * 8));
   }
 
   .project-content__panel.is-swipe-active,
@@ -455,25 +520,39 @@
   }
 
   .project-content__panel.is-swipe-active {
-    transform: translate3d(var(--swipe-offset), 0, 0);
+    position: relative;
+    z-index: 1;
+    box-shadow: 0.6rem 0 1.8rem var(--color-shadow), -0.6rem 0 1.8rem var(--color-shadow);
+    transform: translate3d(var(--swipe-offset), 0, 0)
+      scale(calc(1 - var(--swipe-progress) * 0.025));
   }
 
   .project-content__panel.is-swipe-preview {
     position: absolute;
-    top: 0;
+    z-index: 0;
+    top: var(--swipe-preview-top, 0px);
     left: 0;
     width: 100%;
-    min-height: 100%;
-    background: var(--color-surface-canvas);
-    transform: translate3d(calc(var(--swipe-origin) + var(--swipe-offset)), 0, 0);
+    height: auto;
+    min-height: 0;
+    pointer-events: none;
+    transform: translate3d(calc(var(--swipe-direction) * (1 - var(--swipe-progress)) * 20px), 0, 0)
+      scale(calc(0.95 + var(--swipe-progress) * 0.05));
   }
 
   .project-content__panels.is-swipe-settling .project-content__panel {
-    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition:
+      transform var(--swipe-duration, 340ms) cubic-bezier(0.2, 0.65, 0.3, 1),
+      padding var(--swipe-duration, 340ms) cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+
+  .project-content__panels.is-swipe-settling .project-content__panel::after {
+    transition: opacity var(--swipe-duration, 340ms) ease-out;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .project-content__panels.is-swipe-settling .project-content__panel {
+    .project-content__panels.is-swipe-settling .project-content__panel,
+    .project-content__panels.is-swipe-settling .project-content__panel::after {
       transition: none;
     }
   }

@@ -1,3 +1,3 @@
-A Jaci se tornou a camada de interface compartilhada pelo site público e pelo painel administrativo do Abrigo do Wlad. Componentes de formulário, conteúdo, navegação e feedback passaram a consumir a mesma fundação visual, com testes cobrindo comportamentos essenciais e uma fronteira mais clara entre padrões reutilizáveis e regras específicas de cada aplicação.
+A Jaci tornou-se a camada de interface compartilhada pelo site público e pelo painel administrativo. Formulários, conteúdo, navegação e feedback passaram a utilizar a mesma fundação visual, com testes de comportamentos essenciais.
 
-Além disso, a biblioteca de UI pode ser utilizada em qualquer projeto, pois é licenciada sob a licença MIT e pode ser copiada, modificada, distribuída e usada para fins comerciais e não comerciais, desde que o aviso de direitos autorais e o texto da licença sejam preservados.
+O projeto reuniu minha atuação em concepção estética, desenho de interface e desenvolvimento de componentes. A biblioteca foi disponibilizada sob licença MIT, permitindo sua reutilização em outros projetos conforme os termos da licença.

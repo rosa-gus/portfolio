@@ -93,6 +93,9 @@ export const initializeProjectStories = () => {
     } | null = null;
     let settling = false;
     let settleTimer = 0;
+    let lastX = 0;
+    let lastTime = 0;
+    let velocity = 0;
 
     const clearPreview = (completed: boolean) => {
       if (!preview) return;
@@ -102,9 +105,14 @@ export const initializeProjectStories = () => {
       }
       preview.active.classList.remove("is-swipe-active");
       preview.next.classList.remove("is-swipe-preview");
+      preview.next.inert = false;
+      preview.next.removeAttribute("aria-hidden");
       panels.classList.remove("is-swiping", "is-swipe-settling");
       panels.style.removeProperty("--swipe-offset");
-      panels.style.removeProperty("--swipe-origin");
+      panels.style.removeProperty("--swipe-direction");
+      panels.style.removeProperty("--swipe-progress");
+      panels.style.removeProperty("--swipe-duration");
+      panels.style.removeProperty("--swipe-preview-top");
       preview = null;
       settling = false;
       settleTimer = 0;
@@ -132,9 +140,12 @@ export const initializeProjectStories = () => {
         );
         if (!active || !next) return;
 
+        panels.style.setProperty("--swipe-preview-top", `${Math.max(0, -panels.getBoundingClientRect().top)}px`);
         next.hidden = false;
+        next.inert = true;
+        next.setAttribute("aria-hidden", "true");
         preview = { active, next, nextIndex, direction };
-        panels.style.setProperty("--swipe-origin", direction === 1 ? "100%" : "-100%");
+        panels.style.setProperty("--swipe-direction", String(direction));
         panels.classList.add("is-swiping");
         active.classList.add("is-swipe-active");
         next.classList.add("is-swipe-preview");
@@ -143,6 +154,7 @@ export const initializeProjectStories = () => {
       }
 
       const width = panels.clientWidth;
+      panels.style.setProperty("--swipe-progress", String(Math.min(1, Math.abs(distanceX) / width)));
       panels.style.setProperty(
         "--swipe-offset",
         `${Math.max(-width, Math.min(width, distanceX))}px`,
@@ -171,6 +183,9 @@ export const initializeProjectStories = () => {
         : -1;
 
       const touch = event.touches[0];
+      lastX = touch.clientX;
+      lastTime = event.timeStamp;
+      velocity = 0;
       start = {
         x: touch.clientX,
         y: touch.clientY,
@@ -182,12 +197,21 @@ export const initializeProjectStories = () => {
 
     readingViewport.addEventListener("touchmove", (event) => {
       if (!start || !mobileLayout.matches || settling) return;
+      if (event.touches.length !== 1) {
+        start = null;
+        clearPreview(false);
+        return;
+      }
       const touch = Array.from(event.touches).find(
         (candidate) => candidate.identifier === start?.identifier,
       );
       if (!touch) return;
       const distanceX = touch.clientX - start.x;
       const distanceY = touch.clientY - start.y;
+      const elapsed = event.timeStamp - lastTime;
+      if (elapsed > 0) velocity = (touch.clientX - lastX) / elapsed;
+      lastX = touch.clientX;
+      lastTime = event.timeStamp;
       if (!preview && Math.abs(distanceY) > 12 && Math.abs(distanceY) > Math.abs(distanceX)) {
         start = null;
         return;
@@ -208,20 +232,33 @@ export const initializeProjectStories = () => {
       start = null;
       if (!preview) return;
 
-      const complete = Math.abs(distanceX) >= 50 &&
-        Math.abs(distanceX) >= Math.abs(distanceY) * 1.25;
+      if (event.timeStamp - lastTime > 100) velocity = 0;
+      const width = panels.clientWidth;
+      const distance = Math.min(width, Math.abs(distanceX));
+      const complete = Math.abs(distanceX) >= Math.abs(distanceY) * 1.25 &&
+        (distance >= width * 0.25 || (distance >= 30 && -preview.direction * velocity > 0.45));
+      const remaining = complete ? width - distance : distance;
+      const duration = reducedMotion.matches ? 0 :
+        Math.round(Math.max(240, Math.min(400, 240 + remaining * 0.35 - Math.abs(velocity) * 35)));
       const nextIndex = preview.nextIndex;
       const direction = preview.direction;
       settling = true;
+      panels.style.setProperty("--swipe-duration", `${duration}ms`);
       panels.classList.add("is-swipe-settling");
+      panels.style.setProperty("--swipe-progress", complete ? "1" : "0");
       panels.style.setProperty(
         "--swipe-offset",
         complete ? `${-direction * panels.clientWidth}px` : "0px",
       );
       settleTimer = window.setTimeout(() => {
-        if (complete) selectProjectSection(tabs[nextIndex], false, true, true);
+        if (complete) {
+          const contentTop = panels.getBoundingClientRect().top + window.scrollY;
+          const scrollTop = Math.min(window.scrollY, Math.max(0, contentTop));
+          selectProjectSection(tabs[nextIndex], false, true, true);
+          window.scrollTo({ top: scrollTop, behavior: "instant" });
+        }
         clearPreview(complete);
-      }, reducedMotion.matches ? 0 : 200);
+      }, duration);
     }, { passive: true });
 
     readingViewport.addEventListener("touchcancel", () => {

@@ -28,9 +28,10 @@ type ProfileSEO struct {
 }
 
 type ProfileIntroduction struct {
-	Availability string `json:"availability"`
-	Heading      string `json:"heading"`
-	Summary      string `json:"summary"`
+	ShowAvailability bool   `json:"showAvailability"`
+	Availability     string `json:"availability"`
+	Heading          string `json:"heading"`
+	Summary          string `json:"summary"`
 }
 
 type ProfileCareer struct {

@@ -1,3 +1,4 @@
+import { initializePanelSwipe } from "./panel-swipe";
 import {
   canScrollInDirection,
   createWheelGesture,
@@ -40,6 +41,7 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
     panels.find((panel) => panel.classList.contains("is-current")) ?? panels[0];
   let transitioning = false;
   let revision = 0;
+  let resetSwipe = () => {};
 
   shell.setAttribute("data-panel-navigation", "");
 
@@ -117,9 +119,10 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
     onChange(selected.id);
   };
 
-  const navigate = async (panelID: string, updateHistory = true) => {
+  const navigate = async (panelID: string, updateHistory = true, animate = true) => {
     const selected = panels.find((panel) => panel.id === panelID);
     if (!selected) return;
+    resetSwipe();
     const request = ++revision;
     cancelAnimations();
     active.inert = false;
@@ -135,7 +138,7 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
     const moveFocus = previous.contains(document.activeElement);
     previous.inert = true;
     try {
-      await animatePanel(previous, direction, false);
+      if (animate) await animatePanel(previous, direction, false);
       if (request !== revision) return;
 
       cancelAnimations();
@@ -145,7 +148,7 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
         heading?.setAttribute("tabindex", "-1");
         heading?.focus({ preventScroll: true });
       }
-      await animatePanel(selected, direction, true);
+      if (animate) await animatePanel(selected, direction, true);
     } finally {
       if (request === revision) {
         cancelAnimations();
@@ -154,6 +157,12 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
       }
     }
   };
+
+  resetSwipe = initializePanelSwipe({
+    stage,
+    panels,
+    navigate: (id) => { void navigate(id, true, false); },
+  });
 
   links.forEach((link) => {
     link.addEventListener("click", (event) => {
