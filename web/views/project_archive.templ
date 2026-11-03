@@ -86,12 +86,12 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 		<div class="project-archive__stack">
 			<p class="project-archive__label">ARQUIVOS</p>
 			<div class="project-archive__folders" aria-label="Pastas fechadas">
-				for index, folder := range archiveFolders(projects) {
+				for _, folder := range archiveFolders(projects) {
 					<button
 						class="project-archive__folder"
 						type="button"
 						data-archive-folder={ folder.Key }
-						data-folder-index={ fmt.Sprintf("%02d", index + 1) }
+						data-folder-symbol={ folder.Symbol }
 						data-folder-label={ folder.Label }
 						data-folder-count={ fmt.Sprintf("%02d", len(folder.Projects)) }
 						aria-label={ fmt.Sprintf("Pegar pasta %s, %d projetos", folder.Label, len(folder.Projects)) }
@@ -99,8 +99,11 @@ templ ProjectArchive(projects []portfolio.Project, basePath string) {
 						aria-controls="project-archive-floating"
 					>
 						<span class="project-archive__folder-line">
-							<span>{ fmt.Sprintf("%02d / %s", index + 1, folder.Label) }</span>
+							<span>{ folder.Label }</span>
 							<span>{ fmt.Sprintf("%02d", len(folder.Projects)) }</span>
+						</span>
+						<span class="project-archive__folder-body" aria-hidden="true">
+							<span class="project-archive__folder-symbol" data-symbol={ folder.Symbol }>{ folder.Symbol }</span>
 						</span>
 					</button>
 				}
@@ -123,8 +126,12 @@ templ ProjectArchiveFloating(projects []portfolio.Project) {
 			<span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
 			<button type="button" data-archive-close aria-label="Fechar pasta">[FECHAR]</button>
 			<div class="project-archive__folder-line project-archive__floating-closed-line" aria-hidden="true">
-				<span data-archive-closed-title></span><span data-archive-closed-count></span>
+				<span data-archive-closed-title></span>
+				<span data-archive-closed-count></span>
 			</div>
+			<span class="project-archive__folder-body project-archive__floating-closed-body" aria-hidden="true">
+				<span class="project-archive__folder-symbol" data-archive-closed-symbol></span>
+			</span>
 		</div>
 		<div class="project-archive__floating-sheet" data-archive-sheet>
 			<p class="project-archive__floating-note">CONTEÚDO / SELECIONE UMA FICHA</p>

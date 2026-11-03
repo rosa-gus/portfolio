@@ -1,3 +1,3 @@
-Jaci deriva de [“Îasy”](https://pt.wikipedia.org/wiki/Jaci), palavra do tupi que significa "Lua".
+A Jaci UI nasceu durante o desenvolvimento do Abrigo do Wlad, como uma fundação compartilhada para o site público e o painel administrativo.
 
-A Jaci UI surgiu com a plataforma web do projeto social independente Abrigo do Wlad, quando o site público e o painel administrativo passaram a compartilhar a mesma interface. Para além de definir uma linguagem agradável e nos padrões dos websites atuais, o design system precisava traduzir uma identidade acolhedora para o projeto, que pudesse aliviar a carga cognitiva do visitante diante do tema de resgate e maus-tratos animais.
+Além de implementar o front-end, fui responsável pelo desenho da interface e por sua concepção estética. O ponto de partida foi reconhecer o peso emocional do tema: abandono, acolhimento e adoção de animais. A linguagem visual deveria apresentar essa realidade com cuidado e tornar as tarefas claras para o público e para os voluntários.

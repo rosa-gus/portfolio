@@ -1,14 +1,5 @@
-O Brasil tem cerca de 30 milhões de animais domésticos em situação de rua, dos quais aproximadamente 67% são cães e 33% são gatos.
+O Abrigo do Wlad é um projeto social independente dedicado ao acolhimento e à adoção de cães. Conhecemos sua atuação durante a busca por uma organização para um projeto universitário de extensão e propusemos uma colaboração voluntária.
 
-Esse número alarmante pode ser percebido em qualquer área de habitação humana, seja urbana ou rural, embora 82,9% dos registros de abandono ocorram em áreas urbanas, principalmente em vias públicas (76,6%).
+A equipe de desenvolvimento era formada por duas pessoas. Para entender as necessidades do abrigo, realizamos entrevistas com Loren, uma das principais voluntárias. Enquanto meu colega conduzia as entrevistas, eu identificava e registrava os requisitos a partir dos relatos. Uma dificuldade central era manter a divulgação dos animais: o catálogo dependia de PDFs extensos, trabalhosos de atualizar conforme cães chegavam ou eram adotados.
 
-Seguindo a influência de seu pai e movido pela empatia pelos animais, Wladimir Cruz deixou seu emprego fixo e bem remunerado para criar o projeto social independente Abrigo do Wlad. Quando estávamos buscando um projeto social para um trabalho universitário de extensão, encontramos a página do abrigo no Instagram e logo propusemos uma colaboração voluntária.
-
-Por meio de entrevistas com a voluntária Loren, mapeamos suas dores e as transformamos em requisitos do sistema. Dentre as dificuldades relatas, a que ela considerava mais grave era a ausência de uma ferramenta para adição, remoção e atualização dos cães disponíveis no abrigo, o que os forçava a utilizar PDFs extensos e de difícil manutenção como "vitrine" dos cãezinhos.
-
----
-
-### Referências
-
-- ASSCOM. 30 milhões de animais vivem nas rua; CRMV-PB defende política de controle populacional. Disponível em: <https://www.crmvpb.org.br/30-milhoes-de-animais-vivem-nas-rua-crmv-pb-defende-politica-de-controle-populacional/>. Acesso em: 7 set. 2026.
-- MESQUITA, Julia de. Brasil tem 30 milhões de animais abandonados nas ruas, revela pesquisa. Disponível em: <https://www.metropoles.com/colunas/e-o-bicho/brasil-tem-30-milhoes-de-animais-abandonados-nas-ruas-revela-pesquisa>. Acesso em: 7 set. 2026.
+Também fiquei responsável por organizar esses requisitos, distinguindo os funcionais dos não funcionais e definindo prioridades para orientar o desenvolvimento.

@@ -1,1 +1,5 @@
-Extraímos a fundação para o pacote privado @jaci/ui dentro do monorepo. Tokens semânticos organizam cores, tipografia, superfícies, foco, elevação e movimento nos temas claro e escuro; componentes React e TypeScript usam CSS Modules e são exportados por subcaminho. Alguns componentes utilizam primitives do Radix UI, que fornecem a base de comportamento e acessibilidade, enquanto a Jaci define composição, API e identidade visual. Componentes ligados à navegação e ao layout de cada produto permanecem nas respectivas aplicações.
+Escolhi cores associadas à água, ao céu, à terra e à vegetação para orientar a identidade visual. Essa escolha partiu da intenção de oferecer alívio cognitivo diante de um assunto emocionalmente exigente, articulando cor, hierarquia e composição.
+
+Traduzi essa direção em tokens semânticos de cor, tipografia, superfícies, foco, elevação e movimento, nos temas claro e escuro. A implementação utiliza React, TypeScript e CSS Modules; alguns componentes incorporam primitives do Radix UI como base de comportamento e acessibilidade.
+
+A fundação foi organizada no pacote `@jaci/ui`, dentro do monorepo. Componentes específicos de cada aplicação permaneceram próximos às suas regras de produto.

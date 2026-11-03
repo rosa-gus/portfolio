@@ -20,12 +20,32 @@ func sectionHeadingClass(primary bool) string {
 	return "section-heading section-heading--information"
 }
 
+func sectionHeadingLines(title string, breakAfter []string) []string {
+	lines := make([]string, 0, len(breakAfter)+1)
+	remainder := title
+	for _, marker := range breakAfter {
+		before, after, found := strings.Cut(remainder, marker)
+		if !found {
+			return []string{title}
+		}
+		lines = append(lines, strings.TrimSpace(before+marker))
+		remainder = strings.TrimSpace(after)
+	}
+	if remainder != "" {
+		lines = append(lines, remainder)
+	}
+	return lines
+}
+
 func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	for _, image := range project.Media.Items {
 		if image.ID == project.Media.Cover {
-			image.Src = "/projects/covers/" + url.PathEscape(project.Slug) + ".webp"
-			image.Width = 1200
-			image.Height = 800
+			if !strings.HasPrefix(image.Src, "/projects/covers/") {
+				image.Src = "/projects/covers/" + url.PathEscape(project.Slug) + ".webp"
+			}
+			if width, height, ok := portfolio.ProjectImageDimensions(image.Src); ok {
+				image.Width, image.Height = width, height
+			}
 			return image
 		}
 	}
@@ -203,15 +223,16 @@ func availableProjects(projects []portfolio.Project) []portfolio.Project {
 type archiveFolder struct {
 	Key      string
 	Label    string
+	Symbol   string
 	Projects []portfolio.Project
 }
 
 func archiveFolders(projects []portfolio.Project) []archiveFolder {
 	folders := []archiveFolder{
-		{Key: "interfaces", Label: "Interfaces"},
-		{Key: "systems", Label: "Sistemas & APIs"},
-		{Key: "data", Label: "Dados & IA"},
-		{Key: "design", Label: "Design Systems"},
+		{Key: "interfaces", Label: "Interfaces", Symbol: "@"},
+		{Key: "systems", Label: "Sistemas & APIs", Symbol: "&"},
+		{Key: "data", Label: "Dados & IA", Symbol: "#"},
+		{Key: "design", Label: "Design Systems", Symbol: "*"},
 	}
 	capabilityFolder := map[string]int{
 		"interfaces":          0,
@@ -219,7 +240,7 @@ func archiveFolders(projects []portfolio.Project) []archiveFolder {
 		"data-and-automation": 2,
 		"design-systems":      3,
 	}
-	other := archiveFolder{Key: "other", Label: "Outros"}
+	other := archiveFolder{Key: "other", Label: "Outros", Symbol: "+"}
 	for _, project := range availableProjects(projects) {
 		assigned := false
 		for _, capability := range project.Capabilities {
@@ -262,12 +283,19 @@ func socialImageURL(publicURL string) string {
 	return publicURL + "/og-image.png"
 }
 
+func availabilityLabel(profile portfolio.ProfileContent) string {
+	if !profile.Introduction.ShowAvailability {
+		return ""
+	}
+	return profile.Introduction.Availability
+}
+
 func siteMetadataTitle(profile portfolio.ProfileContent) string {
 	return profile.SEO.Title
 }
 
 func projectMetadataTitle(profile portfolio.ProfileContent, project portfolio.Project) string {
-	return project.Title + " — " + siteMetadataTitle(profile)
+	return project.Title + " / " + siteMetadataTitle(profile)
 }
 
 func projectMetadataDescription(profile portfolio.ProfileContent, project portfolio.Project) string {

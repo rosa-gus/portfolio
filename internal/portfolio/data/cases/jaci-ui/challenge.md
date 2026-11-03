@@ -1,1 +1,3 @@
-Manter a consistência visual e comportamental entre as duas aplicações sem duplicar componentes nem levar regras específicas de produto para a biblioteca. A fundação também precisava sustentar formulários extensos, navegação, feedback e sobreposições com estados previsíveis, responsivos e acessíveis.
+Construir uma identidade visual acolhedora e uma base de componentes reutilizáveis para duas experiências com necessidades distintas: apresentar o abrigo ao público e apoiar sua operação cotidiana.
+
+A proposta buscava conciliar expressão visual, legibilidade e consistência, com a intenção de reduzir a sobrecarga durante a navegação e o uso dos formulários.
