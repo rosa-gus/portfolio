@@ -23,7 +23,7 @@ func TestPagesRenderManifestAssetsWithBasePath(t *testing.T) {
 	}{
 		"home": {
 			render: func(output *bytes.Buffer) error {
-				return Home(profile, []portfolio.Project{project}, "/portfolio", "https://example.com/portfolio").Render(context.Background(), output)
+				return Home(profile, []portfolio.Project{project}, portfolio.Archive{}, "/portfolio", "https://example.com/portfolio").Render(context.Background(), output)
 			},
 		},
 		"project": {

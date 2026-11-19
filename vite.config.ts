@@ -16,6 +16,13 @@ export default defineConfig({
       execFileSync("python3", [script, "--root", root], { stdio: "inherit" });
       const projects = JSON.parse(readFileSync(catalog, "utf8"));
       for (const project of projects) {
+        if (project.media.preview) {
+          const preview = project.media.preview;
+          this.addWatchFile(resolve(root, "web/assets", preview.slice(1)));
+          for (const density of [2, 3]) {
+            this.addWatchFile(resolve(root, "web/assets", preview.slice(1).replace(/\.webp$/, `@${density}x.webp`)));
+          }
+        }
         this.addWatchFile(resolve(root, `web/assets/projects/covers/${project.slug}.webp`));
         for (const image of project.media.items) {
           this.addWatchFile(resolve(root, "web/assets", image.src.slice(1)));

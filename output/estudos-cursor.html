@@ -1,0 +1,67 @@
+<div id="cursor-studies" aria-label="Quatro estudos conceituais para a marca Luis Gustavo">
+  <style>
+    #cursor-studies { color:var(--foreground); }
+    #cursor-studies .studies { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(var(--font-size-base) * 2); }
+    #cursor-studies figure { margin:0; display:flex; flex-direction:column; gap:calc(var(--font-size-base) * .75); }
+    #cursor-studies .large { height:130px; display:flex; align-items:center; justify-content:center; }
+    #cursor-studies .mark { position:relative; display:inline-block; width:var(--size,96px); height:var(--size,96px); flex:none; }
+    #cursor-studies .mark i { position:absolute; inset:0; background:currentColor; }
+    #cursor-studies .a i:first-child { clip-path:polygon(12% 7%,88% 63%,59% 66%,25% 91%); }
+    #cursor-studies .a i:last-child { clip-path:polygon(47% 75%,59% 70%,75% 96%,62% 100%); }
+    #cursor-studies .b i:first-child { clip-path:polygon(12.5% 6.25%,25% 6.25%,25% 18.75%,37.5% 18.75%,37.5% 31.25%,50% 31.25%,50% 43.75%,62.5% 43.75%,62.5% 56.25%,75% 56.25%,75% 68.75%,37.5% 68.75%,37.5% 81.25%,12.5% 81.25%); }
+    #cursor-studies .b i:last-child { inset:75% 25% 6.25% 56.25%; }
+    #cursor-studies .c i:first-child { clip-path:polygon(12% 7%,44% 48%,25% 92%); }
+    #cursor-studies .c i:last-child { clip-path:polygon(22% 10%,89% 62%,58% 66%,74% 94%,61% 100%,45% 70%,51% 49%); }
+    #cursor-studies .d i:first-child { clip-path:polygon(12.5% 6.25%,87.5% 62.5%,56.25% 62.5%,25% 87.5%); }
+    #cursor-studies .d i:nth-child(2) { inset:68.75% 37.5% 18.75% 50%; }
+    #cursor-studies .d i:nth-child(3) { inset:84.375% 25% 6.25% 65.625%; }
+    #cursor-studies .d i:nth-child(4) { inset:93.75% 12.5% 0 81.25%; }
+    #cursor-studies figcaption { display:flex; flex-direction:column; gap:calc(var(--font-size-base) * .25); }
+    #cursor-studies .signature { display:flex; gap:calc(var(--font-size-base) * .5); align-items:center; }
+    #cursor-studies .sizes { display:flex; gap:calc(var(--font-size-base) * 1.2); align-items:end; }
+    #cursor-studies .sample { display:flex; flex-direction:column; align-items:center; gap:calc(var(--font-size-base) * .25); }
+    @media(max-width:440px) { #cursor-studies .studies { grid-template-columns:1fr; } #cursor-studies .large { height:110px; } }
+  </style>
+  <div class="studies">
+    <figure>
+      <figcaption><h3>01 / Intervalo</h3><span class="text-small text-muted">Massa e vazio</span></figcaption>
+      <div class="large"><span class="mark a" role="img" aria-label="Cursor sólido com uma interrupção entre a ponta e a haste"><i></i><i></i></span></div>
+      <div class="signature"><span class="mark a" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span>Luis Gustavo</span></div>
+      <div class="sizes" aria-label="Estudo em tamanhos pequenos">
+        <span class="sample"><span class="mark a" style="--size:16px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">16 px</span></span>
+        <span class="sample"><span class="mark a" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">24 px</span></span>
+        <span class="sample"><span class="mark a" style="--size:32px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">32 px</span></span>
+      </div>
+    </figure>
+    <figure>
+      <figcaption><h3>02 / Encaixe</h3><span class="text-small text-muted">Construção modular</span></figcaption>
+      <div class="large"><span class="mark b" role="img" aria-label="Cursor de contorno escalonado com corpo contínuo e módulo deslocado"><i></i><i></i></span></div>
+      <div class="signature"><span class="mark b" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span>Luis Gustavo</span></div>
+      <div class="sizes" aria-label="Estudo em tamanhos pequenos">
+        <span class="sample"><span class="mark b" style="--size:16px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">16 px</span></span>
+        <span class="sample"><span class="mark b" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">24 px</span></span>
+        <span class="sample"><span class="mark b" style="--size:32px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">32 px</span></span>
+      </div>
+    </figure>
+    <figure>
+      <figcaption><h3>03 / Dobra</h3><span class="text-small text-muted">Dois planos</span></figcaption>
+      <div class="large"><span class="mark c" role="img" aria-label="Cursor dividido longitudinalmente em dois planos por uma abertura angular"><i></i><i></i></span></div>
+      <div class="signature"><span class="mark c" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span>Luis Gustavo</span></div>
+      <div class="sizes" aria-label="Estudo em tamanhos pequenos">
+        <span class="sample"><span class="mark c" style="--size:16px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">16 px</span></span>
+        <span class="sample"><span class="mark c" style="--size:24px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">24 px</span></span>
+        <span class="sample"><span class="mark c" style="--size:32px" aria-hidden="true"><i></i><i></i></span><span class="text-small text-muted">32 px</span></span>
+      </div>
+    </figure>
+    <figure>
+      <figcaption><h3>04 / Retícula</h3><span class="text-small text-muted">Do contínuo ao discreto</span></figcaption>
+      <div class="large"><span class="mark d" role="img" aria-label="Cursor de ponta sólida cuja haste se converte em três módulos progressivamente menores"><i></i><i></i><i></i><i></i></span></div>
+      <div class="signature"><span class="mark d" style="--size:24px" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Luis Gustavo</span></div>
+      <div class="sizes" aria-label="Estudo em tamanhos pequenos">
+        <span class="sample"><span class="mark d" style="--size:16px" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="text-small text-muted">16 px</span></span>
+        <span class="sample"><span class="mark d" style="--size:24px" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="text-small text-muted">24 px</span></span>
+        <span class="sample"><span class="mark d" style="--size:32px" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="text-small text-muted">32 px</span></span>
+      </div>
+    </figure>
+  </div>
+</div>

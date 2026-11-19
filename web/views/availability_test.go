@@ -5,6 +5,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"portfolio/internal/portfolio"
 )
 
 func TestHomeAvailabilityVisibility(t *testing.T) {
@@ -18,7 +20,7 @@ func TestHomeAvailabilityVisibility(t *testing.T) {
 			profile.Introduction.ShowAvailability = visible
 			profile.Introduction.Availability = "Disponível para novas oportunidades"
 			var output bytes.Buffer
-			if err := Home(profile, nil, "", "https://example.com").Render(context.Background(), &output); err != nil {
+			if err := Home(profile, nil, portfolio.Archive{}, "", "https://example.com").Render(context.Background(), &output); err != nil {
 				t.Fatal(err)
 			}
 			html := output.String()

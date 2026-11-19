@@ -52,6 +52,33 @@ func projectCover(project portfolio.Project) portfolio.ProjectImage {
 	return portfolio.ProjectImage{}
 }
 
+func projectGridPreview(project portfolio.Project) portfolio.ProjectImage {
+	if src := project.Media.Preview; src != "" {
+		if width, height, ok := portfolio.ProjectImageDimensions(src); ok {
+			return portfolio.ProjectImage{Src: src, Width: width, Height: height}
+		}
+	}
+	if images := projectArchiveImages(project); len(images) > 0 {
+		return images[0]
+	}
+	return portfolio.ProjectImage{}
+}
+
+func projectGridPreviewSources(project portfolio.Project, basePath string) string {
+	preview := projectGridPreview(project)
+	if preview.Src == "" || project.Media.Preview == "" || preview.Src != project.Media.Preview {
+		return ""
+	}
+	sources := []string{fmt.Sprintf("%s 1x", siteURL(basePath, preview.Src))}
+	for _, density := range []int{2, 3} {
+		src := strings.TrimSuffix(preview.Src, ".webp") + fmt.Sprintf("@%dx.webp", density)
+		if _, _, ok := portfolio.ProjectImageDimensions(src); ok {
+			sources = append(sources, fmt.Sprintf("%s %dx", siteURL(basePath, src), density))
+		}
+	}
+	return strings.Join(sources, ", ")
+}
+
 func projectArchiveImages(project portfolio.Project) []portfolio.ProjectImage {
 	images := make([]portfolio.ProjectImage, 0, 3)
 	cover := projectCover(project)
@@ -103,13 +130,16 @@ func projectToneStyle(tone string) map[string]string {
 	}
 }
 
+func underscoreIdentifier(identifier string) string {
+	return strings.NewReplacer("-", "_", " ", "_").Replace(identifier)
+}
+
 func projectFolioID(project portfolio.Project) string {
 	identifier := strings.TrimSpace(project.Slug)
 	if identifier == "" {
 		identifier = strings.Join(strings.Fields(project.Title), "-")
 	}
-	identifier = strings.NewReplacer("-", "_", " ", "_").Replace(identifier)
-	return strings.ToUpper(identifier)
+	return strings.ToUpper(underscoreIdentifier(identifier))
 }
 
 func projectFolioGlyphRows(project portfolio.Project) []string {
@@ -117,8 +147,15 @@ func projectFolioGlyphRows(project portfolio.Project) []string {
 }
 
 func folioGlyphRows(identifier string) []string {
+	return folioGlyphRowsWithLengths(identifier, []int{1, 3, 5, 7, 5, 3, 1})
+}
+
+func projectCompactFolioGlyphRows(project portfolio.Project) []string {
+	return folioGlyphRowsWithLengths(projectFolioID(project), []int{1, 3, 5, 3, 1})
+}
+
+func folioGlyphRowsWithLengths(identifier string, rowLengths []int) []string {
 	const fallback = "CASE"
-	rowLengths := [...]int{1, 3, 5, 7, 5, 3, 1}
 
 	glyphs := []rune(strings.Map(func(character rune) rune {
 		if unicode.IsLetter(character) || unicode.IsDigit(character) {
@@ -199,64 +236,11 @@ func projectImageIsPortrait(image portfolio.ProjectImage) bool {
 	return image.Height > image.Width
 }
 
-func archiveImageClass(image portfolio.ProjectImage) string {
-	if projectImageIsPortrait(image) {
-		return "project-archive__case-cover-image project-archive__case-cover-image--portrait"
+func archiveLinkRel(identity bool) string {
+	if identity {
+		return "me noreferrer noopener"
 	}
-	return "project-archive__case-cover-image"
-}
-
-func isProjectAvailable(project portfolio.Project) bool {
-	return project.Slug != "" && project.Title != ""
-}
-
-func availableProjects(projects []portfolio.Project) []portfolio.Project {
-	available := make([]portfolio.Project, 0, len(projects))
-	for _, project := range projects {
-		if isProjectAvailable(project) {
-			available = append(available, project)
-		}
-	}
-	return available
-}
-
-type archiveFolder struct {
-	Key      string
-	Label    string
-	Symbol   string
-	Projects []portfolio.Project
-}
-
-func archiveFolders(projects []portfolio.Project) []archiveFolder {
-	folders := []archiveFolder{
-		{Key: "interfaces", Label: "Interfaces", Symbol: "@"},
-		{Key: "systems", Label: "Sistemas & APIs", Symbol: "&"},
-		{Key: "data", Label: "Dados & IA", Symbol: "#"},
-		{Key: "design", Label: "Design Systems", Symbol: "*"},
-	}
-	capabilityFolder := map[string]int{
-		"interfaces":          0,
-		"systems-and-apis":    1,
-		"data-and-automation": 2,
-		"design-systems":      3,
-	}
-	other := archiveFolder{Key: "other", Label: "Outros", Symbol: "+"}
-	for _, project := range availableProjects(projects) {
-		assigned := false
-		for _, capability := range project.Capabilities {
-			if folderIndex, ok := capabilityFolder[capability]; ok {
-				folders[folderIndex].Projects = append(folders[folderIndex].Projects, project)
-				assigned = true
-			}
-		}
-		if !assigned {
-			other.Projects = append(other.Projects, project)
-		}
-	}
-	if len(other.Projects) > 0 {
-		folders = append(folders, other)
-	}
-	return folders
+	return "noreferrer noopener"
 }
 
 func siteURL(basePath, target string) templ.SafeURL {
@@ -408,4 +392,13 @@ func careerCapabilities(projects []portfolio.Project) []string {
 		}
 	}
 	return capabilities
+}
+
+func relatedArchiveProject(slug string, projects []portfolio.Project) (portfolio.Project, bool) {
+	for _, project := range projects {
+		if project.Slug == slug {
+			return project, true
+		}
+	}
+	return portfolio.Project{}, false
 }

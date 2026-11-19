@@ -94,7 +94,7 @@ export const initializePanelSwipe = ({ stage, panels, navigate }: SwipeOptions) 
     if (timer) return;
     reset();
     if (!(event.target instanceof Element) ||
-      event.target.closest('a, button, input, select, textarea, summary, [contenteditable], [data-archive-carousel], [data-archive-floating], .project-archive__folders') ||
+      event.target.closest('a, button, input, select, textarea, summary, [contenteditable], [data-archive-carousel], [data-archive-floating]') ||
       document.querySelector('dialog[open], [data-archive-floating]:not([hidden])') ||
       window.getSelection()?.toString()) return;
     const touch = event.touches[0];

@@ -123,5 +123,5 @@
 
 .scroll-area[data-scroll-start]::before,
 .scroll-area[data-scroll-end]::after {
-  opacity: 1;
+  opacity: 0.5;
 }

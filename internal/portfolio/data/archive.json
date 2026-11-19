@@ -1,0 +1,107 @@
+{
+  "collections": [
+    {
+      "id": "interfaces",
+      "label": "Interfaces",
+      "symbol": "@",
+      "capabilities": [
+        "interfaces"
+      ]
+    },
+    {
+      "id": "systems",
+      "label": "Sistemas & APIs",
+      "symbol": "&",
+      "capabilities": [
+        "systems-and-apis"
+      ]
+    },
+    {
+      "id": "data",
+      "label": "Dados & IA",
+      "symbol": "#",
+      "capabilities": [
+        "data-and-automation"
+      ]
+    },
+    {
+      "id": "design",
+      "label": "Design Systems",
+      "symbol": "*",
+      "capabilities": [
+        "design-systems"
+      ]
+    },
+    {
+      "id": "other",
+      "label": "Outros",
+      "symbol": "+",
+      "fallback": true,
+      "hideWhenEmpty": true
+    }
+  ],
+  "items": [
+    {
+      "id": "collection-interfaces",
+      "type": "collection",
+      "ref": "interfaces"
+    },
+    {
+      "id": "collection-systems",
+      "type": "collection",
+      "ref": "systems"
+    },
+    {
+      "id": "collection-data",
+      "type": "collection",
+      "ref": "data"
+    },
+    {
+      "id": "collection-design",
+      "type": "collection",
+      "ref": "design"
+    },
+    {
+      "id": "collection-other",
+      "type": "collection",
+      "ref": "other"
+    },
+    {
+      "id": "welcome",
+      "type": "document",
+      "ref": "boas-vindas"
+    },
+    {
+      "id": "project-abrigo-do-wlad",
+      "type": "project",
+      "ref": "abrigo-do-wlad"
+    },
+    {
+      "id": "project-coleoptera-identifier",
+      "type": "project",
+      "ref": "coleoptera-identifier"
+    },
+    {
+      "id": "project-mondo-send",
+      "type": "project",
+      "ref": "mondo-send"
+    },
+    {
+      "id": "project-timbre-palette",
+      "type": "project",
+      "ref": "timbre-palette"
+    },
+    {
+      "id": "snake",
+      "type": "app",
+      "ref": "snake"
+    },
+    {
+      "id": "github",
+      "type": "link",
+      "source": "contact.githubURL",
+      "label": "GitHub",
+      "icon": "GH"
+    }
+  ]
+}

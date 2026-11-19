@@ -7,7 +7,7 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 		<header class="project-content__dossier">
 			<div class="project-content__identity">
 				<p class="project-content__coordinate meta-text">
-					<span>Case / { project.Index }</span>
+					<span>/ CASE { project.Index }</span>
 					<span>{ project.Year }</span>
 				</p>
 				<div class="project-content__edition-mark" aria-hidden="true">
@@ -24,16 +24,14 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 				</div>
 			</div>
 		</header>
-
 		<header class="project-content__mobile-heading">
-			<span>Case / { project.Index }</span>
+			<span>/ CASE { project.Index }</span>
 			<strong>
 				<span class="visually-hidden">{ project.Title }</span>
 				<span aria-hidden="true">{ projectFolioID(project) }</span>
 			</strong>
 			<span>{ project.Year }</span>
 		</header>
-
 		<div class="project-content__story" data-project-story>
 			@ScrollArea("Seções do estudo de caso", "horizontal") {
 				<div class="project-content__index control-text" role="tablist" aria-label="Seções do projeto">
@@ -123,7 +121,6 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 					</button>
 				</div>
 			}
-
 			@ScrollArea("Conteúdo do estudo de caso", "vertical") {
 				<div class="project-content__panels">
 					<section
@@ -144,112 +141,103 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 							@renderMarkdown(project.CaseStudy.Context, basePath)
 						</div>
 					</section>
-					<section
-						class="project-content__panel project-content__panel--gallery"
-						id={ "project-" + project.Slug + "-gallery-panel" }
-						data-project-panel="gallery"
-						role="tabpanel"
-						aria-labelledby={ "project-" + project.Slug + "-gallery-tab" }
-						tabindex="0"
-						hidden
-					>
+					<section class="project-content__panel project-content__panel--gallery" id={ "project-" + project.Slug + "-gallery-panel" } data-project-panel="gallery" role="tabpanel" aria-labelledby={ "project-" + project.Slug + "-gallery-tab" } tabindex="0" hidden>
 						<div class="project-gallery" data-project-gallery aria-label={ "Galeria de " + project.Title }>
 							<div class="project-gallery__viewport" data-gallery-viewport>
-							<div class="project-gallery__track">
-								for index, image := range project.Media.Items {
-									<figure class="project-gallery__slide" data-gallery-slide aria-hidden={ index != 0 }>
-										<div class={ galleryMediaClass(image.Note != "") }>
-											if image.Note != "" {
-												<p class="project-gallery__note" id={ galleryNoteID(project.Slug, image.ID) }><span>[NOTA]</span> { image.Note }</p>
-											}
-											<div class="project-gallery__image-frame">
-												<img
-													class={ galleryImageClass(image) }
-													src={ siteURL(basePath, image.Src) }
-													alt={ image.Alt }
-													width={ imageDimension(image.Width) }
-													height={ imageDimension(image.Height) }
-													loading="lazy"
-													decoding="async"
-													aria-describedby={ galleryDescriptionIDs(project.Slug, image.ID, image.Note != "") }
-												/>
+								<div class="project-gallery__track">
+									for index, image := range project.Media.Items {
+										<figure class="project-gallery__slide" data-gallery-slide aria-hidden={ index != 0 }>
+											<div class={ galleryMediaClass(image.Note != "") }>
+												if image.Note != "" {
+													<p class="project-gallery__note" id={ galleryNoteID(project.Slug, image.ID) }>
+														<span>[NOTA]</span> { image.Note }
+													</p>
+												}
+												<div class="project-gallery__image-frame">
+													<img
+														class={ galleryImageClass(image) }
+														src={ siteURL(basePath, image.Src) }
+														alt={ image.Alt }
+														width={ imageDimension(image.Width) }
+														height={ imageDimension(image.Height) }
+														loading="lazy"
+														decoding="async"
+														aria-describedby={ galleryDescriptionIDs(project.Slug, image.ID, image.Note != "") }
+													/>
+												</div>
 											</div>
-										</div>
-										<figcaption class="project-gallery__caption" id={ galleryCaptionID(project.Slug, image.ID) }>
-											<p class="project-gallery__label">{ image.Label }</p>
-											<p class="project-gallery__description">{ image.Caption }</p>
-										</figcaption>
+											<figcaption class="project-gallery__caption" id={ galleryCaptionID(project.Slug, image.ID) }>
+												<p class="project-gallery__label">{ image.Label }</p>
+												<p class="project-gallery__description">{ image.Caption }</p>
+											</figcaption>
 										</figure>
 									}
 								</div>
 							</div>
-						<div class="project-gallery__controls" aria-label="Controles da galeria">
-							<span data-gallery-counter aria-live="polite">
+							<div class="project-gallery__controls" aria-label="Controles da galeria">
+								<span data-gallery-counter aria-live="polite">
 									if len(project.Media.Items) > 0 {
 										{ galleryCounter(0, len(project.Media.Items)) }
 									} else {
 										00 / 00
 									}
-							</span>
-							<div>
-								<button type="button" data-gallery-expand>[AMPLIAR]</button>
-								<button type="button" data-gallery-prev>[ANTERIOR]</button>
-								<button type="button" data-gallery-next>[PRÓXIMA]</button>
+								</span>
+								<div>
+									<button type="button" data-gallery-expand>[AMPLIAR]</button>
+									<button type="button" data-gallery-prev>[ANTERIOR]</button>
+									<button type="button" data-gallery-next>[PRÓXIMA]</button>
 								</div>
 							</div>
 						</div>
-						</section>
-					<section
-					class="project-content__panel"
-					id={ "project-" + project.Slug + "-challenge-panel" }
-					data-project-panel="challenge"
-					role="tabpanel"
-					aria-labelledby={ "project-" + project.Slug + "-challenge-tab" }
-					tabindex="0"
-					hidden
-				>
-					<div class="project-content__prose">
-						@renderMarkdown(project.CaseStudy.Challenge, basePath)
-					</div>
 					</section>
 					<section
-					class="project-content__panel"
-					id={ "project-" + project.Slug + "-decision-panel" }
-					data-project-panel="decision"
-					role="tabpanel"
-					aria-labelledby={ "project-" + project.Slug + "-decision-tab" }
-					tabindex="0"
-					hidden
-				>
-					<div class="project-content__prose">
-						@renderMarkdown(project.CaseStudy.Decision, basePath)
-					</div>
-					</section>
-					<section
-					class="project-content__panel"
-					id={ "project-" + project.Slug + "-result-panel" }
-					data-project-panel="result"
-					role="tabpanel"
-					aria-labelledby={ "project-" + project.Slug + "-result-tab" }
-					tabindex="0"
-					hidden
-				>
-					<div class="project-content__prose">
-						@renderMarkdown(project.CaseStudy.Result, basePath)
-					</div>
-					</section>
-					<section
-						class="project-content__panel project-content__panel--practice"
-						id={ "project-" + project.Slug + "-practice-panel" }
-						data-project-panel="practice"
+						class="project-content__panel"
+						id={ "project-" + project.Slug + "-challenge-panel" }
+						data-project-panel="challenge"
 						role="tabpanel"
-						aria-labelledby={ "project-" + project.Slug + "-practice-tab" }
+						aria-labelledby={ "project-" + project.Slug + "-challenge-tab" }
 						tabindex="0"
 						hidden
 					>
+						<div class="project-content__prose">
+							@renderMarkdown(project.CaseStudy.Challenge, basePath)
+						</div>
+					</section>
+					<section
+						class="project-content__panel"
+						id={ "project-" + project.Slug + "-decision-panel" }
+						data-project-panel="decision"
+						role="tabpanel"
+						aria-labelledby={ "project-" + project.Slug + "-decision-tab" }
+						tabindex="0"
+						hidden
+					>
+						<div class="project-content__prose">
+							@renderMarkdown(project.CaseStudy.Decision, basePath)
+						</div>
+					</section>
+					<section
+						class="project-content__panel"
+						id={ "project-" + project.Slug + "-result-panel" }
+						data-project-panel="result"
+						role="tabpanel"
+						aria-labelledby={ "project-" + project.Slug + "-result-tab" }
+						tabindex="0"
+						hidden
+					>
+						<div class="project-content__prose">
+							@renderMarkdown(project.CaseStudy.Result, basePath)
+						</div>
+					</section>
+					<section class="project-content__panel project-content__panel--practice" id={ "project-" + project.Slug + "-practice-panel" } data-project-panel="practice" role="tabpanel" aria-labelledby={ "project-" + project.Slug + "-practice-tab" } tabindex="0" hidden>
 						<section class="practice-map" aria-label="Ficha técnica">
 							<header class="practice-map__header">
-								<p class="meta-text">Ficha técnica / 06</p>
+								<p class="meta-text">
+									<span>/ FICHA TÉCNICA</span><span
+	class="inline-divider"
+	aria-hidden="true"
+></span><span>06</span>
+								</p>
 							</header>
 							<div class="practice-map__tree">
 								<div class="practice-map__root">
@@ -278,9 +266,19 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 												<div class="practice-map__cover-credit-row">
 													<span class="meta-text">Fotografia sem tratamento</span>
 													if project.Media.CoverCredit.AuthorURL != "" {
-														<a class="practice-map__cover-credit-link" href={ externalURL(project.Media.CoverCredit.AuthorURL) } target="_blank" rel="noreferrer noopener">
+														<a
+															class="practice-map__cover-credit-link"
+															href={ externalURL(project.Media.CoverCredit.AuthorURL) }
+															target="_blank"
+															rel="noreferrer noopener"
+														>
 															<strong>{ project.Media.CoverCredit.Name }</strong>
-															<span>Perfil <span class="practice-map__resource-arrow" aria-hidden="true">↑</span></span>
+															<span>
+																Perfil <span
+	class="practice-map__resource-arrow ui-arrow"
+	aria-hidden="true"
+>↑</span>
+															</span>
 														</a>
 													} else {
 														<strong>{ project.Media.CoverCredit.Name }</strong>
@@ -294,27 +292,42 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 											<h3 class="meta-text">Recursos do projeto</h3>
 											<div class="practice-map__resources">
 												if project.Links.Releases != "" {
-													<a class="practice-map__release-link" href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener">
+													<a
+														class="practice-map__release-link"
+														href={ externalURL(project.Links.Releases) }
+														target="_blank"
+														rel="noreferrer noopener"
+													>
 														<span class="meta-text">Versões</span>
 														<strong>{ "Releases estáveis e experimentais do " + project.Title }</strong>
 														<span class="practice-map__release-action">Abrir</span>
-														<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+														<span class="practice-map__resource-arrow ui-arrow" aria-hidden="true">↑</span>
 													</a>
 												}
 												if project.Links.Repository != "" || project.License.Name != "" {
 													<div class="practice-map__provenance" aria-label="Código-fonte e licença">
 														if project.Links.Repository != "" {
-															<a class="practice-map__provenance-link practice-map__provenance-link--source" href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener">
+															<a
+																class="practice-map__provenance-link practice-map__provenance-link--source"
+																href={ externalURL(project.Links.Repository) }
+																target="_blank"
+																rel="noreferrer noopener"
+															>
 																<span class="meta-text">Código-fonte</span>
 																<strong>{ repositoryLabel(project.Links.Repository) }</strong>
-																<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+																<span class="practice-map__resource-arrow ui-arrow" aria-hidden="true">↑</span>
 															</a>
 														}
 														if project.License.Name != "" {
-															<a class="practice-map__provenance-link practice-map__provenance-link--license" href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">
+															<a
+																class="practice-map__provenance-link practice-map__provenance-link--license"
+																href={ externalURL(project.License.URL) }
+																target="_blank"
+																rel="noreferrer noopener"
+															>
 																<span class="meta-text">Licença</span>
 																<strong>{ project.License.Name }</strong>
-																<span class="practice-map__resource-arrow" aria-hidden="true">↑</span>
+																<span class="practice-map__resource-arrow ui-arrow" aria-hidden="true">↑</span>
 															</a>
 														}
 													</div>
@@ -349,7 +362,7 @@ templ ProjectImageViewer() {
 }
 
 templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, basePath string, publicURL string) {
-	<!doctype html>
+	<!DOCTYPE html>
 	<html lang="pt-BR">
 		<head>
 			<meta charset="utf-8"/>
@@ -390,10 +403,20 @@ templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, b
 					<div class="project-page__actions">
 						<nav aria-label="Links do projeto">
 							if project.Links.Live != "" {
-								<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer">SITE [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+								<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer">
+									SITE [<span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>]
+								</a>
 							}
 							if project.Links.Repository != "" {
-								<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer">CÓDIGO [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+								<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer">
+									CÓDIGO [<span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>]
+								</a>
 							}
 						</nav>
 					</div>

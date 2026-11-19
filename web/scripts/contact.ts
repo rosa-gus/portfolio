@@ -51,7 +51,8 @@ export const initializeContactCopy = () => {
       status.textContent = "E-mail copiado para a área de transferência.";
     } catch {
       button.textContent = "[TENTE NOVAMENTE]";
-      status.textContent = "Não foi possível copiar. Selecione o endereço acima.";
+      status.textContent =
+        "Não foi possível copiar. Selecione o endereço acima.";
     }
     resetTimer = window.setTimeout(reset, 3500);
   });

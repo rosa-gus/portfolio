@@ -25,7 +25,13 @@ class ImageDimensionsTest(unittest.TestCase):
         self.image = self.assets / "portrait.png"
         Image.new("RGB", (10, 30)).save(self.image)
         Image.new("RGB", (40, 20)).save(self.assets / "covers/example.webp")
-        self.catalog = [{"slug": "example", "media": {"items": [{"src": "/projects/portrait.png"}]}}]
+        self.catalog = [{"slug": "example", "media": {
+            "cover": "cover",
+            "items": [
+                {"id": "cover", "src": "/projects/covers/example.webp"},
+                {"id": "portrait", "src": "/projects/portrait.png"},
+            ],
+        }}]
         self.write_catalog()
 
     def write_catalog(self):
@@ -48,6 +54,29 @@ class ImageDimensionsTest(unittest.TestCase):
             module.generate(self.root)
         self.image.write_text("invalid")
         with self.assertRaisesRegex(ValueError, "/projects/portrait.png"):
+            module.generate(self.root)
+
+    def test_includes_preview_density_variants_without_changing_catalog(self):
+        directory = self.assets / "covers/previews"
+        directory.mkdir()
+        self.catalog[0]["media"]["preview"] = "/projects/covers/previews/example.webp"
+        self.write_catalog()
+        for density in (1, 2, 3):
+            suffix = "" if density == 1 else f"@{density}x"
+            Image.new("RGB", (86 * density, 58 * density)).save(directory / f"example{suffix}.webp")
+        module.generate(self.root)
+        dimensions = json.loads((self.data / "image-dimensions.json").read_text())
+        for density in (1, 2, 3):
+            suffix = "" if density == 1 else f"@{density}x"
+            self.assertEqual(dimensions[f"/projects/covers/previews/example{suffix}.webp"], {
+                "width": 86 * density, "height": 58 * density,
+            })
+        self.assertEqual(json.loads((self.data / "projects.json").read_text()), self.catalog)
+
+    def test_missing_preview_fails_with_path(self):
+        self.catalog[0]["media"]["preview"] = "/projects/covers/previews/missing.webp"
+        self.write_catalog()
+        with self.assertRaisesRegex(ValueError, "/projects/covers/previews/missing.webp"):
             module.generate(self.root)
 
     def test_rejects_path_outside_assets(self):

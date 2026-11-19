@@ -12,7 +12,7 @@ func TestHomeOmitsContactEditionMark(t *testing.T) {
 	t.Parallel()
 
 	var output bytes.Buffer
-	if err := Home(portfolio.ProfileContent{}, nil, "", "https://example.com").Render(context.Background(), &output); err != nil {
+	if err := Home(portfolio.ProfileContent{}, nil, portfolio.Archive{}, "", "https://example.com").Render(context.Background(), &output); err != nil {
 		t.Fatalf("Home().Render() returned error: %v", err)
 	}
 
@@ -25,7 +25,7 @@ func TestHomeContactBackgroundOmitsImage(t *testing.T) {
 	t.Parallel()
 
 	var output bytes.Buffer
-	if err := Home(portfolio.ProfileContent{}, nil, "/portfolio", "https://example.com/portfolio").Render(context.Background(), &output); err != nil {
+	if err := Home(portfolio.ProfileContent{}, nil, portfolio.Archive{}, "/portfolio", "https://example.com/portfolio").Render(context.Background(), &output); err != nil {
 		t.Fatalf("Home().Render() returned error: %v", err)
 	}
 
@@ -43,7 +43,7 @@ func TestHomeRendersSourceRepositoryLink(t *testing.T) {
 	}
 
 	var output bytes.Buffer
-	if err := Home(profile, nil, "", "https://example.com").Render(context.Background(), &output); err != nil {
+	if err := Home(profile, nil, portfolio.Archive{}, "", "https://example.com").Render(context.Background(), &output); err != nil {
 		t.Fatalf("Home().Render() returned error: %v", err)
 	}
 
