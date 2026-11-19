@@ -1,0 +1,59 @@
+name: Validate pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install image tooling
+        run: python3 -m pip install -r tools/requirements.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        run: npm run site:build
+        env:
+          SITE_ORIGIN: https://rosa-gus.github.io
+          SITE_BASE_PATH: /portfolio
+
+      - name: Run Go tests
+        run: go test ./...
+
+      - name: Run front-end tests
+        run: node --experimental-strip-types --test tools/tests/*.test.mjs
+
+      - name: Run image tooling tests
+        run: python3 -m unittest discover -s tools/tests -p 'test_*.py'

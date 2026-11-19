@@ -36,6 +36,11 @@ before compiling Go because they are embedded in the binary.
 Restart the Go server after rebuilding assets or templates. Edit `.templ`
 sources rather than generated `_templ.go` files.
 
+Pull requests run `.github/workflows/validate-pr.yml`: static export (including
+TypeScript checks and template generation), Go tests, front-end tests, and Python
+image tooling tests. New pushes cancel older validation runs for the same PR.
+GitHub Pages deployment remains in the separate workflow triggered by pushes to `main`.
+
 ## Structure and content
 
 | Path | Contents |

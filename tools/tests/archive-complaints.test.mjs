@@ -64,7 +64,7 @@ test("leaving carries the return-home effect without repeating consecutively", (
 });
 
 test("debug triggers returning home on the first push without any random draw", () => {
-  const policy = createComplaintPolicy(() => { throw new Error("Unexpected random draw"); });
+  const policy = createComplaintPolicy(() => { throw new Error("Unexpected random draw"); }, true);
   assert.equal(policy.record([], 0), null);
   assert.deepEqual(policy.record([1], 0), { id: 1, text: "quer saber? vou embora!", effect: "return-home" });
 });
