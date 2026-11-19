@@ -1,0 +1,103 @@
+.tooltip {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.tooltip__bubble {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  z-index: 3;
+  width: max-content;
+  max-width: min(22rem, 65vw);
+  min-width: 8ch;
+  min-height: 5.2em;
+  padding: 1.25em 2.25ch;
+  color: var(--color-text-primary);
+  font: var(--type-font-control-compact);
+  font-variant-emoji: text;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  visibility: hidden;
+  isolation: isolate;
+}
+
+/* A transparent bridge keeps the tooltip reachable across the visual gap. */
+.tooltip__bubble::after {
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 0.5rem;
+  content: "";
+}
+
+/* Keep the rectangular fill inside the four corner markers. */
+.tooltip__bubble::before {
+  position: absolute;
+  z-index: -1;
+  inset: calc(0.5em + 1px) calc(0.5ch + 1px);
+  background: color-mix(in srgb, var(--color-surface-raised) 88%, transparent);
+  content: "";
+}
+
+.tooltip__frame {
+  position: absolute;
+  inset: 0.5em 0.5ch;
+  color: color-mix(in srgb, var(--color-text-primary) 60%, transparent);
+  pointer-events: none;
+}
+
+.tooltip__corner {
+  position: absolute;
+  width: 0.45rem;
+  height: 0.45rem;
+  border: 0 solid currentColor;
+}
+
+.tooltip__corner--top-left {
+  top: 0;
+  left: 0;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.tooltip__corner--top-right {
+  top: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.tooltip__corner--bottom-left {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.tooltip__corner--bottom-right {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.tooltip__text {
+  display: grid;
+  gap: 0.3em;
+  overflow-wrap: anywhere;
+}
+
+.tooltip__description {
+  color: var(--color-text-muted);
+}
+
+.tooltip__title {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.tooltip:is(:hover, :focus-within):not([data-tooltip-dismissed]) > .tooltip__bubble {
+  visibility: visible;
+}

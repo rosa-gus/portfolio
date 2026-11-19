@@ -9,7 +9,13 @@ templ themeHead() {
 			const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 			let preference = "system";
 			try {
-				const savedPreference = localStorage.getItem("ui-theme");
+				// Keep this early, standalone bootstrap in sync with scripts/storage.ts.
+				const key = "portfolio:v1:ui-theme";
+				const current = localStorage.getItem(key);
+				const previous = localStorage.getItem("ui-theme");
+				if (current === null && previous !== null) localStorage.setItem(key, previous);
+				localStorage.removeItem("ui-theme");
+				const savedPreference = current ?? previous;
 				if (savedPreference === "light" || savedPreference === "dark") preference = savedPreference;
 			} catch {}
 			const theme = preference === "system" ? systemTheme : preference;

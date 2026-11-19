@@ -1,14 +1,11 @@
 package views
 
-templ EditorialHeading(id string, title string, eyebrow string, primary bool) {
+templ EditorialHeading(id string, heading string, primary bool) {
 	<header class="editorial-heading">
-		if eyebrow != "" {
-			<p class="editorial-heading__eyebrow">{ eyebrow }</p>
-		}
 		if primary {
-			<h1 id={ id }>{ title }</h1>
+			<h1 class="editorial-heading__eyebrow" id={ id }>{ heading }</h1>
 		} else {
-			<h2 id={ id }>{ title }</h2>
+			<h2 class="editorial-heading__eyebrow" id={ id }>{ heading }</h2>
 		}
 	</header>
 }

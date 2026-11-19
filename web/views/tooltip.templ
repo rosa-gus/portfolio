@@ -1,0 +1,23 @@
+package views
+
+// Tooltip wraps its trigger; the trigger references id with aria-describedby.
+// Decorative corners are drawn with CSS borders and follow the bubble's size.
+templ Tooltip(id string, title string, description ...string) {
+	<span class="tooltip" data-tooltip>
+		{ children... }
+		<span class="tooltip__bubble" role="tooltip" id={ id } data-tooltip-bubble>
+			<span class="tooltip__frame" aria-hidden="true">
+				<span class="tooltip__corner tooltip__corner--top-left"></span>
+				<span class="tooltip__corner tooltip__corner--top-right"></span>
+				<span class="tooltip__corner tooltip__corner--bottom-left"></span>
+				<span class="tooltip__corner tooltip__corner--bottom-right"></span>
+			</span>
+			<span class="tooltip__text">
+				if len(description) > 0 && description[0] != "" {
+					<span class="tooltip__description">{ description[0] }</span>
+				}
+				<span class="tooltip__title">{ title }</span>
+			</span>
+		</span>
+	</span>
+}

@@ -3,19 +3,25 @@ import "@fontsource-variable/instrument-sans/standard-italic.css";
 import "@fontsource/instrument-serif/400.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
+import "../styles/fonts.css";
 import "../styles/app.css";
 
 import {
   initializeProjectGalleries,
   initializeProjectImageViewer,
 } from "./project-gallery";
+import { initializeTooltips } from "./tooltip";
 import { initializeContactCopy } from "./contact";
 import { initializeAboutStudy } from "./about-study";
 import { initializeProjectStories } from "./project-story";
 import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
+import { initializeDocuments } from "./documents";
+import { initializeSnakeGame } from "./snake/snake-game";
+import { migrateStorageValue, storageKey } from "./storage";
 
+initializeTooltips();
 initializeContactCopy();
 initializeAboutStudy();
 initializeProjectImageViewer();
@@ -23,11 +29,13 @@ initializeProjectGalleries();
 initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
+initializeSnakeGame();
+const documents = initializeDocuments({ beforeOpen: () => projectArchive.close(false, true) });
 
 type Theme = "light" | "dark";
 type ThemePreference = Theme | "system";
 
-const themeStorageKey = "ui-theme";
+const themeStorageKey = storageKey("ui-theme");
 const themePreferenceOrder: ThemePreference[] = ["system", "light", "dark"];
 const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
 const themeButton = document.querySelector<HTMLButtonElement>(
@@ -50,7 +58,7 @@ const readSavedThemePreference = (): ThemePreference => {
     document.documentElement.dataset.themePreference;
   if (isThemePreference(initializedPreference)) return initializedPreference;
   try {
-    const savedPreference = localStorage.getItem(themeStorageKey);
+    const savedPreference = migrateStorageValue(localStorage, themeStorageKey, "ui-theme");
     return isThemePreference(savedPreference) ? savedPreference : "system";
   } catch {
     return "system";
@@ -262,7 +270,10 @@ reducedMotion.addEventListener("change", () => {
 
 initializePanelNavigation({
   onChange: (panelID) => {
-    if (panelID !== "case") projectArchive.close(false, true);
+    if (panelID !== "case") {
+      projectArchive.close(false, true);
+      documents.close(false, true);
+    }
     if (panelID === "about") activateAboutMedia();
     else deactivateAboutMedia();
   },

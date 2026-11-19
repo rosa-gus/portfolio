@@ -104,7 +104,7 @@
       "live": "https://abrigodowlad.com.br"
     },
     "featured": true,
-    "tone": "#F2F9F9"
+    "tone": "#7fc2f8"
   },
   {
     "slug": "coleoptera-identifier",
@@ -162,6 +162,7 @@
     },
     "media": {
       "cover": "coleoptera-experiment-cover",
+      "preview": "/projects/covers/previews/coleoptera-identifier.webp",
       "coverCredit": {
         "name": "Weronika Romanowska",
         "author_url": "https://unsplash.com/@weronikam"
@@ -256,6 +257,7 @@
     },
     "media": {
       "cover": "cover",
+      "preview": "/projects/covers/previews/mondo-send.webp",
       "coverCredit": {
         "name": "Sue Hughes",
         "author_url": "https://unsplash.com/@suehughes"
@@ -357,6 +359,7 @@
     },
     "media": {
       "cover": "editorial-cover",
+      "preview": "/projects/covers/previews/timbre-palette.webp",
       "coverCredit": {
         "name": "João Henrique",
         "author_url": "https://unsplash.com/@nightingale1917"
@@ -388,6 +391,9 @@
   },
   {
     "slug": "jaci-ui",
+    "relations": [
+      { "ref": "abrigo-do-wlad", "label": "Design system de" }
+    ],
     "index": "05",
     "title": "Jaci UI",
     "category": "Design system",
@@ -431,6 +437,7 @@
     },
     "media": {
       "cover": "jaci-moon-cover",
+      "preview": "/projects/covers/previews/jaci-ui.webp",
       "coverCredit": {
         "name": "Julia Reushenova",
         "author_url": "https://unsplash.com/@jreush"

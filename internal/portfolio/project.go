@@ -14,25 +14,31 @@ import (
 var hexColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
 type Project struct {
-	Slug             string           `json:"slug"`
-	Index            string           `json:"index"`
-	Title            string           `json:"title"`
-	Category         string           `json:"category"`
-	Year             string           `json:"year"`
-	Status           string           `json:"status"`
-	BriefDescription string           `json:"briefDescription"`
-	Summary          string           `json:"summary"`
-	Role             string           `json:"role"`
-	Stack            []string         `json:"stack"`
-	FeaturedStack    []string         `json:"featuredStack"`
-	Capabilities     []string         `json:"capabilities"`
-	PracticeMap      []PracticeBranch `json:"practiceMap"`
-	License          ProjectLicense   `json:"license"`
-	CaseStudy        ProjectCaseStudy `json:"caseStudy"`
-	Media            ProjectMedia     `json:"media"`
-	Links            ProjectLinks     `json:"links"`
-	Featured         bool             `json:"featured"`
-	Tone             string           `json:"tone"`
+	Slug             string            `json:"slug"`
+	Index            string            `json:"index"`
+	Title            string            `json:"title"`
+	Category         string            `json:"category"`
+	Year             string            `json:"year"`
+	Status           string            `json:"status"`
+	BriefDescription string            `json:"briefDescription"`
+	Summary          string            `json:"summary"`
+	Role             string            `json:"role"`
+	Stack            []string          `json:"stack"`
+	FeaturedStack    []string          `json:"featuredStack"`
+	Capabilities     []string          `json:"capabilities"`
+	PracticeMap      []PracticeBranch  `json:"practiceMap"`
+	License          ProjectLicense    `json:"license"`
+	CaseStudy        ProjectCaseStudy  `json:"caseStudy"`
+	Media            ProjectMedia      `json:"media"`
+	Links            ProjectLinks      `json:"links"`
+	Featured         bool              `json:"featured"`
+	Tone             string            `json:"tone"`
+	Relations        []ProjectRelation `json:"relations,omitempty"`
+}
+
+type ProjectRelation struct {
+	Ref   string `json:"ref"`
+	Label string `json:"label"`
 }
 
 type PracticeBranch struct {
@@ -47,6 +53,7 @@ type ProjectLicense struct {
 
 type ProjectMedia struct {
 	Cover       string             `json:"cover"`
+	Preview     string             `json:"preview,omitempty"`
 	CoverCredit ProjectCoverCredit `json:"coverCredit"`
 	Items       []ProjectImage     `json:"items"`
 }
@@ -92,7 +99,7 @@ type ProjectLinks struct {
 	Live       string `json:"live"`
 }
 
-//go:embed data/profile.json data/projects.json data/cases
+//go:embed data/profile.json data/projects.json data/cases data/documents.json data/documents data/archive.json
 var contentFiles embed.FS
 
 //go:embed data/image-dimensions.json
@@ -150,6 +157,9 @@ func mustLoadProjects() []Project {
 		if err := loadCaseStudy(&projects[index]); err != nil {
 			panic(err)
 		}
+	}
+	if err := validateProjectRelations(projects); err != nil {
+		panic(err)
 	}
 	return projects
 }

@@ -52,7 +52,7 @@ func main() {
 		http.ServeFileFS(w, r, web.Static(), "og-image.png")
 	})
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		if err := views.Home(portfolio.Profile, portfolio.Projects, "", publicURL).Render(r.Context(), w); err != nil {
+		if err := views.Home(portfolio.Profile, portfolio.Projects, portfolio.HomeArchive, "", publicURL).Render(r.Context(), w); err != nil {
 			http.Error(w, "The page could not be rendered.", http.StatusInternalServerError)
 		}
 	})
@@ -64,6 +64,17 @@ func main() {
 		}
 		if err := views.ProjectPage(portfolio.Profile, project, "", publicURL).Render(r.Context(), w); err != nil {
 			http.Error(w, "The project could not be rendered.", http.StatusInternalServerError)
+		}
+	})
+
+	mux.HandleFunc("GET /article/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		document, ok := portfolio.FindArticle(r.PathValue("slug"))
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		if err := views.ArticlePage(portfolio.Profile, document, "", publicURL).Render(r.Context(), w); err != nil {
+			http.Error(w, "The article could not be rendered.", http.StatusInternalServerError)
 		}
 	})
 

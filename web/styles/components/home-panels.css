@@ -16,7 +16,8 @@
 
 .editorial-heading {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto;
+  align-content: start;
   gap: clamp(1.5rem, 4vh, 3rem);
   min-width: 0;
   min-height: 0;
@@ -32,25 +33,17 @@
   text-wrap: balance;
 }
 
-.editorial-heading > :is(h1, h2) {
-  align-self: end;
-  justify-self: start;
-  font-family: var(--font-mono);
-  font-size: clamp(0.875rem, 1vw, 1.125rem);
-  font-weight: 400;
-  letter-spacing: var(--type-tracking-meta);
-  line-height: 1.4;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
 .information-panel > .editorial-heading {
   padding-top: 0;
 }
 
-.contact-panel .editorial-heading > h2 {
+.contact-panel > .editorial-heading {
+  gap: 0.75rem;
+}
+
+.contact-panel__signature {
   color: var(--color-text-muted);
-  opacity: 1;
+  font-size: 0.75rem;
 }
 
 .contact-panel__name-accent {
@@ -524,6 +517,16 @@
 
 .about-panel__copy {
   align-self: end;
+}
+
+.contact-panel__correspondence {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
 }
 
 .contact-panel__intro {

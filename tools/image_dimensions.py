@@ -22,6 +22,13 @@ def generate(root: Path) -> None:
             if cover["src"].startswith("/projects/covers/")
             else f"/projects/covers/{project['slug']}.webp"
         )
+        if preview := media.get("preview"):
+            sources.add(preview)
+            for density in (2, 3):
+                path = Path(preview)
+                variant = path.with_stem(f"{path.stem}@{density}x").as_posix()
+                if (assets / variant.lstrip("/")).is_file():
+                    sources.add(variant)
     dimensions = {}
     for src in sorted(sources):
         filename = (assets / src.lstrip("/")).resolve()

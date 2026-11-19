@@ -1,0 +1,95 @@
+package views
+
+import (
+"fmt"
+"portfolio/internal/portfolio"
+)
+
+templ DocumentIcon(kind portfolio.DocumentKind) {
+<span class="project-archive__item-icon document-icon document-fold" data-document-kind={ string(kind) }
+	aria-hidden="true">
+	<span class="document-icon__format">md</span>
+	<span class="document-icon__lines"><i></i><i></i><i></i></span>
+</span>
+}
+
+templ DocumentNotes(documents []portfolio.Document, basePath string) {
+for _, document := range documents {
+if document.Kind == portfolio.DocumentNote {
+<dialog class="document-note" id={ "note-" + document.Slug } data-document-note={ document.Slug }
+	aria-labelledby={ "note-title-" + document.Slug }>
+	<section class="document-note__sheet document-fold">
+		<header class="document-note__heading" data-document-note-handle>
+			<div class="document-note__controls control-text">
+				<h2 id={ "note-title-" + document.Slug }>{ underscoreIdentifier(document.Title) + ".md" }</h2><button
+					type="button" data-document-note-close>[FECHAR]</button>
+			</div>
+		</header>
+		@ScrollArea("Conteúdo de " + document.Title, "vertical") {
+		<div class="prose project-content__prose document-prose">
+			@renderMarkdown(document.Content, basePath)
+		</div>
+		}
+	</section>
+</dialog>
+}
+}
+}
+
+templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document, basePath string, publicURL string) {
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content={ documentDescription(document) } />
+	@siteIcons(basePath)
+	@themeHead()
+	<title>{ document.Title + " / " + profile.Identity.DisplayName }</title>
+	<link rel="canonical" href={ articleURL(publicURL, document.Slug) } />
+	<meta property="og:type" content="article" />
+	<meta property="og:locale" content="pt_BR" />
+	<meta property="og:title" content={ document.Title } />
+	<meta property="og:description" content={ documentDescription(document) } />
+	<meta property="og:url" content={ articleURL(publicURL, document.Slug) } />
+	<meta property="og:image" content={ socialImageURL(publicURL) } />
+	if document.Date != "" {
+	<meta property="article:published_time" content={ document.Date } />
+	}
+	for _, stylesheet := range appStylesheets() {
+	<link rel="stylesheet" href={ siteURL(basePath, stylesheet) } />
+	}
+	<script type="module" src={ siteURL(basePath, appScript()) }></script>
+</head>
+
+<body>
+	<div class="article-page">
+		<header class="article-page__navigation control-text">
+			<a data-documents-back href={ siteURL(basePath, "/#case" ) }>[VOLTAR AOS DOCUMENTOS]</a>
+			@themeToggle()
+		</header>
+		<main class="article-page__sheet document-fold" id="content">
+			<header class="article-page__heading">
+				<p class="meta-text">ARTIGO / MD</p>
+				<h1>{ document.Title }</h1>
+				<p class="article-page__metadata meta-text">
+					if document.Date != "" {
+					<time datetime={ document.Date }>{ documentDateLabel(document.Date) }</time><span
+						class="inline-divider" aria-hidden="true"></span>
+					}
+					<span>{ fmt.Sprintf("%d MIN DE LEITURA", document.ReadingMinutes()) }</span>
+				</p>
+				if document.Summary != "" {
+				<p class="article-page__summary">{ document.Summary }</p>
+				}
+			</header>
+			<div class="prose project-content__prose document-prose">
+				@renderMarkdown(document.Content, basePath)
+			</div>
+		</main>
+	</div>
+</body>
+
+</html>
+}

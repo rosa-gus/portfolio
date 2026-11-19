@@ -2,7 +2,7 @@ package views
 
 import "portfolio/internal/portfolio"
 
-templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, basePath string, publicURL string) {
+templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archive portfolio.Archive, basePath string, publicURL string) {
 	<!DOCTYPE html>
 	<html lang="pt-BR">
 		<head>
@@ -46,17 +46,23 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 					</a>
 					<p class="masthead__role" data-page-title aria-live="polite">{ availabilityLabel(profile) }</p>
 					<div class="masthead__actions">
-						<p class="masthead__profession">{ profile.Identity.Profession }</p>
 						@themeToggle()
 					</div>
 				</header>
 				<main class="stage" id="content">
 					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ availabilityLabel(profile) } aria-labelledby="projects-title">
-						@EditorialHeading("projects-title", "Cases", profile.Introduction.Heading, true)
-						@ProjectArchive(projects, basePath)
+						@EditorialHeading("projects-title", profile.Introduction.Heading, true)
+						@ProjectArchive(archive, basePath)
 					</section>
-					<section class="content-panel information-panel career-panel" id="career" data-panel data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
-						@EditorialHeading("career-title", "Carreira", profile.Career.Heading, false)
+					<section
+						class="content-panel information-panel career-panel"
+						id="career"
+						data-panel
+						data-panel-title="Experiência aplicada"
+						hidden
+						aria-labelledby="career-title"
+					>
+						@EditorialHeading("career-title", profile.Career.Heading, false)
 						@ScrollArea("Percurso profissional", "vertical") {
 							<div class="career-record">
 								<header class="career-record__header meta-text">
@@ -73,11 +79,16 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 												<p class="career-entry__description">{ entry.Description }</p>
 												<div class="career-entry__meta meta-text">
 													<p>{ entry.DetailLabel }</p>
-												if len(entry.EvidenceSlugs) > 0 {
-													<div class="evidence-links">
-														for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
-															<a href={ projectURL(basePath, project.Slug) }>{ project.Title } <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
-														}
+													if len(entry.EvidenceSlugs) > 0 {
+														<div class="evidence-links">
+															for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
+																<a href={ projectURL(basePath, project.Slug) }>
+																	{ project.Title } <span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>
+																</a>
+															}
 														</div>
 													} else {
 														<p>{ entry.Detail }</p>
@@ -98,18 +109,41 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 							</div>
 						}
 					</section>
-					<section class="content-panel information-panel about-panel" id="about" data-panel data-panel-title="Perfil" hidden aria-labelledby="about-title">
-						<div class="about-panel__media" data-panel-background data-about-media data-about-state="image" aria-hidden="true">
+					<section
+						class="content-panel information-panel about-panel"
+						id="about"
+						data-panel
+						data-panel-title="Perfil"
+						hidden
+						aria-labelledby="about-title"
+					>
+						<div
+							class="about-panel__media"
+							data-panel-background
+							data-about-media
+							data-about-state="image"
+							aria-hidden="true"
+						>
 							<picture>
 								<source media="(max-width: 620px)" srcset={ siteURL(basePath, "/about-reticula-mobile-poster.webp") }/>
-								<img data-about-image src={ siteURL(basePath, "/about-reticula-poster.webp") } alt="" decoding="async" loading="lazy"/>
+								<img
+									data-about-image
+									src={ siteURL(basePath, "/about-reticula-poster.webp") }
+									alt=""
+									decoding="async"
+									loading="lazy"
+								/>
 							</picture>
 							<video data-about-video muted playsinline preload="none">
-								<source src={ siteURL(basePath, "/about-reticula-mobile.webm") } media="(max-width: 620px)" type="video/webm"/>
+								<source
+									src={ siteURL(basePath, "/about-reticula-mobile.webm") }
+									media="(max-width: 620px)"
+									type="video/webm"
+								/>
 								<source src={ siteURL(basePath, "/about-reticula.webm") } type="video/webm"/>
 							</video>
 						</div>
-						@EditorialHeading("about-title", "Sobre", profile.About.Heading, false)
+						@EditorialHeading("about-title", profile.About.Heading, false)
 						@ScrollArea("Sobre Luis Gustavo", "vertical", ScrollAreaShadowNone) {
 							<div class="about-panel__copy prose prose--intro">
 								for _, paragraph := range profile.About.Paragraphs {
@@ -121,68 +155,148 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, baseP
 							<details class="about-study">
 								<summary class="about-study__summary">
 									<span>{ profile.About.Media.Label }{ " / " }{ profile.About.Media.Name }</span>
-									<span class="about-study__toggle"><span class="about-study__plus" aria-hidden="true">+</span><span class="about-study__minus" aria-hidden="true">−</span>{ " DETALHES" }</span>
+									<span class="about-study__toggle">
+										<span
+											class="about-study__plus"
+											aria-hidden="true"
+										>+</span><span
+	class="about-study__minus"
+	aria-hidden="true"
+>−</span>{ " DETALHES" }
+									</span>
 								</summary>
 								<div class="about-study__body">
 									<p class="about-study__description">{ profile.About.Media.Summary }</p>
 									<dl class="about-study__metadata">
-										<dt>Técnica</dt><dd>{ profile.About.Media.Technique }</dd>
-										<dt>Paleta</dt><dd>{ profile.About.Media.Palette }</dd>
-										<dt>Versão</dt><dd>{ profile.About.Media.Version }</dd>
+										<dt>Técnica</dt>
+										<dd>{ profile.About.Media.Technique }</dd>
+										<dt>Paleta</dt>
+										<dd>{ profile.About.Media.Palette }</dd>
+										<dt>Versão</dt>
+										<dd>{ profile.About.Media.Version }</dd>
 										if profile.About.Media.Author != "" {
-											<dt>Autor</dt><dd><a href={ externalURL(profile.About.Media.AuthorURL) } target="_blank" rel="noreferrer">{ profile.About.Media.Author }</a></dd>
+											<dt>Autor</dt>
+											<dd>
+												<a
+													href={ externalURL(profile.About.Media.AuthorURL) }
+													target="_blank"
+													rel="noreferrer"
+												>{ profile.About.Media.Author }</a>
+											</dd>
 										}
 									</dl>
 									<nav class="about-study__links" aria-label="Rosa-retícula">
-										<a href={ externalURL(profile.About.Media.ExploreURL) } target="_blank" rel="noreferrer">[EXPLORAR <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
-										<a href={ externalURL(profile.About.Media.SourceURL) } target="_blank" rel="noreferrer">[CÓDIGO-FONTE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+										<a
+											href={ externalURL(profile.About.Media.ExploreURL) }
+											target="_blank"
+											rel="noreferrer"
+										>
+											[EXPLORAR <span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>]
+										</a>
+										<a
+											href={ externalURL(profile.About.Media.SourceURL) }
+											target="_blank"
+											rel="noreferrer"
+										>
+											[CÓDIGO-FONTE <span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>]
+										</a>
 									</nav>
 								</div>
 							</details>
-							<button class="about-panel__play" data-about-play type="button" aria-label="Reproduzir o vídeo ensaio desde o início" aria-pressed="false">[ ] REPRODUZIR</button>
+							<button
+								class="about-panel__play"
+								data-about-play
+								type="button"
+								aria-label="Reproduzir o vídeo ensaio desde o início"
+								aria-pressed="false"
+							>
+								[ ]
+								REPRODUZIR
+							</button>
 						</div>
 					</section>
-					<section class="content-panel information-panel contact-panel" id="contact" data-panel data-panel-title="Contato" hidden aria-labelledby="contact-title">
-						<div class="contact-panel__media" data-panel-background aria-hidden="true">
-						</div>
+					<section
+						class="content-panel information-panel contact-panel"
+						id="contact"
+						data-panel
+						data-panel-title="Contato"
+						hidden
+						aria-labelledby="contact-title"
+					>
+						<div class="contact-panel__media" data-panel-background aria-hidden="true"></div>
 						<header class="editorial-heading">
-							<p class="editorial-heading__eyebrow">{ profile.Contact.Heading }</p>
-							<h2 id="contact-title">Também assino como <span class="contact-panel__name-accent">rosa</span>{ " gus" }</h2>
+							<h2 class="editorial-heading__eyebrow" id="contact-title">{ profile.Contact.Heading }</h2>
+							<p class="contact-panel__signature meta-text">
+								assino como <span
+	class="contact-panel__name-accent"
+>rosa</span>{ " gus ou luis gustavo r.c." }
+							</p>
 						</header>
 						<div class="contact-panel__body">
+							<header class="contact-panel__correspondence meta-text">
+								<span>/ CORRESPONDÊNCIA</span>
+							</header>
 							<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
 							<div class="contact-panel__primary">
 								<div class="contact-panel__address">
-									<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>{ profile.Contact.Email }</a>
-									<button
-										class="contact-panel__copy"
-										type="button"
-										data-contact-copy
-										data-copy-value={ profile.Contact.Email }
-										aria-describedby="contact-copy-status"
-										hidden
-									>[COPIAR]</button>
+									<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>
+										{
+								profile.Contact.Email }
+									</a>
+									<button class="contact-panel__copy" type="button" data-contact-copy data-copy-value={ profile.Contact.Email } aria-describedby="contact-copy-status" hidden>[COPIAR]</button>
 								</div>
-								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>[ENVIAR E-MAIL <span class="ui-arrow ui-arrow--command" aria-hidden="true">↑</span>]</a>
-								<p class="contact-panel__status meta-text" id="contact-copy-status" data-contact-copy-status aria-live="polite"></p>
+								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>
+									[ENVIAR
+									E-MAIL <span class="ui-arrow ui-arrow--command" aria-hidden="true">↑</span>]
+								</a>
+								<p
+									class="contact-panel__status meta-text"
+									id="contact-copy-status"
+									data-contact-copy-status
+									aria-live="polite"
+								></p>
 							</div>
 							if profile.Contact.GitHubURL != "" || profile.Contact.LinkedInURL != "" || profile.Contact.SourceURL != "" {
 								<nav class="contact-panel__channels meta-text" aria-label="Outros canais de contato">
 									if profile.Contact.GitHubURL != "" {
-										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">GitHub <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">
+											GitHub
+											<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+										</a>
 									}
 									if profile.Contact.LinkedInURL != "" {
-										<a href={ externalURL(profile.Contact.LinkedInURL) } target="_blank" rel="me noreferrer">LinkedIn <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+										<a
+											href={ externalURL(profile.Contact.LinkedInURL) }
+											target="_blank"
+											rel="me noreferrer"
+										>
+											LinkedIn <span
+	class="ui-arrow ui-arrow--redirect"
+	aria-hidden="true"
+>↑</span>
+										</a>
 									}
 									if profile.Contact.SourceURL != "" {
-										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">Código-fonte <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">
+											Código-fonte
+											<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+										</a>
 									}
 								</nav>
 							}
 						</div>
 					</section>
 				</main>
-				@ProjectArchiveFloating(projects)
+				@DocumentNotes(archive.Documents, basePath)
+				if archive.HasApp("snake") {
+					@SnakeGame()
+				}
 				<nav class="command-bar" aria-label="Seções principais">
 					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
 					<a data-panel-target="career" href="#career">Carreira</a>

@@ -24,7 +24,7 @@ func TestHomeRendersProfileContent(t *testing.T) {
 	}
 
 	var output bytes.Buffer
-	if err := Home(profile, nil, "", "https://example.com").Render(context.Background(), &output); err != nil {
+	if err := Home(profile, nil, portfolio.Archive{}, "", "https://example.com").Render(context.Background(), &output); err != nil {
 		t.Fatalf("Home().Render() returned error: %v", err)
 	}
 

@@ -80,7 +80,7 @@ func exportSite(ctx context.Context, cfg config) (string, error) {
 		return "", fmt.Errorf("create .nojekyll: %w", err)
 	}
 	publicURL := sitepath.PublicURL(cfg.origin, cfg.basePath)
-	if err := renderPage(ctx, filepath.Join(temporary, "index.html"), views.Home(portfolio.Profile, portfolio.Projects, cfg.basePath, publicURL)); err != nil {
+	if err := renderPage(ctx, filepath.Join(temporary, "index.html"), views.Home(portfolio.Profile, portfolio.Projects, portfolio.HomeArchive, cfg.basePath, publicURL)); err != nil {
 		return "", err
 	}
 
@@ -93,6 +93,19 @@ func exportSite(ctx context.Context, cfg config) (string, error) {
 		}
 		projectFile := filepath.Join(temporary, "case", project.Slug, "index.html")
 		if err := renderPage(ctx, projectFile, views.ProjectPage(portfolio.Profile, project, cfg.basePath, publicURL)); err != nil {
+			return "", err
+		}
+	}
+
+	for _, document := range portfolio.Documents {
+		if document.Kind != portfolio.DocumentArticle {
+			continue
+		}
+		if err := validateSlug(document.Slug); err != nil {
+			return "", err
+		}
+		articleFile := filepath.Join(temporary, "article", document.Slug, "index.html")
+		if err := renderPage(ctx, articleFile, views.ArticlePage(portfolio.Profile, document, cfg.basePath, publicURL)); err != nil {
 			return "", err
 		}
 	}
