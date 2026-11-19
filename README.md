@@ -84,12 +84,12 @@ in `archive.json` to display it on the home. The title is rendered by the page, 
 Markdown should start with the body rather than a duplicate top-level heading.
 
 The archive preserves item positions and reading context in session storage
-when navigating to an article. `[DESBAGUNÇAR]` restores the original grid.
+when navigating to an article. `[REORGANIZAR]` restores the original grid.
 
 ## Maintaining the home document grid
 
 Edit `internal/portfolio/data/archive.json`. The `items` array is the original grid
-order, also used by `[DESBAGUNÇAR]`. Keep each `id` unique and stable: dragged
+order, also used by `[REORGANIZAR]`. Keep each `id` unique and stable: dragged
 positions are stored by ID, independently of labels, destinations, or array order.
 
 - **Add:** append an entry referencing existing content, or create a link.
