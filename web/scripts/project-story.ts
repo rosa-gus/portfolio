@@ -1,300 +1,98 @@
-import { initializeProjectGalleries } from "./project-gallery";
-
-const selectProjectSection = (
-  selectedTab: HTMLButtonElement,
-  moveFocus = false,
-  revealTab = false,
-  fromSwipe = false,
-) => {
-  const story = selectedTab.closest<HTMLElement>("[data-project-story]");
-  const section = selectedTab.dataset.projectTab;
-  if (!story || !section) return;
-
-  story
-    .querySelectorAll<HTMLButtonElement>("[data-project-tab]")
-    .forEach((tab) => {
-      const active = tab === selectedTab;
-      tab.classList.toggle("is-active", active);
-      tab.setAttribute("aria-selected", String(active));
-      tab.tabIndex = active ? 0 : -1;
-    });
-
-  story
-    .querySelectorAll<HTMLElement>("[data-project-panel]")
-    .forEach((panel) => {
-      const active = panel.dataset.projectPanel === section;
-      panel.classList.toggle("is-swipe-selected", active && fromSwipe);
-      panel.classList.toggle("is-active", active);
-      panel.hidden = !active;
-    });
-
-  const readingViewport = story.querySelector<HTMLElement>(
-    '[data-scroll-area][data-axis="vertical"] > [data-scroll-area-viewport]',
-  );
-  readingViewport?.scrollTo({ top: 0 });
-
-  if (revealTab) {
-    const tabViewport = story.querySelector<HTMLElement>(
-      '[data-scroll-area][data-axis="horizontal"] > [data-scroll-area-viewport]',
-    );
-    if (tabViewport) {
-      const tabCenter =
-        selectedTab.getBoundingClientRect().left -
-        tabViewport.getBoundingClientRect().left +
-        tabViewport.scrollLeft +
-        selectedTab.offsetWidth / 2;
-      tabViewport.scrollTo({
-        left: tabCenter - tabViewport.clientWidth / 2,
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-      });
-    }
-  }
-
-  if (section === "gallery") {
-    window.requestAnimationFrame(() => initializeProjectGalleries(story));
-  }
-
-  if (moveFocus) selectedTab.focus();
-};
-
-const getTabs = (tab: HTMLButtonElement) => {
-  const story = tab.closest<HTMLElement>("[data-project-story]");
-  return story
-    ? Array.from(
-        story.querySelectorAll<HTMLButtonElement>("[data-project-tab]"),
-      ).filter((candidate) => candidate.getClientRects().length > 0)
-    : [];
-};
-
 export const initializeProjectStories = () => {
-  const mobileLayout = window.matchMedia("(max-width: 620px)");
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
   document.querySelectorAll<HTMLElement>("[data-project-story]").forEach((story) => {
-    const readingViewport = story.querySelector<HTMLElement>(
-      '[data-scroll-area][data-axis="vertical"] > [data-scroll-area-viewport]',
-    );
-    const panels = story.querySelector<HTMLElement>(".project-content__panels");
-    if (!readingViewport || !panels) return;
-
-    const tabs = Array.from(
-      story.querySelectorAll<HTMLButtonElement>("[data-project-tab]"),
+    const page = story.closest<HTMLElement>(".project-page");
+    const header = page?.querySelector<HTMLElement>(".project-page__header");
+    const index = story.querySelector<HTMLElement>(".project-note__index");
+    const viewport = story.closest<HTMLElement>("[data-scroll-area-viewport]");
+    const mobile = window.matchMedia("(max-width: 620px)");
+    const links = Array.from(
+      story.querySelectorAll<HTMLAnchorElement>("[data-project-anchor]"),
     );
     const sections = Array.from(
-      panels.querySelectorAll<HTMLElement>("[data-project-panel]"),
+      story.querySelectorAll<HTMLElement>("[data-project-section]"),
     );
-    let preview: {
-      active: HTMLElement;
-      next: HTMLElement;
-      nextIndex: number;
-      direction: number;
-    } | null = null;
-    let settling = false;
-    let settleTimer = 0;
-    let lastX = 0;
-    let lastTime = 0;
-    let velocity = 0;
+    if (!page || !header || !index || !viewport || sections.length === 0) return;
 
-    const clearPreview = (completed: boolean) => {
-      if (!preview) return;
-      if (!completed) {
-        preview.next.hidden = true;
-        preview.active.classList.add("is-swipe-selected");
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const headerHeight = header.getBoundingClientRect().height;
+      const indexHeight = index.getBoundingClientRect().height;
+      page.style.setProperty("--project-header-height", `${headerHeight}px`);
+      page.style.setProperty("--project-index-height", `${indexHeight}px`);
+      viewport.tabIndex = mobile.matches ? -1 : 0;
+
+      const offset = Number.parseFloat(
+        getComputedStyle(sections[0]).scrollMarginTop,
+      ) || 0;
+      const readingTop = mobile.matches ? 0 : viewport.getBoundingClientRect().top;
+      let current = sections[0];
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= readingTop + offset + 24)
+          current = section;
       }
-      preview.active.classList.remove("is-swipe-active");
-      preview.next.classList.remove("is-swipe-preview");
-      preview.next.inert = false;
-      preview.next.removeAttribute("aria-hidden");
-      panels.classList.remove("is-swiping", "is-swipe-settling");
-      panels.style.removeProperty("--swipe-offset");
-      panels.style.removeProperty("--swipe-direction");
-      panels.style.removeProperty("--swipe-progress");
-      panels.style.removeProperty("--swipe-duration");
-      panels.style.removeProperty("--swipe-preview-top");
-      preview = null;
-      settling = false;
-      settleTimer = 0;
+      // The final section can be shorter than the viewport.
+      const atEnd = mobile.matches
+        ? window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2
+        : viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2;
+      if (atEnd)
+        current = sections[sections.length - 1];
+
+      links.forEach((link) => {
+        if (link.dataset.projectAnchor === current.dataset.projectSection)
+          link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    };
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
     };
 
-    const updatePreview = (distanceX: number, distanceY: number) => {
-      if (Math.abs(distanceX) < 12 || Math.abs(distanceX) < Math.abs(distanceY) * 1.25)
-        return;
-
-      const direction = distanceX < 0 ? 1 : -1;
-      if (
-        start && start.galleryLength > 0 &&
-        (direction === 1
-          ? start.galleryIndex !== start.galleryLength - 1
-          : start.galleryIndex !== 0)
-      ) return;
-
-      if (preview && preview.direction !== direction) clearPreview(false);
-      if (!preview) {
-        const activeIndex = tabs.findIndex((tab) => tab.classList.contains("is-active"));
-        const nextIndex = activeIndex + direction;
-        const active = sections.find((panel) => panel.classList.contains("is-active"));
-        const next = sections.find(
-          (panel) => panel.dataset.projectPanel === tabs[nextIndex]?.dataset.projectTab,
+    const scrollToSection = (section: HTMLElement, focus = false) => {
+      const offset = Number.parseFloat(getComputedStyle(section).scrollMarginTop) || 0;
+      const top = viewport.scrollTop + section.getBoundingClientRect().top
+        - viewport.getBoundingClientRect().top - offset;
+      // Native fragment navigation can scroll every overflow ancestor when the
+      // last section cannot reach the top. Only move the reading viewport.
+      if (focus) section.focus({ preventScroll: true });
+      viewport.scrollTo({ top: Math.max(0, Math.min(top, viewport.scrollHeight - viewport.clientHeight)) });
+      scheduleUpdate();
+    };
+    const restoreFragment = () => {
+      if (mobile.matches) return;
+      const section = sections.find((candidate) => `#${candidate.id}` === window.location.hash);
+      if (section) scrollToSection(section);
+    };
+    links.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (mobile.matches || event.defaultPrevented || event.button !== 0
+          || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const section = sections.find(
+          (candidate) => candidate.dataset.projectSection === link.dataset.projectAnchor,
         );
-        if (!active || !next) return;
-
-        panels.style.setProperty("--swipe-preview-top", `${Math.max(0, -panels.getBoundingClientRect().top)}px`);
-        next.hidden = false;
-        next.inert = true;
-        next.setAttribute("aria-hidden", "true");
-        preview = { active, next, nextIndex, direction };
-        panels.style.setProperty("--swipe-direction", String(direction));
-        panels.classList.add("is-swiping");
-        active.classList.add("is-swipe-active");
-        next.classList.add("is-swipe-preview");
-        if (next.dataset.projectPanel === "gallery")
-          window.requestAnimationFrame(() => initializeProjectGalleries(story));
-      }
-
-      const width = panels.clientWidth;
-      panels.style.setProperty("--swipe-progress", String(Math.min(1, Math.abs(distanceX) / width)));
-      panels.style.setProperty(
-        "--swipe-offset",
-        `${Math.max(-width, Math.min(width, distanceX))}px`,
-      );
-    };
-
-    let start: {
-      x: number;
-      y: number;
-      identifier: number;
-      galleryIndex: number;
-      galleryLength: number;
-    } | null = null;
-
-    readingViewport.addEventListener("touchstart", (event) => {
-      start = null;
-      if (!mobileLayout.matches || settling || event.touches.length !== 1) return;
-      if (!(event.target instanceof Element)) return;
-      if (event.target.closest("a, button, input, select, textarea, [contenteditable]"))
-        return;
-
-      const gallery = event.target.closest<HTMLElement>(".project-gallery__viewport");
-      const slides = gallery?.querySelectorAll<HTMLElement>("[data-gallery-slide]");
-      const galleryIndex = slides
-        ? Array.from(slides).findIndex((slide) => slide.getAttribute("aria-hidden") === "false")
-        : -1;
-
-      const touch = event.touches[0];
-      lastX = touch.clientX;
-      lastTime = event.timeStamp;
-      velocity = 0;
-      start = {
-        x: touch.clientX,
-        y: touch.clientY,
-        identifier: touch.identifier,
-        galleryIndex,
-        galleryLength: slides?.length ?? 0,
-      };
-    }, { passive: true });
-
-    readingViewport.addEventListener("touchmove", (event) => {
-      if (!start || !mobileLayout.matches || settling) return;
-      if (event.touches.length !== 1) {
-        start = null;
-        clearPreview(false);
-        return;
-      }
-      const touch = Array.from(event.touches).find(
-        (candidate) => candidate.identifier === start?.identifier,
-      );
-      if (!touch) return;
-      const distanceX = touch.clientX - start.x;
-      const distanceY = touch.clientY - start.y;
-      const elapsed = event.timeStamp - lastTime;
-      if (elapsed > 0) velocity = (touch.clientX - lastX) / elapsed;
-      lastX = touch.clientX;
-      lastTime = event.timeStamp;
-      if (!preview && Math.abs(distanceY) > 12 && Math.abs(distanceY) > Math.abs(distanceX)) {
-        start = null;
-        return;
-      }
-      updatePreview(distanceX, distanceY);
-    }, { passive: true });
-
-    readingViewport.addEventListener("touchend", (event) => {
-      if (!start || !mobileLayout.matches) return;
-      const touch = Array.from(event.changedTouches).find(
-        (candidate) => candidate.identifier === start?.identifier,
-      );
-      if (!touch) return;
-
-      const distanceX = touch.clientX - start.x;
-      const distanceY = touch.clientY - start.y;
-      updatePreview(distanceX, distanceY);
-      start = null;
-      if (!preview) return;
-
-      if (event.timeStamp - lastTime > 100) velocity = 0;
-      const width = panels.clientWidth;
-      const distance = Math.min(width, Math.abs(distanceX));
-      const complete = Math.abs(distanceX) >= Math.abs(distanceY) * 1.25 &&
-        (distance >= width * 0.25 || (distance >= 30 && -preview.direction * velocity > 0.45));
-      const remaining = complete ? width - distance : distance;
-      const duration = reducedMotion.matches ? 0 :
-        Math.round(Math.max(240, Math.min(400, 240 + remaining * 0.35 - Math.abs(velocity) * 35)));
-      const nextIndex = preview.nextIndex;
-      const direction = preview.direction;
-      settling = true;
-      panels.style.setProperty("--swipe-duration", `${duration}ms`);
-      panels.classList.add("is-swipe-settling");
-      panels.style.setProperty("--swipe-progress", complete ? "1" : "0");
-      panels.style.setProperty(
-        "--swipe-offset",
-        complete ? `${-direction * panels.clientWidth}px` : "0px",
-      );
-      settleTimer = window.setTimeout(() => {
-        if (complete) {
-          const contentTop = panels.getBoundingClientRect().top + window.scrollY;
-          const scrollTop = Math.min(window.scrollY, Math.max(0, contentTop));
-          selectProjectSection(tabs[nextIndex], false, true, true);
-          window.scrollTo({ top: scrollTop, behavior: "instant" });
-        }
-        clearPreview(complete);
-      }, duration);
-    }, { passive: true });
-
-    readingViewport.addEventListener("touchcancel", () => {
-      start = null;
-      if (settleTimer) window.clearTimeout(settleTimer);
-      clearPreview(false);
+        if (!section) return;
+        event.preventDefault();
+        if (window.location.hash !== link.hash)
+          window.history.pushState(null, "", link.hash);
+        scrollToSection(section, true);
+      });
     });
-  });
 
-  document.addEventListener("click", (event) => {
-    if (!(event.target instanceof Element)) return;
-    const tab = event.target.closest<HTMLButtonElement>("[data-project-tab]");
-    if (tab) selectProjectSection(tab);
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (
-      !(event.target instanceof HTMLButtonElement) ||
-      !event.target.matches("[data-project-tab]")
-    )
-      return;
-
-    const tabs = getTabs(event.target);
-    const currentIndex = tabs.indexOf(event.target);
-    if (currentIndex < 0) return;
-
-    let nextIndex: number | undefined;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown")
-      nextIndex = (currentIndex + 1) % tabs.length;
-    if (event.key === "ArrowLeft" || event.key === "ArrowUp")
-      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = tabs.length - 1;
-    if (nextIndex === undefined) return;
-
-    event.preventDefault();
-    selectProjectSection(tabs[nextIndex], true);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    viewport.addEventListener("scroll", scheduleUpdate, { passive: true });
+    mobile.addEventListener("change", scheduleUpdate);
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("hashchange", () => {
+      restoreFragment();
+      scheduleUpdate();
+    });
+    window.addEventListener("popstate", restoreFragment);
+    const observer = new ResizeObserver(scheduleUpdate);
+    observer.observe(header);
+    observer.observe(index);
+    observer.observe(story);
+    observer.observe(viewport);
+    update();
+    restoreFragment();
   });
 };
