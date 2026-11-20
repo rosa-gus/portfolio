@@ -1,6 +1,12 @@
 import { storageKey } from "../storage";
 import { createSociety, type Environment, type Surface } from "./engine";
 
+// Identity is independent of temperament and affinity. Halos stay neutral.
+const bodyPalettes = {
+  dark: ["#d8ceb7", "#d1b0bc", "#acbfa8", "#a9bed0"],
+  light: ["#796b50", "#8e6678", "#607b68", "#5f748d"],
+};
+
 export const initializeSociety = () => {
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   const dismissedKey = storageKey("society-dismissed");
@@ -18,7 +24,8 @@ export const initializeSociety = () => {
   // Shared map: measure visible rectangles on layout changes, never per frame.
   let surfaces: Surface[] = [];
   let width = 1, height = 1;
-  let ink = "", light = "", font = "";
+  let light = "", font = "";
+  let bodyColors = bodyPalettes.light;
   let frame = 0;
   let lastFrame: number | null = null;
   let elapsed = 0;
@@ -30,9 +37,10 @@ export const initializeSociety = () => {
     canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     const styles = getComputedStyle(document.documentElement);
-    ink = styles.getPropertyValue("--color-text-primary").trim();
     font = styles.getPropertyValue("--font-mono").trim();
-    light = document.documentElement.dataset.theme === "dark" ? "#f3e2b8" : "#fffaf0";
+    const dark = document.documentElement.dataset.theme === "dark";
+    light = dark ? "#f3e2b8" : "#fffaf0";
+    bodyColors = dark ? bodyPalettes.dark : bodyPalettes.light;
     surfaces = [];
     const shelterSelector = ".project-archive__item-icon, .project-archive__case-cover, .project-content__edition-mark, .article-page__heading";
     const nodes = document.querySelectorAll<HTMLElement>(`${shelterSelector}, .masthead, .command-bar, .project-archive__item-title, .project-archive__item-meta, h1, h2, h3, p, a, button, input, textarea, [role=tablist]`);
@@ -127,10 +135,10 @@ export const initializeSociety = () => {
       context.globalAlpha = brightness * lightVisibility * (light === "#fffaf0" ? 0.05 : 0.10);
       context.fillStyle = glow;
       context.fillRect(entity.x - radius, entity.y - radius, radius * 2, radius * 2);
-      context.globalAlpha = brightness * 0.72;
-      context.fillStyle = ink; context.font = `${entity.size}px ${font}`;
+      context.globalAlpha = brightness * 0.63 * (1 - entity.phase * 0.28);
+      context.fillStyle = bodyColors[entity.color]; context.font = `${entity.size}px ${font}`;
       context.textAlign = "center"; context.textBaseline = "middle";
-      const resting = entity.state === "rest" || entity.state === "observe";
+      const resting = entity.state === "rest" || entity.state === "observe" || entity.state === "yield";
       context.fillText("*", entity.x, entity.y + (resting ? Math.sin(elapsed * 0.0012 + entity.id) * 0.7 : 0));
       context.restore();
     }

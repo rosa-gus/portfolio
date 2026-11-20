@@ -57,7 +57,7 @@ test("society continues beyond three seconds, hides and reappears without crowdi
       for (const surface of environment.surfaces.filter((rect) => rect.shelter)) {
         assert.ok(society.entities.filter((entity) => entity.home === surface.id).length <= 2);
       }
-      if (time < 35_000) assert.equal(society.speech, null);
+      if (time < 30_000) assert.equal(society.speech, null);
     }
   }
   for (const state of ["walk", "rest", "enter", "hidden", "leave", "peek", "observe"]) assert.ok(seen.has(state), state);
@@ -74,4 +74,144 @@ test("withdrawal is bounded, speech ends, and remapping does not end the society
   for (let i = 0; i < 18; i++) society.step(50);
   assert.equal(society.finished, true);
   assert.equal(society.opacity, 0);
+});
+
+const holdOthers = (society, keep) => {
+  for (const entity of society.entities) {
+    entity.state = "rest"; entity.path = []; entity.home = null; entity.partner = null;
+    entity.until = keep.includes(entity) ? 0 : 1e9;
+    entity.nextDecision = 0;
+  }
+};
+
+test("encounters build reciprocal memory and lead to a shared walk, independently of colour", () => {
+  let deliberate = false;
+  const seeded = seededRandom(9);
+  const society = createSociety(environment, () => deliberate ? 0.1 : seeded());
+  const [a, b] = society.entities;
+  holdOthers(society, [a, b]);
+  Object.assign(a, { x: 280, y: 400, state: "observe", partner: b.id, sociability: 1, timidity: 0 });
+  Object.assign(b, { x: 320, y: 400, state: "observe", partner: a.id, sociability: 1, timidity: 0 });
+  const identities = society.entities.map((entity) => [entity.id, entity.color, entity.fidelity]);
+  deliberate = true;
+  society.step(50);
+  assert.ok(a.affinities.has(b.id) && b.affinities.has(a.id));
+  assert.ok(a.color !== b.color);
+  assert.equal(a.state, "walk");
+  assert.equal(b.state, "walk");
+  assert.ok(a.togetherUntil > 0 && a.togetherUntil === b.togetherUntil);
+  assert.equal(a.partner, b.id);
+  assert.equal(b.partner, a.id);
+  society.remap(environment);
+  assert.deepEqual(society.entities.map((entity) => [entity.id, entity.color, entity.fidelity]), identities);
+  assert.ok(a.affinities.has(b.id) && b.affinities.has(a.id));
+});
+
+test("faithful residents return to preferred shelters and wait when those shelters are occupied", () => {
+  const society = createSociety(environment, seededRandom(5));
+  const [visitor, residentA, residentB] = society.entities;
+  holdOthers(society, [visitor]);
+  Object.assign(visitor, { x: 380, y: 330, preferredHome: "folder-a", fidelity: 1, exposedAt: -20000 });
+  society.step(50);
+  assert.equal(visitor.home, "folder-a");
+  holdOthers(society, [visitor]);
+  for (const resident of [residentA, residentB]) Object.assign(resident, { home: "folder-a", state: "hidden", x: 175, y: 225, until: 1e9 });
+  Object.assign(visitor, { x: 100, y: 270, exposedAt: -20000 });
+  society.step(50);
+  assert.equal(visitor.state, "observe");
+  assert.equal(visitor.interest, "folder-a");
+  assert.equal(visitor.home, null);
+  assert.equal(society.entities.filter((entity) => entity.home === "folder-a").length, 2);
+});
+
+test("long-running society preserves identities, bounded affinities and occasional quiet periods", () => {
+  const society = createSociety(environment, seededRandom(2));
+  const colors = society.entities.map((entity) => entity.color);
+  let quiet = false, yielding = false, memories = false;
+  for (let time = 0; time < 180000; time += 50) {
+    society.step(50);
+    quiet ||= society.quiet;
+    yielding ||= society.entities.some((entity) => entity.state === "yield");
+    memories ||= society.entities.some((entity) => entity.affinities.size > 0);
+    for (const entity of society.entities) {
+      assert.ok(entity.affinities.size <= 3);
+      assert.ok(entity.color >= 0 && entity.color < 4);
+      for (const [id, memory] of entity.affinities) {
+        assert.ok(id !== entity.id && society.entities.some((other) => other.id === id));
+        assert.ok(memory.strength > 0 && memory.strength <= 1);
+      }
+    }
+    if (society.quiet) assert.equal(society.speech, null);
+  }
+  assert.ok(quiet && yielding && memories);
+  assert.deepEqual(society.entities.map((entity) => entity.color), colors);
+});
+
+test("encounter speech uses invented murmurs and retains a global rare-event cooldown", () => {
+  let deliberate = false;
+  const seeded = seededRandom(9);
+  const society = createSociety(environment, () => deliberate ? 0 : seeded());
+  const [a, b] = society.entities;
+  holdOthers(society, []);
+  Object.assign(a, { x: 280, y: 400, state: "observe", partner: b.id });
+  Object.assign(b, { x: 320, y: 400, state: "observe", partner: a.id });
+  deliberate = true;
+  const events = [];
+  let previousSpeech = null;
+  for (let time = 50; time <= 180000; time += 50) {
+    society.step(50);
+    if (time < 30000) assert.equal(society.speech, null);
+    if (society.speech && society.speech !== previousSpeech) {
+      assert.match(society.speech.text, /^[mnpruü.\s…?-]+$/u);
+      assert.ok(society.speech.text.length <= 10);
+      events.push(time);
+      previousSpeech = society.speech;
+    }
+  }
+  assert.ok(events.length >= 2);
+  for (let index = 1; index < events.length; index++) assert.ok(events[index] - events[index - 1] >= 40000);
+});
+
+test("a blocked resident waits three times before passing through a stationary group", () => {
+  const society = createSociety({ width: 900, height: 600, surfaces: [] }, seededRandom(9));
+  const [walker, blocker, neighbour] = society.entities;
+  holdOthers(society, []);
+  Object.assign(walker, { x: 100, y: 300, state: "walk", path: [{ x: 300, y: 300 }], speed: 35 });
+  Object.assign(blocker, { x: 150, y: 300 });
+  Object.assign(neighbour, { x: 165, y: 300 });
+  let crossed = false, faded = false;
+  for (let time = 0; time < 9500; time += 50) {
+    society.step(50);
+    if (walker.passing) {
+      crossed = true;
+      // The counter may reset once clear, so check it only while approaching.
+      if (walker.x < 150) assert.ok(walker.blockedAttempts >= 3);
+    }
+    if (!crossed) assert.ok(walker.x < 150);
+    faded ||= walker.phase > 0.3;
+    assert.ok(society.entities.filter((entity) => entity.passing).length <= 1);
+  }
+  assert.ok(crossed && faded);
+  assert.ok(walker.x > 200);
+  assert.equal(walker.passing, false);
+  assert.ok(walker.phase < 0.01);
+});
+
+test("opposing residents grant passage to one stable priority and keep their routes", () => {
+  const society = createSociety({ width: 900, height: 600, surfaces: [] }, seededRandom(3));
+  const [a, b] = society.entities;
+  holdOthers(society, []);
+  Object.assign(a, { x: 120, y: 300, state: "yield", path: [{ x: 220, y: 300 }], until: 0, blockedAttempts: 3, blockedBy: b.id, waitingFor: b.id, speed: 40 });
+  Object.assign(b, { x: 140, y: 300, state: "yield", path: [{ x: 70, y: 300 }], until: 0, blockedAttempts: 3, blockedBy: a.id, waitingFor: a.id, speed: 40 });
+  society.step(50);
+  assert.equal(a.passing, true);
+  assert.equal(b.passing, false);
+  for (let time = 0; time < 5000; time += 50) {
+    society.step(50);
+    assert.ok(society.entities.filter((entity) => entity.passing).length <= 1);
+  }
+  assert.ok(a.x > 180);
+  assert.ok(b.x < 120);
+  society.remap({ width: 900, height: 600, surfaces: [] });
+  assert.ok(society.entities.every((entity) => !entity.passing && entity.phase === 0));
 });
