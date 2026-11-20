@@ -224,6 +224,27 @@
   border-color: color-mix(in srgb, var(--color-border-strong) 50%, #83a65c);
 }
 
+.project-archive__item.is-complaining {
+  animation: archive-complaint-hop 360ms linear;
+}
+
+@keyframes archive-complaint-hop {
+  0%, 100% { translate: 0 0; }
+  15% { translate: 0 -6px; }
+  35% { translate: 0 -10px; }
+  55% { translate: 0 -6px; }
+  75% { translate: 0 0; }
+  87% { translate: 0 -2px; }
+}
+
+@media (max-width: 900px) and (pointer: coarse) {
+  [data-archive-complaint-trigger] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
 .project-archive__item.is-nauseous .project-archive__item-icon img {
   filter: sepia(1) saturate(1.4) hue-rotate(45deg);
 }
@@ -273,6 +294,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .project-archive__complaint { transition: none; }
+  .project-archive__item.is-complaining { animation: none; }
 }
 
 .project-archive__scrim {

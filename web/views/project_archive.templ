@@ -10,7 +10,7 @@ templ ProjectArchive(archive portfolio.Archive, basePath string) {
 		<div class="project-archive__workspace">
 			<div class="project-archive__toolbar">
 				<p class="project-archive__document-count">
-					<span>/ DOCUMENTOS</span><span
+					<span data-archive-complaint-trigger>/ DOCUMENTOS</span><span
 	class="inline-divider"
 	aria-hidden="true"
 ></span><span>{ fmt.Sprintf("%d ITENS", len(archive.Items)) }</span>

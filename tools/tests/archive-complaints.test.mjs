@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createComplaintPolicy } from "../../web/scripts/archive-complaints.ts";
+import { createComplaintPolicy, createComplaintTapGesture } from "../../web/scripts/archive-complaints.ts";
 
 const pushThreeTimes = (policy, id, now) => {
   let complaint = null;
@@ -81,4 +81,62 @@ test("debug does not exhaust per-document or per-visit quotas", () => {
   for (let i = 0; i < 20; i++) {
     assert.deepEqual(policy.record([1], i * 4_500), { id: 1, text: "quer saber? vou embora!", effect: "return-home" });
   }
+});
+
+test("a completed tap gesture complains immediately and introduces the knocking", () => {
+  const policy = createComplaintPolicy(() => 0.999, false);
+  assert.deepEqual(policy.record([1], 0, "tap"), { id: 1, text: "tá batendo por quê?" });
+  assert.equal(policy.record([2], 7_999, "tap"), null);
+  assert.equal(policy.record([1], 14_999, "tap"), null);
+  const next = policy.record([1], 15_000, "tap");
+  assert.ok(next);
+  assert.notEqual(next.effect, "return-home");
+  assert.equal(next.text, "tá batendo por quê?");
+});
+
+test("mobile complaints share desktop quotas and never try to move grid items home", () => {
+  const policy = createComplaintPolicy(() => 0.999, false);
+  for (let i = 0; i < 8; i++) {
+    const complaint = policy.record([Math.floor(i / 4)], i * 15_000, "tap");
+    assert.ok(complaint);
+    assert.deepEqual(complaint, { id: Math.floor(i / 4), text: "tá batendo por quê?" });
+  }
+  assert.equal(policy.record([2], 150_000, "tap"), null);
+  assert.equal(pushThreeTimes(policy, 3, 160_000), null);
+});
+
+const tap = (gesture, now, x = 20, y = 20) => {
+  gesture.start(1, x, y, now);
+  return gesture.end(1, x, y, now + 50);
+};
+
+test("five quick taps trigger exactly once per group", () => {
+  const gesture = createComplaintTapGesture();
+  for (let group = 0; group < 2; group++) {
+    for (let i = 0; i < 5; i++) assert.equal(tap(gesture, group * 1_000 + i * 150), i === 4);
+  }
+});
+
+test("pauses, long presses, scrolling movements and cancellations break the sequence", () => {
+  for (const interrupt of [
+    (gesture) => { tap(gesture, 1_000); },
+    (gesture) => { gesture.start(1, 20, 20, 450); gesture.end(1, 20, 20, 800); },
+    (gesture) => { gesture.start(1, 20, 20, 450); gesture.move(1, 20, 40); gesture.end(1, 20, 20, 500); },
+    (gesture) => { gesture.start(1, 20, 20, 450); gesture.end(1, 40, 20, 500); },
+    (gesture) => gesture.reset(),
+  ]) {
+    const gesture = createComplaintTapGesture();
+    for (let i = 0; i < 3; i++) assert.equal(tap(gesture, i * 150), false);
+    interrupt(gesture);
+    assert.equal(tap(gesture, 1_200), false);
+    assert.equal(tap(gesture, 1_350), false);
+  }
+});
+
+test("another pointer cannot complete a tap", () => {
+  const gesture = createComplaintTapGesture();
+  gesture.start(1, 20, 20, 0);
+  assert.equal(gesture.end(2, 20, 20, 50), false);
+  gesture.reset();
+  for (let i = 0; i < 4; i++) assert.equal(tap(gesture, i * 150), false);
 });
