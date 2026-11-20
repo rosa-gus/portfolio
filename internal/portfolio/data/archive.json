@@ -27,7 +27,7 @@
     {
       "id": "design",
       "label": "Design Systems",
-      "symbol": "*",
+      "symbol": "=",
       "capabilities": [
         "design-systems"
       ]
@@ -102,6 +102,11 @@
       "source": "contact.githubURL",
       "label": "GitHub",
       "icon": "GH"
+    },
+    {
+      "id": "license",
+      "type": "document",
+      "ref": "licenca"
     }
   ]
 }

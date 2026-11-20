@@ -4,5 +4,11 @@
     "title": "boas vindas",
     "kind": "note",
     "content": "documents/boas-vindas.md"
+  },
+  {
+    "slug": "licenca",
+    "title": "licença",
+    "kind": "note",
+    "content": "documents/licenca.md"
   }
 ]

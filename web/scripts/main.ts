@@ -20,6 +20,7 @@ import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
 import { initializeSnakeGame } from "./snake/snake-game";
 import { migrateStorageValue, storageKey } from "./storage";
+import { initializeSociety } from "./society";
 
 initializeTooltips();
 initializeContactCopy();
@@ -278,3 +279,5 @@ initializePanelNavigation({
     else deactivateAboutMedia();
   },
 });
+
+initializeSociety();

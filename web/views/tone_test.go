@@ -3,6 +3,7 @@ package views
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"portfolio/internal/portfolio"
@@ -89,7 +90,7 @@ func TestProjectFolioGlyphRowsRepeatShortIdentifiers(t *testing.T) {
 	}
 }
 
-func TestProjectContentRendersRelocatedDetails(t *testing.T) {
+func TestProjectContentRendersContinuousNoteAndTechnicalDetails(t *testing.T) {
 	t.Parallel()
 
 	project := portfolio.Project{
@@ -103,6 +104,15 @@ func TestProjectContentRendersRelocatedDetails(t *testing.T) {
 			{Capability: "interfaces", Technologies: []string{"Go"}},
 			{Capability: "security", Technologies: []string{"Python"}},
 		},
+		CaseStudy: portfolio.ProjectCaseStudy{
+			Context:   portfolio.MarkdownDocument{Source: "Context body."},
+			Challenge: portfolio.MarkdownDocument{Source: "Challenge body."},
+			Decision:  portfolio.MarkdownDocument{Source: "Decision body."},
+			Result:    portfolio.MarkdownDocument{Source: "Result body."},
+		},
+		Media: portfolio.ProjectMedia{Items: []portfolio.ProjectImage{
+			{ID: "screen", Src: "/projects/screen.png", Alt: "Project screen", Label: "Interface"},
+		}},
 		License: portfolio.ProjectLicense{
 			Name: "GPL-3.0",
 			URL:  "https://www.gnu.org/licenses/gpl-3.0.html",
@@ -120,15 +130,31 @@ func TestProjectContentRendersRelocatedDetails(t *testing.T) {
 
 	html := output.String()
 	assertContains(t, html, `class="project-content__standfirst">An editorial project summary.</p>`)
-	assertContains(t, html, `data-project-tab="practice"`)
-	assertContains(t, html, `class="practice-map__tree"`)
+	assertContains(t, html, `href="#project-coleoptera-identifier-practice"`)
+	assertContains(t, html, `class="project-note__facts"`)
+	assertNotContains(t, html, `role="tab`)
+	assertNotContains(t, html, ` hidden`)
+	assertNotContains(t, html, `practice-map__tree`)
+	previous := -1
+	for _, section := range []string{"context", "challenge", "decision", "result", "gallery", "practice"} {
+		position := strings.Index(html, `data-project-section="`+section+`"`)
+		if position <= previous {
+			t.Fatalf("section %q is missing or out of reading order", section)
+		}
+		previous = position
+		assertContains(t, html, `href="#project-coleoptera-identifier-`+section+`"`)
+	}
+	for _, body := range []string{"Context body.", "Challenge body.", "Decision body.", "Result body."} {
+		assertContains(t, html, body)
+	}
+	assertContains(t, html, `data-project-gallery`)
+	assertContains(t, html, `data-gallery-expand`)
+	assertContains(t, html, `src="/projects/screen.png"`)
 	assertContains(t, html, `Applied research and full-stack development`)
-	assertContains(t, html, `<li>[Go]</li>`)
-	assertContains(t, html, `class="practice-map__resources"`)
-	assertContains(t, html, `class="practice-map__release-link"`)
+	assertContains(t, html, `<span>Go</span>`)
+	assertContains(t, html, `class="project-note__resources control-text"`)
 	assertContains(t, html, `Releases estáveis e experimentais do Coleoptera Identifier`)
 	assertContains(t, html, `https://github.com/example/coleoptera-identifier/releases`)
-	assertContains(t, html, `class="practice-map__provenance"`)
 	assertContains(t, html, `github.com/example/coleoptera-identifier`)
 	assertContains(t, html, `GPL-3.0`)
 	assertNotContains(t, html, `Mapa de prática`)
