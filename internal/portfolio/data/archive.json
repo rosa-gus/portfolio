@@ -102,6 +102,11 @@
       "source": "contact.githubURL",
       "label": "GitHub",
       "icon": "GH"
+    },
+    {
+      "id": "license",
+      "type": "document",
+      "ref": "licenca"
     }
   ]
 }

@@ -1,10 +1,8 @@
-# Luis Gustavo R.C. / Portfólio
+# Rosa Gus / Portfólio
 
 A Portuguese-language software engineering portfolio built with Go, `templ`,
 TypeScript, and Vite. Runs as an HTTP server or exports to a static site,
 with an interactive project archive and dedicated case studies.
-
-## Visual identity
 
 The portfolio's visual style aspires to an “editorial poetics of the digital archive”.
 
