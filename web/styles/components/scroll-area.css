@@ -14,7 +14,7 @@
 
 @supports not selector(::-webkit-scrollbar) {
   .scroll-area__viewport {
-    scrollbar-color: currentColor transparent;
+    scrollbar-color: var(--color-surface-active) transparent;
     scrollbar-width: thin;
   }
 }
@@ -45,7 +45,7 @@
 .scroll-area__viewport::-webkit-scrollbar-thumb {
   border: 0;
   border-radius: 0;
-  background: currentColor;
+  background: var(--color-surface-active);
 }
 
 .scroll-area__viewport::-webkit-scrollbar-button {
