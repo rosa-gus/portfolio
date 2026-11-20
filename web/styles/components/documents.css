@@ -76,7 +76,7 @@
   position: absolute;
   inset: 0;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--document-fold-size)), calc(100% - var(--document-fold-size)) 100%, 0 100%);
-  opacity: 0.8;
+  opacity: 1;
   transition: opacity 80ms ease-out;
   pointer-events: none;
   content: "";
@@ -90,7 +90,7 @@
 
 .document-note::after {
   z-index: -1;
-  background: #000;
+  background: var(--color-shadow-offset);
   transform: translate(6px, 6px);
 }
 

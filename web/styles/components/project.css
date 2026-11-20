@@ -171,7 +171,7 @@
 
 .project-content__tab {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  grid-template-columns: 2rem minmax(0, 1fr);
   gap: clamp(0.7rem, 1.5vw, 1.25rem);
   align-items: center;
   width: 100%;
@@ -187,26 +187,17 @@
   border-top: 1px solid var(--color-border-subtle);
 }
 
-.project-content__tab:hover,
-.project-content__tab.is-active {
+.project-content__tab:hover {
   color: var(--color-text-primary);
 }
 
 .project-content__tab.is-active {
-  background: color-mix(in srgb, currentColor 4%, transparent);
+  background: var(--color-surface-active);
+  color: var(--color-text-active);
 }
 
 .project-content__tab-number {
   opacity: 0.72;
-}
-
-.project-content__tab-marker {
-  visibility: hidden;
-  font-size: 0.65rem;
-}
-
-.project-content__tab.is-active .project-content__tab-marker {
-  visibility: visible;
 }
 
 .project-content__panels {
