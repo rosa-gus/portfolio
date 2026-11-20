@@ -27,3 +27,18 @@ from `app.css`.
 Ordinary paragraphs do not need a dedicated class when their role is clear from
 their container. Add a token only when it represents a recurring decision;
 component-specific exceptions belong to the component that requires them.
+
+## Theme colors and active states
+
+Use semantic theme tokens directly: `--color-surface-*`, `--color-text-*`,
+and `--color-border-*`. Avoid paper/ink aliases and component-specific theme
+colors.
+
+Selected controls use `--color-surface-active` with `--color-text-active`.
+Selection expressed through a border uses `--color-border-active`. These roles
+also cover text selection and navigation swipe transitions. Light mode uses
+deep rose with light text; dark mode uses pale rose with dark text.
+
+Offset window shadows use `--color-shadow-offset`, independently of active
+states. Selecting an item does not require adding a fill where its existing
+indicator is an underline, marker, or border.

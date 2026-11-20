@@ -1,25 +1,23 @@
 :root {
   color-scheme: light;
-  --color-ink: #eee9de;
-  --color-ink-raised: #e3ded3;
-  --color-paper: #171713;
-  --color-paper-muted: #6d6961;
-  --color-line: rgba(23, 23, 19, 0.2);
-  --color-line-strong: rgba(23, 23, 19, 0.62);
-  --color-accent: #0d0d0b;
-  --color-chrome: rgba(238, 233, 222, 0.92);
-  --color-shadow: rgba(54, 48, 37, 0.16);
+  --color-surface-canvas: #ecdee1;
+  --color-surface-raised: #e1d3d6;
+  --color-text-primary: #1c1719;
+  --color-text-muted: #706569;
+  --color-border-subtle: rgba(28, 23, 25, 0.2);
+  --color-border-strong: rgba(28, 23, 25, 0.62);
+  --color-accent: #100d0e;
+  --color-chrome: rgba(236, 222, 225, 0.92);
+  --color-shadow: rgba(54, 41, 48, 0.16);
   --font-display: "Instrument Sans Variable", "Helvetica Neue", sans-serif;
   --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "IBM Plex Mono", monospace;
 
-  /* Semantic color roles */
-  --color-surface-canvas: var(--color-ink);
-  --color-surface-raised: var(--color-ink-raised);
-  --color-text-primary: var(--color-paper);
-  --color-text-muted: var(--color-paper-muted);
-  --color-border-subtle: var(--color-line);
-  --color-border-strong: var(--color-line-strong);
+  /* Shared interaction and media roles */
+  --color-surface-active: light-dark(#302027, #eadadd);
+  --color-text-active: light-dark(#ecdee1, #0a0a09);
+  --color-border-active: var(--color-surface-active);
+  --color-shadow-offset: light-dark(#302027, #000);
   --color-text-on-media: #f4f4f0;
   --color-text-on-media-muted: rgba(244, 244, 240, 0.72);
   --color-text-on-media-subtle: rgba(244, 244, 240, 0.42);
@@ -64,12 +62,12 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-ink: #0a0a09;
-  --color-ink-raised: #131311;
-  --color-paper: #e9e9e5;
-  --color-paper-muted: #9d9d99;
-  --color-line: rgba(233, 233, 229, 0.2);
-  --color-line-strong: rgba(233, 233, 229, 0.62);
+  --color-surface-canvas: #0a0a09;
+  --color-surface-raised: #131311;
+  --color-text-primary: #e9e9e5;
+  --color-text-muted: #9d9d99;
+  --color-border-subtle: rgba(233, 233, 229, 0.2);
+  --color-border-strong: rgba(233, 233, 229, 0.62);
   --color-accent: #fffefa;
   --color-chrome: rgba(10, 10, 9, 0.92);
   --color-shadow: rgba(0, 0, 0, 0.32);
@@ -78,12 +76,12 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --color-ink: #0a0a09;
-    --color-ink-raised: #131311;
-    --color-paper: #e9e9e5;
-    --color-paper-muted: #9d9d99;
-    --color-line: rgba(233, 233, 229, 0.2);
-    --color-line-strong: rgba(233, 233, 229, 0.62);
+    --color-surface-canvas: #0a0a09;
+    --color-surface-raised: #131311;
+    --color-text-primary: #e9e9e5;
+    --color-text-muted: #9d9d99;
+    --color-border-subtle: rgba(233, 233, 229, 0.2);
+    --color-border-strong: rgba(233, 233, 229, 0.62);
     --color-accent: #fffefa;
     --color-chrome: rgba(10, 10, 9, 0.92);
     --color-shadow: rgba(0, 0, 0, 0.32);

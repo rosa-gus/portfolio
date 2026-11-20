@@ -147,7 +147,7 @@ export const initializePanelSwipe = ({ stage, panels, navigate }: SwipeOptions) 
     stage.style.setProperty("--home-swipe-duration", `${duration}ms`);
     previewLink?.style.setProperty("--command-swipe-duration", `${duration}ms`);
     previewLink?.style.setProperty("--command-swipe-fill", complete ? "100%" : "0%");
-    previewLink?.style.setProperty("--command-swipe-text", complete ? "var(--color-ink)" : "var(--color-text-primary)");
+    previewLink?.style.setProperty("--command-swipe-text", complete ? "var(--color-text-active)" : "var(--color-text-primary)");
     stage.classList.add("is-home-swipe-settling");
     stage.style.setProperty("--home-swipe-offset", complete ? `${-preview.direction * width}px` : "0px");
     stage.style.setProperty("--home-swipe-progress", complete ? "1" : "0");

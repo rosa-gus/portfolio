@@ -152,15 +152,15 @@
 }
 
 .command-bar a.is-current {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--color-surface-active);
+  color: var(--color-text-active);
 }
 
 .command-bar a.is-swipe-target {
   background-color: color-mix(
     in srgb,
-    var(--color-paper) var(--command-swipe-fill, 0%),
-    color-mix(in srgb, var(--color-paper) 8%, var(--color-chrome))
+    var(--color-surface-active) var(--command-swipe-fill, 0%),
+    color-mix(in srgb, var(--color-surface-active) 8%, var(--color-chrome))
   );
   color: var(--command-swipe-text, var(--color-text-primary));
   transition:
