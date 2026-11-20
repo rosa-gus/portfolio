@@ -1,7 +1,9 @@
 // CSS handles the responsive corners, hover and focus. JavaScript only handles
 // dismissal, keeping Escape effective until the next deliberate interaction.
 export const initializeTooltips = () => {
-  const tooltips = Array.from(document.querySelectorAll<HTMLElement>("[data-tooltip]"));
+  const tooltips = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-tooltip]"),
+  );
   if (!tooltips.length) return;
 
   tooltips.forEach((tooltip) => {
@@ -18,7 +20,8 @@ export const initializeTooltips = () => {
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     tooltips.forEach((tooltip) => {
-      if (tooltip.matches(":hover, :focus-within")) tooltip.dataset.tooltipDismissed = "";
+      if (tooltip.matches(":hover, :focus-within"))
+        tooltip.dataset.tooltipDismissed = "";
     });
   });
 };
