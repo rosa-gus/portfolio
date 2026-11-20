@@ -15,3 +15,4 @@
 @import "./components/snake-game.css" layer(components);
 
 @import "./components/tooltip.css" layer(components);
+@import "../scripts/society/styles.css" layer(components);
