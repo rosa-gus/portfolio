@@ -235,7 +235,7 @@ covers remain independent. Image dimensions are collected during the normal asse
   The original is preserved as `ski-slide-source.wav`; `ski-slide-loop.wav` uses
   only the first 1.25 seconds, with an equal-power crossfade and volume normalization
   to create a continuous loop. Rebuild it with `python3 tools/prepare_ski_audio.py`.
-- Ski impact, near-miss bell, and yeti footstep effects: **[Kenney](https://kenney.nl/)**,
+- Ski impact effects (including `impact-fall.ogg`), near-miss bell, and yeti footstep effects: **[Kenney](https://kenney.nl/)**,
   [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
   Original files: `impactWood_light_004.ogg`, `footstep_concrete_000.ogg`,
   `impactBell_heavy_001.ogg`, and `footstep_snow_000.ogg`.

@@ -3,6 +3,7 @@ package views
 import "fmt"
 
 const skiGameVersion = "0.1.0"
+const skiCaptureMessage = "Alguém alcançou você."
 
 templ SkiGame(basePath string) {
 	@Window(WindowOptions{
@@ -16,7 +17,7 @@ templ SkiGame(basePath string) {
 					<section data-ski-intro aria-label="Sobre o jogo" hidden>
 						@GameMetadata("SKI", "esquie entre obstáculos.\ncuidado com a companhia.") {
 							<dl class="game-metadata__fields">
-								<div><dt>AUTOR</dt><dd>rosa gus</dd></div>
+								<div><dt>POR</dt><dd>rosa gus</dd></div>
 								<div><dt>INSPIRAÇÃO</dt><dd class="game-metadata__inline"><span>SkiFree</span><span class="inline-divider inline-divider--small" aria-hidden="true"></span><span class="visually-hidden"> de </span><span>Chris Pirih</span></dd></div>
 								<div><dt>VERSÃO</dt><dd>v{ skiGameVersion }</dd></div>
 							</dl>
@@ -24,23 +25,21 @@ templ SkiGame(basePath string) {
 					</section>
 					<p data-ski-message-text>Uma pista pela frente.</p>
 					<p data-ski-game-over hidden>
-						Fim da descida.<br/>
-						<span class="ski-game__wave">
-							<span class="ski-game__sr-only">Alguém alcançou você.</span>
-							<span aria-hidden="true">
-								for index, letter := range []rune("Alguém alcançou você.") {
-									<span class="ski-game__wave-letter" style={ fmt.Sprintf("--wave-delay: %dms;", index*45) }>{ string(letter) }</span>
-								}
-							</span>
+						<span class="visually-hidden">{ skiCaptureMessage }</span>
+						<span aria-hidden="true">
+							for index, letter := range []rune(skiCaptureMessage) {
+								<span class="ski-game__wave-letter" style={ fmt.Sprintf("--wave-delay: %dms;", index*45) }>{ string(letter) }</span>
+							}
 						</span>
 					</p>
-					<dl class="ski-game__results" data-ski-results hidden>
-						<div><dt>PONTOS</dt><dd data-ski-result-score>0</dd></div>
-						<div><dt>DISTÂNCIA</dt><dd data-ski-result-distance>0 m</dd></div>
-						<div><dt>POR POUCO</dt><dd data-ski-result-near-misses>0</dd></div>
-						<div class="ski-game__result-record"><dt data-ski-result-record-label>MELHOR PONTUAÇÃO</dt><dd data-ski-result-best>0</dd></div>
-					</dl>
-					<p class="ski-game__result-version" data-ski-result-version hidden>v{ skiGameVersion }</p>
+					<div class="ski-game__results" data-ski-results hidden>
+						<p class="ski-game__result-score"><strong data-ski-result-score>0</strong> pontos</p>
+						<dl class="ski-game__result-metrics">
+							<div><dt>Distância</dt><dd data-ski-result-distance>0 m</dd></div>
+							<div><dt>Por pouco</dt><dd data-ski-result-near-misses>0</dd></div>
+							<div class="ski-game__result-record" data-ski-result-record><dt data-ski-result-record-label>Melhor pontuação</dt><dd data-ski-result-best>0</dd></div>
+						</dl>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -76,5 +75,6 @@ templ skiHelp() {
 
 templ skiTips() {
 	<p>Ganhe 10 pontos a cada 10 metros. Passe rente a árvores e pedras, sem bater e mantendo a velocidade de descida, para ganhar +50 por pouco.</p>
+	<p>Se bater, aponte os esquis para baixo para recuperar o equilíbrio. Você também pode usar @ArrowGlyph("down"), S ou o botão Descer.</p>
 	<p>No slalom, antecipe as curvas e alterne entre as aberturas da pista. Os trechos ficam mais exigentes conforme a descida avança.</p>
 }

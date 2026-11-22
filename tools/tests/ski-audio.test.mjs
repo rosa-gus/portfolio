@@ -22,7 +22,7 @@ test("sliding stays quiet, follows speed, ducks for cues, and cancels pending st
       return filter;
     }
     createBufferSource() {
-      const source = { ...node(), playbackRate: parameter(), start() {}, stop() { this.stopped = true; this.onended?.(); } };
+      const source = { ...node(), playbackRate: parameter(), start(...args) { this.startArgs = args; }, stop() { this.stopped = true; this.onended?.(); } };
       sources.push(source);
       return source;
     }
@@ -42,8 +42,13 @@ test("sliding stays quiet, follows speed, ducks for cues, and cancels pending st
     const gain = loop.output.output.output;
     const slow = gain.gain.target;
     game.speed = 360;
+    audio.update(game, 0);
+    const straight = gain.gain.target;
+    const straightCutoff = filters[1].frequency.target;
     audio.update(game, 1);
     assert.ok(gain.gain.target > slow);
+    assert.ok(gain.gain.target > straight);
+    assert.ok(filters[1].frequency.target > straightCutoff);
     assert.ok(gain.gain.target <= 0.034);
     assert.equal(filters[0].type, "highpass");
     assert.equal(filters[1].type, "lowpass");
@@ -52,6 +57,26 @@ test("sliding stays quiet, follows speed, ducks for cues, and cancels pending st
     audio.update(game, 1);
     assert.ok(gain.gain.target < fast / 2);
     await flush();
+    const firstFallCue = sources.length;
+    audio.events([{ type: "fall", x: 320, y: 142, side: "left" }]);
+    await flush();
+    const [impact, fallScrape] = sources.slice(firstFallCue);
+    assert.ok(impact.buffer.endsWith("/impact-fall.ogg"));
+    assert.deepEqual(impact.startArgs, []);
+    assert.ok(fallScrape.buffer.endsWith("/ski-slide-loop.wav"));
+    assert.deepEqual(fallScrape.startArgs, [0.07, 0, 0.18]);
+    audio.events([{ type: "ski-contact" }]);
+    await flush();
+    assert.deepEqual(sources.at(-1).startArgs, [0, 0, 0.11]);
+    const beforeCapture = sources.length;
+    audio.capture(0.13);
+    assert.ok(sources.every(source => source.stopped));
+    await flush();
+    assert.equal(sources.length, beforeCapture + 1);
+    const captureStep = sources.at(-1);
+    assert.ok(captureStep.buffer.endsWith("/yeti-step.ogg"));
+    assert.deepEqual(captureStep.startArgs, [0.13, 0, 0.22]);
+    assert.ok(captureStep.playbackRate.value < 1);
     audio.stop();
     assert.ok(sources.every(source => source.stopped));
     const count = sources.length;

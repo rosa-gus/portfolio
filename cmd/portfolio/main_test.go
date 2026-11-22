@@ -13,7 +13,7 @@ import (
 func TestSkiSpritesAreServedFromEmbeddedAssets(t *testing.T) {
 	handler := newHandler("https://example.com")
 	sprites := map[string][2]int{
-		"skier-down": {24, 32}, "skier-left": {24, 32}, "skier-right": {24, 32},
+		"skier-front": {24, 32}, "skier-left": {24, 32}, "skier-right": {24, 32},
 		"pine": {24, 32}, "rock": {24, 16}, "tracks": {24, 32},
 		"yeti-idle": {28, 32}, "yeti-run-01": {28, 32}, "yeti-run-02": {28, 32},
 	}

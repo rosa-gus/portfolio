@@ -1,7 +1,7 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import { SkiEngine, SKI_STEP, SKI_WIDTH, SKI_HEIGHT } from "./ski-engine";
 import { drawSki, loadSkiSprites } from "./ski-renderer";
-import { SkiFeedback } from "./ski-feedback";
+import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, SkiFeedback } from "./ski-feedback";
 import { createSkiAudio } from "./ski-audio";
 import { storageKey } from "../../storage";
 
@@ -13,21 +13,23 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const feedback = new SkiFeedback();
   const audio = createSkiAudio();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const touchControls = matchMedia("(pointer: coarse)");
   const toggle = dialog.querySelector<HTMLButtonElement>("[data-ski-toggle]")!;
   const restart = dialog.querySelector<HTMLButtonElement>("[data-ski-restart]")!;
   const message = dialog.querySelector<HTMLElement>("[data-ski-message]")!;
   const messageText = dialog.querySelector<HTMLElement>("[data-ski-message-text]")!;
   const intro = dialog.querySelector<HTMLElement>("[data-ski-intro]")!;
-  const resultVersion = dialog.querySelector<HTMLElement>("[data-ski-result-version]")!;
   const gameOverText = dialog.querySelector<HTMLElement>("[data-ski-game-over]")!;
   const results = dialog.querySelector<HTMLElement>("[data-ski-results]")!;
   const resultScore = dialog.querySelector<HTMLElement>("[data-ski-result-score]")!;
   const resultDistance = dialog.querySelector<HTMLElement>("[data-ski-result-distance]")!;
   const resultNearMisses = dialog.querySelector<HTMLElement>("[data-ski-result-near-misses]")!;
+  const resultRecord = dialog.querySelector<HTMLElement>("[data-ski-result-record]")!;
   const resultBest = dialog.querySelector<HTMLElement>("[data-ski-result-best]")!;
   const resultRecordLabel = dialog.querySelector<HTMLElement>("[data-ski-result-record-label]")!;
   const distance = dialog.querySelector<HTMLElement>("[data-ski-distance]")!;
   const record = dialog.querySelector<HTMLElement>("[data-ski-best]")!;
+  const formatResult = new Intl.NumberFormat("pt-BR", { useGrouping: true });
   const score = dialog.querySelector<HTMLElement>("[data-ski-score]")!;
   const sound = dialog.querySelector<HTMLButtonElement>("[data-ski-sound]")!;
   let muted = false;
@@ -51,8 +53,10 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   let previous = 0;
   let accumulator = 0;
   let pointer: { id: number; heading: number } | null = null;
+  let usingKeyboard = false;
   const available = () => dialog.open && !dialog.inert && !document.hidden;
   const setText = (element: HTMLElement, value: string) => { if (element.textContent !== value) element.textContent = value; };
+  const capturing = () => game.phase === "over" && feedback.endAge + 1e-6 < SKI_CAPTURE_DURATION;
   const persist = () => {
     best = Math.max(best, Math.floor(game.distance));
     bestScore = Math.max(bestScore, game.score);
@@ -64,31 +68,34 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const render = () => {
     best = Math.max(best, Math.floor(game.distance));
     bestScore = Math.max(bestScore, game.score);
-    drawSki(canvas, game, sprites, feedback, reducedMotion.matches);
+    const balanceHint = touchControls.matches && !usingKeyboard ? "toque em [DESCER]." : "pressione ↓ / S.";
+    drawSki(canvas, game, sprites, feedback, balanceHint, reducedMotion.matches);
     setText(distance, `${String(Math.floor(game.distance)).padStart(4, "0")} m`);
     setText(record, `${String(best).padStart(4, "0")} m`);
     setText(score, String(game.score).padStart(4, "0"));
     const labels = { ready: "Uma pista pela frente.", running: "", paused: "Descida pausada", over: "Fim da descida. Alguém alcançou você." };
-    message.hidden = game.phase === "running" || (game.phase === "over" && feedback.endAge < 0.7);
+    const showResults = game.phase === "over" && !capturing();
+    message.hidden = game.phase === "running" || capturing();
     message.classList.toggle("is-over", game.phase === "over");
     message.classList.toggle("is-ready", game.phase === "ready");
     message.classList.toggle("is-paused", game.phase === "paused");
     intro.hidden = game.phase !== "ready";
-    resultVersion.hidden = game.phase !== "over";
     messageText.hidden = game.phase === "ready" || game.phase === "over";
-    gameOverText.hidden = game.phase !== "over";
-    results.hidden = game.phase !== "over";
+    gameOverText.hidden = !showResults;
+    results.hidden = !showResults;
     setText(messageText, labels[game.phase]);
-    if (game.phase === "over") {
-      setText(resultScore, String(game.score));
-      setText(resultDistance, `${Math.floor(game.distance)} m`);
-      setText(resultNearMisses, String(game.nearMisses));
-      setText(resultBest, String(bestScore));
-      setText(resultRecordLabel, game.score > runBestScore ? "NOVO RECORDE" : "MELHOR PONTUAÇÃO");
+    if (showResults) {
+      setText(resultScore, formatResult.format(game.score));
+      setText(resultDistance, `${formatResult.format(Math.floor(game.distance))} m`);
+      setText(resultNearMisses, formatResult.format(game.nearMisses));
+      const improvement = game.score - runBestScore;
+      setText(resultBest, improvement > 0 ? `+${formatResult.format(improvement)}` : formatResult.format(bestScore));
+      setText(resultRecordLabel, improvement > 0 ? "Novo recorde" : "Melhor pontuação");
+      resultRecord.classList.toggle("is-new-record", improvement > 0);
     }
     const actions = { ready: "[INICIAR]", running: "[PAUSAR]", paused: "[CONTINUAR]", over: "[NOVA DESCIDA]" };
     setText(toggle, actions[game.phase]);
-    toggle.disabled = false;
+    toggle.disabled = capturing();
     restart.hidden = game.phase === "ready" || game.phase === "over";
   };
   const clearInput = () => {
@@ -101,7 +108,7 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   };
   const pause = () => {
     stop(); clearInput(); game.pause();
-    if (game.phase === "over") feedback.endAge = Math.max(0.7, feedback.endAge);
+    if (game.phase === "over") feedback.endAge = Math.max(SKI_CAPTURE_DURATION, feedback.endAge);
     persist(); render();
   };
   const input = () => {
@@ -124,8 +131,12 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
         const before = game.distance;
         game.tick(input());
         feedback.step(game, (game.distance - before) / 0.16, SKI_STEP, game.events);
-        audio.events(game.events);
-        if ((game.phase as string) === "over") { audio.stop(); clearInput(); persist(); }
+        if ((game.phase as string) === "over") {
+          audio.capture(SKI_CAPTURE_CONTACT);
+          clearInput(); persist();
+        } else {
+          audio.events(game.events);
+        }
       } else {
         feedback.step(game, 0, SKI_STEP, []);
       }
@@ -133,11 +144,11 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
     }
     audio.update(game, feedback.carve);
     render();
-    if (game.phase === "running" || (game.phase === "over" && feedback.endAge < 1)) frame = requestAnimationFrame(loop);
+    if (game.phase === "running" || capturing()) frame = requestAnimationFrame(loop);
     else { clearInput(); persist(); }
   };
   const play = () => {
-    if (!available()) return;
+    if (!available() || capturing()) return;
     if (game.phase === "running") { pause(); return; }
     audio.unlock();
     stop(); clearInput();
@@ -165,6 +176,7 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (["ArrowLeft", "ArrowRight", "ArrowDown", "a", "d", "s"].includes(key)) {
       event.preventDefault(); keys.add(key);
+      usingKeyboard = true;
     } else if ([" ", "Enter"].includes(key) && !(event.target instanceof Element && event.target.closest("button"))) {
       event.preventDefault(); if (!event.repeat) play();
     }
@@ -179,6 +191,7 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   canvas.addEventListener("pointerdown", event => {
     if (!available() || game.phase !== "running" || !event.isPrimary || event.button !== 0) return;
     event.preventDefault(); canvas.focus({ preventScroll: true });
+    if (event.pointerType === "touch") usingKeyboard = false;
     pointer = { id: event.pointerId, heading: pointerHeading(event) }; canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener("pointermove", event => { if (pointer?.id === event.pointerId) pointer.heading = pointerHeading(event); });
@@ -190,6 +203,7 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
     button.addEventListener("pointerdown", event => {
       if (game.phase !== "running" || !available() || event.button !== 0) return;
       event.preventDefault(); touches.set(event.pointerId, button.dataset.skiControl!);
+      usingKeyboard = false;
       button.classList.add("is-pressed"); button.setPointerCapture(event.pointerId);
     });
     const up = (event: PointerEvent) => { touches.delete(event.pointerId); button.classList.remove("is-pressed"); };

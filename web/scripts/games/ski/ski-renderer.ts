@@ -1,8 +1,16 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
-import { SKI_HEIGHT, SKI_WIDTH, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
-import type { SkiFeedback } from "./ski-feedback";
+import { SKI_HEIGHT, SKI_MAX_HEADING, SKI_TRAIL_LIFETIME, SKI_WIDTH, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
+import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, type SkiFeedback } from "./ski-feedback";
 
-const names = ["skier-down", "skier-left", "skier-right", "pine", "rock", "tracks", "yeti-glimpse", "yeti-idle", "yeti-run-01", "yeti-run-02"] as const;
+const names = [
+  "skier-front", "skier-left", "skier-right",
+  "skier-diagonal-left", "skier-diagonal-left-01", "skier-diagonal-left-02",
+  "skier-diagonal-right", "skier-diagonal-right-01", "skier-diagonal-right-02",
+  "skier-stumble-left", "skier-stumble-right", "skier-fall-left", "skier-fall-right",
+  "skier-recover-left", "skier-recover-right",
+  "shadow-pine", "shadow-rock", "shadow-skis",
+  "pine", "rock", "tracks", "yeti-glimpse", "yeti-idle", "yeti-run-01", "yeti-run-02",
+] as const;
 type Sprite = typeof names[number];
 type Theme = "light" | "dark";
 type Sprites = Record<Theme, Record<Sprite, HTMLImageElement>>;
@@ -18,8 +26,73 @@ export const loadSkiSprites = async (base: string): Promise<Sprites> => {
   return sprites;
 };
 
+const skierSprite = (game: SkiEngine, stride: number, reducedMotion: boolean): Sprite => {
+  if (game.balance) return `skier-${game.balance.pose}-${game.balance.side}`;
+  const heading = Math.abs(game.player.heading);
+  if (heading <= 0.15) return "skier-front";
+  const side = game.player.heading < 0 ? "left" : "right";
+  // The original lateral poses face opposite to their filenames.
+  if (heading >= SKI_MAX_HEADING - 0.08) return side === "left" ? "skier-right" : "skier-left";
+  if (reducedMotion || heading < Math.PI * 0.28) return `skier-diagonal-${side}`;
+  return `skier-diagonal-${side}-${stride < 0.5 ? "01" : "02"}`;
+};
+
+const drawSkiTrails = (context: CanvasRenderingContext2D, game: SkiEngine, groove: string, ridge: string) => {
+  const last = game.trails.at(-1);
+  const liveTip = last && last.age > 0 && game.skisOnSnow && game.phase !== "over"
+    ? { ...last, x: game.player.x, y: game.player.y - 4, heading: game.player.heading, age: 0, connected: true }
+    : undefined;
+
+  for (let index = 0; index <= game.trails.length; index++) {
+    const trail = game.trails[index] ?? liveTip;
+    if (!trail) break;
+    const previous = trail.connected ? game.trails[index - 1] : undefined;
+    const turn = trail.heading - (previous?.heading ?? trail.heading);
+    const distance = previous ? Math.hypot(trail.x - previous.x, trail.y - previous.y) : 0;
+    const pressure = Math.min(1, Math.abs(turn) * 55 / Math.max(1, distance));
+    const acrossX = Math.cos(trail.heading);
+    const acrossY = -Math.sin(trail.heading);
+    const previousAcrossX = previous ? Math.cos(previous.heading) : acrossX;
+    const previousAcrossY = previous ? -Math.sin(previous.heading) : acrossY;
+    const horizontalEdge = Math.abs(acrossX) >= Math.abs(acrossY);
+    const seed = previous?.tick ?? trail.tick;
+    context.globalAlpha = 1 - (trail.age / SKI_TRAIL_LIFETIME) ** 1.35;
+
+    for (const side of [-1, 1]) {
+      const load = side === -Math.sign(turn) ? pressure : 0;
+      const endX = Math.round(trail.x + side * acrossX * 9);
+      const endY = Math.round(trail.y + side * acrossY * 9);
+      const startX = Math.round(previous ? previous.x + side * previousAcrossX * 9 : endX + acrossY * 3);
+      const startY = Math.round(previous ? previous.y + side * previousAcrossY * 9 : endY - acrossX * 3);
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const steps = Math.max(Math.abs(dx), Math.abs(dy));
+      const edgeX = horizontalEdge ? side * Math.sign(acrossX) : 0;
+      const edgeY = horizontalEdge ? 0 : side * Math.sign(acrossY);
+
+      // Draw on integer pixels and group the grain into short, stable patches.
+      for (let step = previous ? 1 : 0; step <= steps; step++) {
+        const x = startX + Math.round(dx * step / steps);
+        const y = startY + Math.round(dy * step / steps);
+        const grain = Math.imul((seed * 31 + Math.floor(step / 3) * 17) ^ side, 0x9e3779b9);
+        const texture = ((grain ^ (grain >>> 16)) >>> 24) / 256;
+        context.fillStyle = groove;
+        context.fillRect(x, y, 1, 1);
+        if (texture < 0.3 + load * 0.45) {
+          context.fillRect(x + edgeX, y + edgeY, 1, 1);
+        }
+        if (texture < 0.12 + load * 0.45) {
+          context.fillStyle = ridge;
+          context.fillRect(x + edgeX * 2, y + edgeY * 2, 1, 1);
+        }
+      }
+    }
+  }
+  context.globalAlpha = 1;
+};
+
 /** Scene presentation only. All positions and progression come from the engine. */
-export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Sprites, feedback: SkiFeedback, reducedMotion = false) => {
+export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Sprites, feedback: SkiFeedback, balanceHint: string, reducedMotion = false) => {
   const context = canvas.getContext("2d");
   if (!context) return;
   const style = getComputedStyle(canvas);
@@ -27,22 +100,22 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
   const bank = sprites[dark ? "dark" : "light"];
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, SKI_WIDTH, SKI_HEIGHT);
-  context.fillStyle = style.getPropertyValue("--ski-track-tone").trim();
-  for (const trail of game.trails) {
-    const dx = Math.round(Math.cos(trail.heading) * 9);
-    const dy = Math.round(Math.sin(trail.heading) * 9);
-    // Rasterize short angled tracks on integer pixels, without rotating the art.
-    for (const side of [-1, 1]) {
-      for (let i = 0; i < 6; i++) {
-        context.fillRect(Math.round(trail.x + side * dx + Math.sin(trail.heading) * i),
-          Math.round(trail.y - side * dy + Math.cos(trail.heading) * i), 1, 1);
-      }
-    }
-  }
-  const draw = (name: Sprite, x: number, y: number) => {
+  drawSkiTrails(context, game, style.getPropertyValue("--ski-track-tone").trim(),
+    style.getPropertyValue("--ski-track-ridge-tone").trim());
+  const draw = (name: Sprite, x: number, y: number, anchorY = bank[name].height) => {
     const image = bank[name];
-    context.drawImage(image, Math.round(x - image.width), Math.round(y - image.height * 2), image.width * 2, image.height * 2);
+    context.drawImage(image, Math.round(x - image.width), Math.round(y - anchorY * 2), image.width * 2, image.height * 2);
   };
+  const ending = game.phase === "over";
+  const captured = ending && feedback.endAge >= SKI_CAPTURE_CONTACT;
+  const wobble = !reducedMotion && game.balance?.pose === "stumble"
+    ? Math.sin(game.elapsed * 48) * feedback.impact * 12 : 0;
+  const playerX = game.player.x + wobble;
+  // The contact line sits three source pixels below the top of each shadow.
+  for (const { kind, x, y } of game.objects) {
+    if (kind !== "tracks") draw(`shadow-${kind}`, x, y, 3);
+  }
+  draw("shadow-skis", playerX, game.player.y, 3);
   const scene: { y: number; render: () => void }[] = game.objects.map(object => ({
     y: object.y,
     render: () => draw(object.kind, object.x, object.y),
@@ -58,15 +131,30 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
     } });
   }
   scene.push({ y: game.player.y, render: () => {
-    if (game.phase === "over" && feedback.endAge > 0.18) return;
-    if (game.stumble > 0) context.globalAlpha = 0.75;
-    const wobble = reducedMotion ? 0 : Math.sin(game.elapsed * 48) * feedback.impact * 12;
-    draw(game.player.heading < -0.15 ? "skier-right" : game.player.heading > 0.15 ? "skier-left" : "skier-down", game.player.x + wobble, game.player.y);
-    context.globalAlpha = 1;
+    if (!captured) {
+      draw(skierSprite(game, feedback.stride, reducedMotion), playerX, game.player.y);
+      return;
+    }
+    const front = bank["skier-front"];
+    const x = Math.round(playerX);
+    const y = Math.round(game.player.y);
+    // The bottom rows of the front sprite contain the ski tips.
+    context.drawImage(front, 7, 28, 3, 4, x - 13, y - 7, 6, 8);
+    context.drawImage(front, 14, 28, 3, 4, x + 7, y - 11, 6, 8);
   } });
   if (game.yeti) {
     const enemy = game.yeti;
-    scene.push({ y: enemy.y, render: () => draw(game.phase === "over" ? "yeti-idle" : Math.floor(enemy.age * 6) % 2 ? "yeti-run-02" : "yeti-run-01", enemy.x, enemy.y) });
+    const approach = ending && !reducedMotion ? Math.min(1, feedback.endAge / SKI_CAPTURE_CONTACT) : 0;
+    const settle = captured && !reducedMotion
+      ? Math.min(1, (feedback.endAge - SKI_CAPTURE_CONTACT) / (SKI_CAPTURE_DURATION - SKI_CAPTURE_CONTACT)) : 0;
+    const direction = Math.sign(game.player.x - enemy.x) || 1;
+    const x = enemy.x + (game.player.x - enemy.x) * approach + direction * settle * 11;
+    const y = enemy.y + (game.player.y + 4 - enemy.y) * approach - settle * 15;
+    const sprite = captured || (ending && reducedMotion) ? "yeti-idle"
+      : Math.floor((enemy.age + (ending ? feedback.endAge : 0)) * 6) % 2 ? "yeti-run-02" : "yeti-run-01";
+    // At contact the yeti overlaps the skier, then the skier's skis remain in front.
+    scene.push({ y: ending && !captured && !reducedMotion && approach > 0.85 ? game.player.y + 1 : y,
+      render: () => draw(sprite, x, y) });
   }
   if (feedback.retreat) {
     const enemy = feedback.retreat;
@@ -88,14 +176,21 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
   context.font = `500 13px ${style.getPropertyValue("--font-mono").trim() || "monospace"}`;
   context.textAlign = "center";
   context.textBaseline = "middle";
-  for (const caption of feedback.captions) {
-    context.globalAlpha = Math.min(1, (caption.life - caption.age) / 0.2);
-    const y = Math.round(caption.y - (reducedMotion ? 0 : caption.age * 16));
-    const width = context.measureText(caption.text).width + 16;
+  const drawCaption = (text: string, x: number, y: number, opacity: number) => {
+    context.globalAlpha = opacity;
+    const width = context.measureText(text).width + 16;
     context.fillStyle = style.getPropertyValue("--color-surface-canvas").trim();
-    context.fillRect(Math.round(caption.x - width / 2), y - 12, Math.ceil(width), 24);
+    context.fillRect(Math.round(x - width / 2), y - 12, Math.ceil(width), 24);
     context.fillStyle = style.getPropertyValue("--color-text-primary").trim();
-    context.fillText(caption.text, Math.round(caption.x), y);
+    context.fillText(text, Math.round(x), y);
+  };
+  for (const caption of feedback.captions) {
+    const y = Math.round(caption.y - (reducedMotion ? 0 : caption.age * 16));
+    drawCaption(caption.text, caption.x, y, Math.min(1, (caption.life - caption.age) / 0.2));
+  }
+  if (game.phase === "running" && game.balance?.pose === "stumble" && !game.balance.corrected) {
+    const x = Math.max(100, Math.min(SKI_WIDTH - 100, game.player.x));
+    drawCaption(balanceHint, x, game.player.y + 17, 1);
   }
   context.globalAlpha = 1;
 };

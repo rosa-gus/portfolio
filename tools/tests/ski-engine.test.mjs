@@ -13,6 +13,9 @@ const rng = () => {
 
 // Invert downhillRatio = cos(heading) * (0.35 + 0.65 * cos(heading)).
 const headingForDescent = ratio => Math.acos((-0.35 + Math.sqrt(0.35 ** 2 + 2.6 * ratio)) / 1.3);
+const obstacleAtPlayer = (game, kind = "rock") => ({
+  id: 999, kind, x: game.player.x + 8, y: game.player.y + 2, hit: false,
+});
 const closePass = (ratio, kind = "pine", distance = 0, side = 1) => {
   const game = new SkiEngine(rng());
   game.start();
@@ -129,23 +132,91 @@ test("pointer headings persist, clamp to the slope, and ignore non-finite input"
   assert.equal(game.player.heading, SKI_MAX_HEADING);
 });
 
-test("obstacle collisions slow instead of killing; footprints do not collide", () => {
+test("only obstacles start a stumble; the balance window freezes while paused", () => {
   const game = new SkiEngine(rng());
   game.start();
-  const object = kind => ({ id: 999, kind, x: game.player.x, y: game.player.y + 2, hit: false });
-  game.objects = [object("tracks")];
+  game.objects = [obstacleAtPlayer(game, "tracks")];
   game.tick();
-  assert.equal(game.stumble, 0);
-  game.objects = [object("rock")];
+  assert.equal(game.balance, null);
+  game.objects = [obstacleAtPlayer(game)];
   game.tick();
-  assert.equal(game.stumble, 1.1);
+  assert.equal(game.balance.pose, "stumble");
+  assert.equal(game.balance.side, "left");
   assert.equal(game.objects[0].hit, true);
   assert.equal(game.phase, "running");
-  const speed = game.speed;
+  assert.deepEqual(game.events.map(event => event.type), ["collision"]);
+  game.pause();
+  const frozen = JSON.stringify(game);
+  advance(game, 80, { steer: 0, downhill: true });
+  assert.equal(JSON.stringify(game), frozen);
+  game.start();
+
+  // A single press while already facing downhill still counts.
   game.tick({ steer: 0, downhill: true });
-  assert.ok(game.speed < speed / 2);
-  advance(game, 70);
-  assert.equal(game.stumble, 0);
+  assert.deepEqual(game.events, [{ type: "ski-contact" }]);
+  assert.equal(game.trails.at(-1).age, 0);
+  assert.equal(game.trails.at(-1).connected, false);
+  const slowed = game.speed;
+  assert.ok(slowed < 150);
+  game.tick({ steer: 0, downhill: true });
+  assert.equal(game.events.some(event => event.type === "ski-contact"), false);
+  advance(game, 9);
+  assert.deepEqual([game.balance.pose, game.balance.afterFall], ["recover", false]);
+  assert.equal(game.trails.at(-1).connected, true);
+  assert.ok(game.speed > slowed);
+  advance(game, 30);
+  assert.equal(game.balance, null);
+  assert.ok(game.speed >= 240);
+});
+
+test("steering or aiming into the fall line in time avoids a fall", () => {
+  for (const [heading, input] of [
+    [SKI_MAX_HEADING, { steer: 0, downhill: true }],
+    [-1.1, { steer: 1 }],
+    [1.1, { steer: 0, heading: 0.1 }],
+  ]) {
+    const game = new SkiEngine(rng());
+    game.start();
+    game.player.heading = heading;
+    game.objects = [obstacleAtPlayer(game, "pine")];
+    game.tick();
+    assert.equal(game.balance.pose, "stumble");
+    advance(game, 30, input);
+    assert.deepEqual([game.balance.pose, game.balance.afterFall], ["recover", false]);
+    assert.ok(Math.abs(game.player.heading) <= 0.28);
+  }
+});
+
+test("missing the balance window causes one fall, then an automatic recovery", () => {
+  const game = new SkiEngine(rng());
+  game.start();
+  game.objects = [obstacleAtPlayer(game)];
+  game.tick();
+  advance(game, 41);
+  assert.equal(game.balance.pose, "stumble", "neutral controls don't correct a stumble by themselves");
+  const stumbleSpeed = game.speed;
+  game.tick();
+  assert.equal(game.balance.pose, "fall");
+  assert.deepEqual(game.events.map(({ type, side }) => [type, side]), [["fall", "left"]]);
+  const fallSpeed = game.speed;
+  assert.ok(fallSpeed < stumbleSpeed / 2);
+  assert.equal(game.phase, "running");
+  const trails = game.trails.length;
+  advance(game, 38, { steer: 1 });
+  assert.equal(game.balance.pose, "fall");
+  assert.equal(game.player.heading, 0);
+  assert.ok(game.trails.length <= trails);
+  assert.equal(game.events.some(event => event.type === "fall"), false);
+  game.tick();
+  assert.deepEqual([game.balance.pose, game.balance.afterFall], ["recover", true]);
+  assert.deepEqual(game.events, [{ type: "ski-contact" }]);
+  assert.equal(game.trails.at(-1).age, 0);
+  assert.equal(game.trails.at(-1).connected, false);
+  advance(game, 20);
+  assert.ok(game.speed > fallSpeed && game.speed < 240);
+  advance(game, 20);
+  assert.equal(game.balance, null);
+  assert.ok(game.speed >= 240);
 });
 
 test("clues precede pursuit and capture freezes the ended game", () => {
@@ -206,14 +277,19 @@ test("escaping requires a real gap rather than simply surviving a timer", () => 
 });
 
 test("turning and collision recovery let the yeti gain ground without overshooting", () => {
-  for (const stumble of [0, 1.1]) {
+  for (const hit of [false, true]) {
     const game = new SkiEngine(rng());
     game.start(); game.distance = SKI_FIRST_YETI + 1; game.objects = [];
     game.tick();
     game.yeti.x = game.player.x;
     game.yeti.y = game.player.y - 90;
-    game.stumble = stumble;
-    game.player.heading = stumble ? 0 : headingForDescent(0.6);
+    if (hit) {
+      game.objects = [obstacleAtPlayer(game)];
+      game.tick({ steer: 0, downhill: true });
+      assert.equal(game.balance.pose, "stumble");
+    } else {
+      game.player.heading = headingForDescent(0.6);
+    }
     const before = game.player.y - game.yeti.y;
     game.tick();
     assert.ok(game.player.y - game.yeti.y < before);
@@ -396,7 +472,7 @@ test("the yeti silently peeks behind a lateral pine only after its tree becomes 
   advance(game, 100);
   assert.equal(game.glimpse, null);
   assert.equal(game.yeti, null);
-  assert.equal(game.stumble, 0);
+  assert.equal(game.balance, null);
   game.distance = 1850; game.terrainRow = 0; game.spawnDistance = 135;
   game.tick();
   assert.equal(game.glimpse, null, "only one glimpse per encounter");
@@ -430,7 +506,7 @@ test("pursuit and reset remove the glimpse without turning it into a collidable 
   game.player.x = tree.x + game.glimpse.side * 40;
   tree.y = game.player.y + 2;
   game.tick();
-  assert.equal(game.stumble, 0);
+  assert.equal(game.balance, null);
   assert.equal(game.nearMisses, 0);
   assert.deepEqual(game.events, []);
   game.distance = SKI_FIRST_YETI + 1;
@@ -480,12 +556,15 @@ test("reset clears pursuit, records of the run, heading, and trails", () => {
   const game = new SkiEngine(rng());
   game.start(); game.distance = 900;
   advance(game, 30, { steer: 1, downhill: true });
+  game.objects = [obstacleAtPlayer(game)];
+  game.tick();
+  assert.equal(game.balance.pose, "stumble");
   game.reset();
   assert.equal(game.phase, "ready");
   assert.equal(game.distance, 0);
   assert.equal(game.elapsed, 0);
   assert.equal(game.yeti, null);
-  assert.equal(game.stumble, 0);
+  assert.equal(game.balance, null);
   assert.equal(game.escapes, 0);
   assert.equal(game.slalom, null);
   assert.deepEqual(game.trails, []);

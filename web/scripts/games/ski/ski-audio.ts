@@ -5,6 +5,7 @@ const urls = {
   slide: new URL("./audio/ski-slide-loop.wav", import.meta.url),
   pine: new URL("./audio/impact-pine.ogg", import.meta.url),
   rock: new URL("./audio/impact-rock.ogg", import.meta.url),
+  fall: new URL("./audio/impact-fall.ogg", import.meta.url),
   bell: new URL("./audio/near-miss-bell.ogg", import.meta.url),
   step: new URL("./audio/yeti-step.ogg", import.meta.url),
   appear: new URL("./audio/yeti-appear.ogg", import.meta.url),
@@ -46,7 +47,7 @@ export const createSkiAudio = () => {
     } catch { /* Audio is optional; the simulation and visual feedback continue. */ }
   };
 
-  const play = async (name: Sound, volume: number) => {
+  const play = async (name: Sound, volume: number, clip?: { duration: number; delay?: number; rate?: number }) => {
     if (muted) return;
     const token = generation;
     const buffer = await buffers.get(name);
@@ -58,7 +59,16 @@ export const createSkiAudio = () => {
     source.connect(gain).connect(master);
     playing.add(source);
     source.onended = () => { playing.delete(source); source.disconnect(); gain.disconnect(); };
-    source.start();
+    if (clip) {
+      const start = context.currentTime + (clip.delay ?? 0);
+      source.playbackRate.value = clip.rate ?? 1;
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(volume, start, 0.01);
+      gain.gain.setTargetAtTime(0, start + clip.duration / 3, clip.duration / 7);
+      source.start(start, 0, clip.duration);
+    } else {
+      source.start();
+    }
   };
 
   const startSlide = async () => {
@@ -92,6 +102,11 @@ export const createSkiAudio = () => {
     if (items.length && context) duckUntil = context.currentTime + 0.3;
     for (const event of items) {
       if (event.type === "collision") void play(event.kind, 0.7);
+      if (event.type === "fall") {
+        void play("fall", 0.7);
+        void play("slide", 0.14, { delay: 0.07, duration: 0.18 });
+      }
+      if (event.type === "ski-contact") void play("slide", 0.11, { duration: 0.11 });
       if (event.type === "near-miss" && context && context.currentTime >= nextBell) {
         void play("bell", 0.3);
         nextBell = context.currentTime + 0.12;
@@ -107,11 +122,11 @@ export const createSkiAudio = () => {
       // Keep the loop behind discrete cues: quiet even at full speed, with a soft
       // attack, less bright friction, and only a small change in pitch.
       const speed = Math.min(1, game.speed / 360);
-      const volume = (0.03 + carve * 0.004) * speed ** 1.6;
+      const volume = (0.025 + carve * 0.009) * speed ** 1.6;
       const duck = context.currentTime < duckUntil ? 0.45 : 1;
       slide.gain.gain.setTargetAtTime(muted ? 0 : volume * duck, context.currentTime, 0.22);
       slide.source.playbackRate.setTargetAtTime(0.94 + speed * 0.06, context.currentTime, 0.35);
-      slide.lowpass.frequency.setTargetAtTime(1200 + speed * 800, context.currentTime, 0.3);
+      slide.lowpass.frequency.setTargetAtTime(1150 + speed * 650 + carve * 300, context.currentTime, 0.2);
     }
     if (game.yeti && game.yeti.age >= nextStep) {
       const proximity = Math.max(0, 1 - Math.hypot(game.yeti.x - game.player.x, game.yeti.y - game.player.y) / 400);
@@ -134,5 +149,9 @@ export const createSkiAudio = () => {
     muted = value;
     if (master && context) master.gain.setTargetAtTime(muted ? 0 : 0.5, context.currentTime, 0.03);
   };
-  return { unlock, events, update, stop, setMuted };
+  const capture = (delay: number) => {
+    stop();
+    void play("step", 0.85, { delay, duration: 0.22, rate: 0.72 });
+  };
+  return { unlock, events, update, stop, setMuted, capture };
 };

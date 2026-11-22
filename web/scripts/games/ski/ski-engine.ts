@@ -6,11 +6,18 @@
 export type SkiPhase = "ready" | "running" | "paused" | "over";
 export type SkiInput = { steer: number; downhill?: boolean; heading?: number };
 export type SkiObject = { id: number; kind: "pine" | "rock" | "tracks"; x: number; y: number; hit: boolean; passed?: boolean; clearance?: number; slowPass?: boolean };
-export type SkiTrail = { x: number; y: number; heading: number; age: number };
+export type SkiTrail = { x: number; y: number; heading: number; age: number; tick: number; connected: boolean };
+type SkiBalance = { side: "left" | "right"; ticks: number } & (
+  | { pose: "stumble"; corrected: boolean }
+  | { pose: "fall" }
+  | { pose: "recover"; afterFall: boolean }
+);
 export type SkiEvent =
   | { type: "collision"; kind: "pine" | "rock"; x: number; y: number }
   | { type: "near-miss"; x: number; y: number; points: number }
+  | { type: "fall"; side: SkiBalance["side"]; x: number; y: number }
   | { type: "yeti-appear" | "escape" | "capture" | "slalom-end"; x: number; y: number }
+  | { type: "ski-contact" }
   | { type: "slalom-start"; level: number };
 export type SkiSlalom = {
   level: number; gates: number; spacing: number; halfWidth: number; amplitude: number;
@@ -21,7 +28,16 @@ export const SKI_HEIGHT = 360;
 export const SKI_STEP = 1 / 60;
 export const SKI_MAX_HEADING = Math.PI / 2;
 const TURN_RATE = Math.PI * 0.85;
-const STUMBLE_DURATION = 1.1;
+const BALANCE_TICKS = Math.round(0.7 / SKI_STEP);
+const MIN_STUMBLE_TICKS = Math.round(0.12 / SKI_STEP);
+const FALL_TICKS = Math.round(0.65 / SKI_STEP);
+const RECOVERY_TICKS = Math.round(0.45 / SKI_STEP);
+const FALL_RECOVERY_TICKS = Math.round(0.65 / SKI_STEP);
+const BALANCE_HEADING = 0.28;
+const STUMBLE_SPEED = 0.52;
+const FALL_SPEED = 0.2;
+const TRAIL_SPACING = 8;
+export const SKI_TRAIL_LIFETIME = 0.8;
 export const SKI_DISTANCE_INTERVAL = 10;
 export const SKI_DISTANCE_POINTS = 10;
 export const SKI_NEAR_MISS_POINTS = 50;
@@ -46,7 +62,7 @@ export class SkiEngine {
   trails: SkiTrail[] = [];
   yeti: { x: number; y: number; age: number } | null = null;
   glimpse: { treeId: number; side: number; age: number } | null = null;
-  stumble = 0;
+  balance: SkiBalance | null = null;
   escapes = 0;
   nearMisses = 0;
   slalom: SkiSlalom | null = null;
@@ -55,6 +71,7 @@ export class SkiEngine {
   private nextYeti = SKI_FIRST_YETI;
   private spawnDistance = 0;
   private trailDistance = 0;
+  private trailConnected = false;
   private sequence = 0;
   private terrainRow = 0;
   private laneCenter = SKI_WIDTH / 2;
@@ -73,7 +90,8 @@ export class SkiEngine {
 
   reset() {
     this.phase = "ready";
-    this.distance = this.elapsed = this.speed = this.stumble = this.escapes = this.nearMisses = 0;
+    this.distance = this.elapsed = this.speed = this.escapes = this.nearMisses = 0;
+    this.balance = null;
     this.events = [];
     this.player = { x: SKI_WIDTH / 2, y: 142, heading: 0 };
     this.velocity = { x: 0, y: 0 };
@@ -88,6 +106,7 @@ export class SkiEngine {
     this.recoveryRows = 0;
     this.nextYeti = SKI_FIRST_YETI;
     this.spawnDistance = this.trailDistance = this.sequence = 0;
+    this.trailConnected = false;
     this.terrainRow = 0;
     this.laneCenter = SKI_WIDTH / 2;
     this.laneDirection = this.random() < 0.5 ? -1 : 1;
@@ -203,28 +222,77 @@ export class SkiEngine {
     if (initialGap === undefined && !resting && ++this.terrainRow % 24 === 0) this.laneDirection *= -1;
   }
 
+  private steer(input: SkiInput) {
+    const previousHeading = this.player.heading;
+    const maxTurn = TURN_RATE * SKI_STEP;
+    const pointerHeading = input.heading !== undefined && Number.isFinite(input.heading)
+      ? clamp(input.heading, -SKI_MAX_HEADING, SKI_MAX_HEADING) : undefined;
+    const target = input.downhill || this.balance?.pose === "fall" ? 0 : pointerHeading;
+    const steer = Number.isFinite(input.steer) ? clamp(input.steer, -1, 1) : 0;
+    this.player.heading = target === undefined
+      ? clamp(previousHeading + steer * maxTurn, -SKI_MAX_HEADING, SKI_MAX_HEADING)
+      : previousHeading + clamp(target - previousHeading, -maxTurn, maxTurn);
+    const heading = Math.abs(this.player.heading);
+    return heading <= BALANCE_HEADING
+      && (target !== undefined ? Math.abs(target) <= BALANCE_HEADING : heading < Math.abs(previousHeading));
+  }
+
+  private plantSkis() {
+    this.trailDistance = TRAIL_SPACING;
+    this.events.push({ type: "ski-contact" });
+  }
+
+  get skisOnSnow() {
+    return !this.balance || this.balance.pose === "recover" || (this.balance.pose === "stumble" && this.balance.corrected);
+  }
+
+  private advanceBalance(corrected: boolean) {
+    const balance = this.balance;
+    if (!balance) return 1;
+    balance.ticks++;
+    if (balance.pose === "stumble") {
+      if (corrected && !balance.corrected) {
+        balance.corrected = true;
+        this.plantSkis();
+      }
+      if (balance.corrected && balance.ticks >= MIN_STUMBLE_TICKS) {
+        this.balance = { pose: "recover", side: balance.side, ticks: 0, afterFall: false };
+      } else if (balance.ticks >= BALANCE_TICKS) {
+        this.balance = { pose: "fall", side: balance.side, ticks: 0 };
+        this.events.push({ type: "fall", side: balance.side, x: this.player.x, y: this.player.y });
+        return FALL_SPEED;
+      }
+      return STUMBLE_SPEED;
+    }
+    if (balance.pose === "fall") {
+      if (balance.ticks >= FALL_TICKS) {
+        this.balance = { pose: "recover", side: balance.side, ticks: 0, afterFall: true };
+        this.plantSkis();
+      }
+      return FALL_SPEED;
+    }
+    const duration = balance.afterFall ? FALL_RECOVERY_TICKS : RECOVERY_TICKS;
+    if (balance.ticks >= duration) {
+      this.balance = null;
+      return 1;
+    }
+    const progress = balance.ticks / duration;
+    const eased = progress * progress * (3 - 2 * progress);
+    const minimum = balance.afterFall ? FALL_SPEED : STUMBLE_SPEED;
+    return minimum + (1 - minimum) * eased;
+  }
+
   /** Advance precisely one 1/60-second step. Paused games do not consume RNG. */
   tick(input: SkiInput = { steer: 0 }) {
     if (this.phase !== "running") return;
     this.events = [];
     const dt = SKI_STEP;
     this.elapsed += dt;
-    this.stumble = Math.max(0, this.stumble - dt);
-    const steer = Number.isFinite(input.steer) ? clamp(input.steer, -1, 1) : 0;
-    if (input.downhill) {
-      this.player.heading += clamp(-this.player.heading, -TURN_RATE * dt, TURN_RATE * dt);
-    } else if (input.heading !== undefined && Number.isFinite(input.heading)) {
-      const target = clamp(input.heading, -SKI_MAX_HEADING, SKI_MAX_HEADING);
-      this.player.heading += clamp(target - this.player.heading, -TURN_RATE * dt, TURN_RATE * dt);
-    } else {
-      this.player.heading = clamp(this.player.heading + steer * TURN_RATE * dt, -SKI_MAX_HEADING, SKI_MAX_HEADING);
-    }
+    const speedFactor = this.advanceBalance(this.steer(input));
     // Heading persists when controls are released. Gravity favors the fall line.
     const downhill = Math.max(0, Math.cos(this.player.heading));
     const base = Math.min(360, 240 + this.distance * 0.05);
-    const recovery = 1 - this.stumble / STUMBLE_DURATION;
-    const recoveryEase = recovery * recovery * (3 - 2 * recovery);
-    this.speed = base * (0.35 + 0.65 * downhill) * (0.32 + 0.68 * recoveryEase);
+    this.speed = base * (0.35 + 0.65 * downhill) * speedFactor;
     this.velocity = { x: Math.sin(this.player.heading) * this.speed, y: downhill * this.speed };
     const previousX = this.player.x;
     this.player.x = clamp(previousX + this.velocity.x * dt, 26, SKI_WIDTH - 26);
@@ -232,7 +300,9 @@ export class SkiEngine {
     const fastPass = this.velocity.y >= base * SKI_NEAR_MISS_MIN_DESCENT_RATIO;
     this.distance += travel * 0.16;
     this.spawnDistance += travel;
-    this.trailDistance += Math.hypot(this.player.x - previousX, travel);
+    if (this.skisOnSnow) {
+      this.trailDistance += Math.hypot(this.player.x - previousX, travel);
+    }
     for (const object of this.objects) object.y -= travel;
     if (this.slalom && this.slalom.lastGateY !== null) {
       this.slalom.lastGateY -= travel;
@@ -254,10 +324,12 @@ export class SkiEngine {
       if (tree && tree.y <= SKI_HEIGHT) this.glimpse.age += dt;
       if (!tree || this.slalom || this.yeti || this.glimpse.age >= SKI_YETI_GLIMPSE_DURATION) this.glimpse = null;
     }
-    this.trails = this.trails.filter(trail => trail.y > -10 && trail.age < 0.8);
-    if (this.trailDistance >= 8) {
-      this.trailDistance %= 8;
-      this.trails.push({ x: this.player.x, y: this.player.y - 4, heading: this.player.heading, age: 0 });
+    this.trails = this.trails.filter(trail => trail.y > -10 && trail.age < SKI_TRAIL_LIFETIME);
+    if (this.trailDistance >= TRAIL_SPACING) {
+      this.trailDistance %= TRAIL_SPACING;
+      this.trails.push({ x: this.player.x, y: this.player.y - 4, heading: this.player.heading, age: 0,
+        tick: Math.round(this.elapsed / SKI_STEP), connected: this.trailConnected });
+      this.trailConnected = true;
     }
     const rowSpacing = this.rowSpacing;
     if (this.spawnDistance >= rowSpacing) {
@@ -277,17 +349,20 @@ export class SkiEngine {
         if (dx < radius) {
           const alreadyHit = object.hit;
           object.hit = true;
-          if (!alreadyHit && this.stumble === 0) {
-            this.stumble = STUMBLE_DURATION;
+          if (!alreadyHit && !this.balance) {
+            const side = this.player.x < object.x ? "left" : "right";
+            this.balance = { pose: "stumble", side, ticks: 0, corrected: false };
+            this.trailDistance = 0;
+            this.trailConnected = false;
             this.events.push({ type: "collision", kind: object.kind, x: this.player.x, y: this.player.y });
           }
         }
         // An invulnerable pass must never count as a skillful dodge.
-        if (this.stumble > 0) object.hit = true;
+        if (this.balance) object.hit = true;
       }
       if (dy <= -12) {
         object.passed = true;
-        if (!object.hit && !object.slowPass && fastPass && this.stumble === 0 && object.clearance !== undefined
+        if (!object.hit && !object.slowPass && fastPass && !this.balance && object.clearance !== undefined
             && object.clearance >= radius && object.clearance < radius + 16) {
           this.nearMisses++;
           this.events.push({ type: "near-miss", x: this.player.x, y: this.player.y, points: SKI_NEAR_MISS_POINTS });
