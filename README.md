@@ -76,7 +76,9 @@ Content is embedded, so rebuild the server or static site after editing it.
 and visibility on the home grid are controlled by `archive.json`. The initial note
 is `boas vindas`. Each entry has a
 unique `slug`, `title`, `kind` (`note` or `article`), and `content` pointing to
-`documents/<slug>.md`. Optional fields are `summary` and an ISO `date` (`YYYY-MM-DD`).
+`documents/<slug>.md`. Optional fields are `summary` and a publication `date`
+(`YYYY-MM-DD`). Notes can also set `updatedAt` in the same format for
+**Última edição** in the window's ficha.
 
 Notes open in a popup with the existing Markdown styles. Articles open at
 `/article/<slug>` with a reading layout and are included in the static export.
@@ -93,6 +95,13 @@ when navigating to an article. `[REORGANIZAR]` restores the original grid.
 Edit `internal/portfolio/data/archive.json`. The `items` array is the original grid
 order, also used by `[REORGANIZAR]`. Keep each `id` unique and stable: dragged
 positions are stored by ID, independently of labels, destinations, or array order.
+
+Add `?open=<id>` to the home URL to open a visible app, note, or collection,
+or to select a project's consultation card on load. For example,
+`/portfolio/?open=ski` opens Ski and `/portfolio/?open=welcome` opens the
+welcome note. Opening an app or note sets `open` in the current URL and
+closing it removes the parameter. Opening a collection or selecting a project
+leaves the URL as it is. Articles and full case studies have their own URLs.
 
 - **Add:** append an entry referencing existing content, or create a link.
 - **Reorder:** move entries within `items`.
@@ -119,6 +128,14 @@ its component and behavior. Link `icon` is a short text mark. Links require
 an absolute HTTP(S) `url` or one profile `source`: `contact.githubURL`,
 `contact.linkedInURL`, or `contact.sourceURL`. A channel with an empty profile URL
 is omitted automatically.
+
+On wide screens, the underlined title of a note or app opens its metadata in a
+separate window. App records live in `internal/portfolio/data/apps.json`, where
+`slug` matches the archive item's `ref`. The optional fields are
+`publishedAt` (`YYYY-MM-DD`), `version`, `sourcePath` (path relative to the
+repository root), and `license` (source code license). Apps and notes can
+also define an ordered `metadata` array with `label` and `value` in each entry.
+Apps can define `credits` in the same format for their intro and metadata window.
 
 `collections` defines each folder's `id`, `label`, `symbol`, and `capabilities`.
 A project belongs to a folder when it matches any listed capability; it can

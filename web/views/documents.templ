@@ -22,7 +22,7 @@ if document.Kind == portfolio.DocumentNote {
     Class: "document-note",
     Width: "36rem", Height: "28rem", Decoration: "fold",
     Attributes: templ.Attributes{"data-document-note": document.Slug},
-}, WindowSlots{}) {
+}, WindowSlots{Record: noteRecord(document)}) {
     @ScrollArea("Conteúdo de " + document.Title, "vertical") {
         <div class="prose project-content__prose document-prose">
             @renderMarkdown(document.Content, basePath)

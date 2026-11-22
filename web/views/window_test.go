@@ -88,7 +88,7 @@ func TestWindowOmitsEmptyAreasAndPreservesInlineSemantics(t *testing.T) {
 }
 
 func TestGamesAndCollectionsUseSharedWindowAndCommandAreas(t *testing.T) {
-	for _, component := range []templ.Component{SkiGame("/portfolio"), SnakeGame(), ProjectArchiveFloating(nil, "")} {
+	for _, component := range []templ.Component{SkiGame("/portfolio", ""), SnakeGame(""), ProjectArchiveFloating(nil, "")} {
 		var output bytes.Buffer
 		if err := component.Render(context.Background(), &output); err != nil {
 			t.Fatal(err)
@@ -105,6 +105,70 @@ func TestGamesAndCollectionsUseSharedWindowAndCommandAreas(t *testing.T) {
 	}
 	assertContains(t, output.String(), `data-window-decoration="fold"`)
 	assertNotContains(t, output.String(), `data-window-commands`)
+}
+
+func TestGameAndNoteRecordsRenderInTheirWindows(t *testing.T) {
+	var output bytes.Buffer
+	const repository = "https://example.com/portfolio"
+	if err := SkiGame("", repository).Render(context.Background(), &output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	for _, want := range []string{
+		`<h2 class="window__title" id="ski-game-title"><span class="window__title-text">ski.ts</span>`,
+		`aria-describedby="ski-game-record-description" aria-controls="ski-game-record" aria-haspopup="dialog" aria-expanded="false">ski.ts</button>`,
+		`<span id="ski-game-record-description" hidden>Abre os metadados</span>`,
+		`<dialog id="ski-game-record" class="window window--record" data-window-record data-window-decoration="tab"`,
+		`id="ski-game-record-title">metadados</h2>`,
+		`href="https://example.com/portfolio/tree/main/web/scripts/games/ski"`,
+		`v0.1.0`, `GPL-3.0-only`, `SkiFree, de Chris Pirih`,
+	} {
+		assertContains(t, html, want)
+	}
+	assertNotContains(t, html, `data-tooltip`)
+
+	for _, game := range []struct {
+		component   templ.Component
+		inspiration string
+	}{
+		{SkiGame("", repository), "SkiFree, de Chris Pirih"},
+		{SnakeGame(repository), ""},
+	} {
+		output.Reset()
+		if err := game.component.Render(context.Background(), &output); err != nil {
+			t.Fatal(err)
+		}
+		html := output.String()
+		intro, record, found := strings.Cut(html, `class="window window--record"`)
+		if !found {
+			t.Fatal("game should render a metadata window")
+		}
+		assertContains(t, intro, `class="game-credits"`)
+		assertContains(t, intro, `data-credit-leader aria-hidden="true">.</span>`)
+		assertContains(t, intro, "Rosa Gus")
+		assertContains(t, record, "Rosa Gus")
+		assertNotContains(t, record, "data-credit-leader")
+		if game.inspiration == "" {
+			assertNotContains(t, html, "<dt>Inspiração</dt>")
+		} else if got := strings.Count(html, game.inspiration); got != 2 {
+			t.Errorf("inspiration should appear in the intro and the record, got %d occurrences", got)
+		}
+	}
+
+	output.Reset()
+	notes := []portfolio.Document{
+		{Slug: "sample", Title: "Sample", Kind: portfolio.DocumentNote, UpdatedAt: "2026-11-20"},
+		{Slug: "empty", Title: "Empty", Kind: portfolio.DocumentNote},
+	}
+	if err := DocumentNotes(notes, "").Render(context.Background(), &output); err != nil {
+		t.Fatal(err)
+	}
+	html = output.String()
+	assertContains(t, html, `aria-controls="note-sample-record" aria-haspopup="dialog" aria-expanded="false">Sample.md</button>`)
+	assertContains(t, html, `<time datetime="2026-11-20">20 NOV 2026</time>`)
+	assertContains(t, html, `data-window-decoration="fold"`)
+	assertContains(t, html, `<header class="window__heading" data-window-handle><h2 class="window__title" id="note-sample-title"`)
+	assertNotContains(t, html, `id="note-empty-record"`)
 }
 
 func TestArrowGlyphUsesPlexTextGlyphForEveryDirection(t *testing.T) {

@@ -1,5 +1,7 @@
 .window {
   --document-fold-size: 0px;
+  --window-frame-opacity: 1;
+  --window-shadow-opacity: 1;
   --window-viewport-height: calc(100dvh - 5rem);
   position: fixed;
   width: min(var(--window-width, 36rem), calc(100vw - 2rem));
@@ -29,6 +31,7 @@
   position: absolute;
   inset: 0;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--document-fold-size)), calc(100% - var(--document-fold-size)) 100%, 0 100%);
+  opacity: var(--window-shadow-opacity);
   pointer-events: none;
   content: "";
   transition: opacity 80ms ease-out;
@@ -61,7 +64,7 @@
   touch-action: none;
   user-select: none;
 }
-.window.is-dragging .window__heading { cursor: grabbing; }
+.window.is-dragging > .window__sheet > .window__heading { cursor: grabbing; }
 .window__title { margin: 0; font: 500 0.85rem / 1.2 var(--font-mono); overflow-wrap: anywhere; }
 .window__information { display: flex; flex: 1; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; }
 .window__information strong { color: var(--color-text-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -69,9 +72,9 @@
 .window :is(.window__close, .window__command-bar button) { min-height: 2.75rem; font: var(--type-font-control-compact); color: var(--color-text-primary); }
 .window :is(.window__close, .window__command-bar button):not(:disabled):hover { text-decoration: underline; text-underline-offset: 0.2em; }
 
-.window[data-window-decoration="tab"] .window__title {
+.window[data-window-decoration="tab"] > .window__title {
   position: absolute;
-  z-index: 1;
+  z-index: 3;
   bottom: calc(100% - 1px);
   left: 0;
   max-width: calc(100% - 1.5rem);
@@ -85,12 +88,77 @@
   border: 1px solid var(--color-border-strong);
   border-bottom: 0;
   background: var(--color-surface-raised);
+  color: var(--color-text-muted);
   font: var(--type-font-control-compact);
 }
 
+.window__record-toggle { display: none; }
+
+@media (min-width: 48rem) {
+  .window__title-text { display: none; }
+  .window__record-toggle {
+    display: block;
+    text-align: start;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  .window__record-toggle:is(:hover, :focus-visible) { color: var(--color-text-primary); }
+  .window[data-window-decoration="tab"] > .window__title:has(> .window__record-toggle) { padding-inline: 0; }
+  .window[data-window-decoration="tab"] > .window__title > .window__record-toggle {
+    height: 100%;
+    padding-inline: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline-offset: -2px;
+  }
+}
+
+/* A fixed companion shares the parent's top layer and uses viewport coordinates. */
+.window:has(> .window--record[open]) { transform: none; transition-property: opacity; }
+.window:has(> .window--record.is-behind) > .window__sheet { position: relative; z-index: 2; }
+.window--record {
+  z-index: 4;
+  --window-width: 21rem;
+  --window-height: auto;
+  transform: none;
+  transition: opacity var(--transition-fast);
+}
+.window--record.is-behind { z-index: 0; }
+.window--record > .window__sheet > .window__body { overflow: auto; }
+
+/* Apply opacity to each frame independently of the nested window. */
+.window:has(> .window--record[open]:not(.is-behind)),
+.window--record.is-open.is-behind {
+  --window-frame-opacity: 0.9;
+  --window-shadow-opacity: 0.2;
+}
+.window:is(.window--record, :has(> .window--record)) > :is(.window__title, .window__sheet) {
+  opacity: var(--window-frame-opacity);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .window:is(.window--record, :has(> .window--record)) > :is(.window__title, .window__sheet) {
+    transition: opacity var(--transition-fast);
+  }
+}
+
+.window__record-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 14ch) minmax(0, 1fr);
+  gap: 0.625rem 1rem;
+  margin: 0;
+  font: var(--type-font-meta);
+  overflow-wrap: anywhere;
+}
+.window__record-fields > div { display: contents; }
+.window__record-fields dt { color: var(--color-text-muted); text-transform: uppercase; }
+.window__record-fields dd { margin: 0; }
+.window__record-fields .ui-arrow { margin-inline-start: 0.4em; }
+
 .window__body { display: grid; grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; padding: 0.25rem 1rem 1rem; overflow: hidden; }
 .window__body > .scroll-area { align-self: stretch; --scroll-area-surface: var(--color-surface-raised); }
-.window[data-window-decoration="fold"] .window__body { padding-bottom: 2rem; }
+.window[data-window-decoration="fold"] > .window__sheet > .window__body { padding-bottom: 2rem; }
 .window__commands { padding: 0 1rem; max-height: min(45dvh, 20rem); overflow-y: auto; }
 .window__command-bar { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 0 1rem; }
 .window__actions { display: flex; align-items: center; flex: 1; flex-wrap: wrap; gap: 0 1rem; min-width: 0; }

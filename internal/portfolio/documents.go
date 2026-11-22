@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"regexp"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -18,12 +17,14 @@ const (
 )
 
 type Document struct {
-	Slug    string           `json:"slug"`
-	Title   string           `json:"title"`
-	Kind    DocumentKind     `json:"kind"`
-	Summary string           `json:"summary,omitempty"`
-	Date    string           `json:"date,omitempty"`
-	Content MarkdownDocument `json:"content"`
+	Slug      string           `json:"slug"`
+	Title     string           `json:"title"`
+	Kind      DocumentKind     `json:"kind"`
+	Summary   string           `json:"summary,omitempty"`
+	Date      string           `json:"date,omitempty"`
+	UpdatedAt string           `json:"updatedAt,omitempty"`
+	Metadata  []MetadataEntry  `json:"metadata,omitempty"`
+	Content   MarkdownDocument `json:"content"`
 }
 
 var documentSlugPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -57,10 +58,14 @@ func loadDocuments(files fs.FS) ([]Document, error) {
 		if document.Kind != DocumentNote && document.Kind != DocumentArticle {
 			return nil, fmt.Errorf("invalid document kind for %q: %q", document.Slug, document.Kind)
 		}
-		if document.Date != "" {
-			if _, err := time.Parse("2006-01-02", document.Date); err != nil {
-				return nil, fmt.Errorf("invalid document date for %q: %w", document.Slug, err)
-			}
+		if err := validateDate(document.Date); err != nil {
+			return nil, fmt.Errorf("invalid document date for %q: %w", document.Slug, err)
+		}
+		if err := validateDate(document.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("invalid document update date for %q: %w", document.Slug, err)
+		}
+		if err := validateMetadata(document.Metadata); err != nil {
+			return nil, fmt.Errorf("invalid metadata for document %q: %w", document.Slug, err)
 		}
 		expected := "documents/" + document.Slug + ".md"
 		if document.Content.Path != expected {

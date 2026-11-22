@@ -1,6 +1,9 @@
 package views
 
-import "strings"
+import (
+	"strings"
+	"portfolio/internal/portfolio"
+)
 
 templ GameMetadata(title string, description string) {
 	<div class="game-metadata">
@@ -15,4 +18,20 @@ templ GameMetadata(title string, description string) {
 		</p>
 		{ children... }
 	</div>
+}
+
+templ GameCredits(credits []portfolio.MetadataEntry) {
+	if len(credits) > 0 {
+		<dl class="game-credits">
+			for _, credit := range credits {
+				<div>
+					<dt>{ credit.Label }</dt>
+					<dd>
+						<span class="game-credits__leader" data-credit-leader aria-hidden="true">.</span>
+						<span>{ credit.Value }</span>
+					</dd>
+				</div>
+			}
+		</dl>
+	}
 }

@@ -1,16 +1,20 @@
 package views
 
+import "portfolio/internal/portfolio"
 
-templ SnakeGame() {
+templ SnakeGame(repository string) {
+	{{ app := portfolio.AppBySlug("snake") }}
 	@Window(WindowOptions{
 		ID: "snake-game", Title: "snake.ts", Class: "snake-game", Width: "26rem", Decoration: "tab",
 		Attributes: templ.Attributes{"data-popup": "snake"},
-	}, WindowSlots{Information: snakeInformation(), Commands: snakeCommands(), Touch: snakeTouch(), Help: snakeHelp()}) {
+	}, WindowSlots{Information: snakeInformation(), Commands: snakeCommands(), Touch: snakeTouch(), Help: snakeHelp(), Record: appRecord(app, repository)}) {
 		<div class="window__media snake-game__board" data-window-media>
 			<canvas width="400" height="400" tabindex="0" data-snake-canvas aria-label="Tabuleiro do snake. Controle com as setas ou WASD." role="img"></canvas>
 			<div class="window__message game-message" data-snake-message role="status">
 				<section data-snake-intro aria-label="Sobre o jogo" hidden>
-					@GameMetadata("SNAKE", "o clássico jogo da cobrinha.\nmas desconfie da magia.")
+					@GameMetadata("SNAKE", "o clássico jogo da cobrinha.\nmas desconfie da magia.") {
+						@GameCredits(app.Credits)
+					}
 				</section>
 				<p data-snake-message-text data-window-feature-status>Pronto para jogar?</p>
 			</div>

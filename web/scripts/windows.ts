@@ -6,9 +6,23 @@ type WindowOptions = {
   loadFeatures?: Record<string, () => Promise<WindowFeature>>;
 };
 
+const syncArchiveWindowURL = (source: HTMLElement | null, open: boolean) => {
+  const id = source?.dataset.archiveId;
+  if (!source || !id) return;
+  if (!source.hasAttribute("data-popup-trigger") && !source.hasAttribute("data-document-note-trigger")) return;
+
+  const url = new URL(window.location.href);
+  const isInURL = url.searchParams.get("open") === id;
+  if (isInURL === open) return;
+  if (open) url.searchParams.set("open", id);
+  else url.searchParams.delete("open");
+  window.history.replaceState(window.history.state, "", url);
+};
+
 export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = {}) => {
   initializeWindowLayout();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const recordViewport = window.matchMedia("(min-width: 48rem)");
   const windows = Array.from(document.querySelectorAll<HTMLDialogElement>("dialog[data-window]"));
   let active: HTMLDialogElement | null = null;
   let trigger: HTMLElement | null = null;
@@ -43,6 +57,30 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
     dialog.style.top = `${Math.min(maxTop, Math.max(topMargin, top))}px`;
   };
 
+  const enableDrag = (dialog: HTMLDialogElement, available: () => boolean) => {
+    const handle = dialog.querySelector<HTMLElement>("[data-window-handle]");
+    handle?.addEventListener("pointerdown", (event) => {
+      if (!available() || !event.isPrimary || event.button !== 0) return;
+      if (event.target instanceof Element && event.target.closest("a, button, input, select, textarea")) return;
+      event.preventDefault();
+      stopDrag();
+      dialog.classList.add("is-dragging");
+      const rect = dialog.getBoundingClientRect();
+      positionWindow(dialog, rect.left, rect.top);
+      drag = {
+        dialog,
+        handle,
+        pointerId: event.pointerId,
+        offsetX: event.clientX - Number.parseFloat(dialog.style.left),
+        offsetY: event.clientY - Number.parseFloat(dialog.style.top),
+      };
+      handle.setPointerCapture(event.pointerId);
+    });
+    handle?.addEventListener("lostpointercapture", (event) => {
+      if (drag?.handle === handle && drag.pointerId === event.pointerId) stopDrag();
+    });
+  };
+
   const finishClose = () => {
     stopDrag();
     window.clearTimeout(timer);
@@ -60,6 +98,7 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
     dialog?.style.removeProperty("left");
     dialog?.style.removeProperty("top");
     dialog?.removeAttribute("aria-busy");
+    syncArchiveWindowURL(source, false);
     if (returnFocus && source?.isConnected && !source.closest("[hidden]")) source.focus({ preventScroll: true });
   };
 
@@ -96,6 +135,7 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
     trigger = source;
     returnFocus = true;
     dialog.showModal();
+    syncArchiveWindowURL(source, true);
     fitWindowMedia(dialog);
     dialog.dispatchEvent(new Event("popup:open"));
     const viewport = dialog.querySelector<HTMLElement>("[data-scroll-area-viewport]");
@@ -109,6 +149,62 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
   });
 
   windows.forEach((dialog) => {
+    const available = () => active === dialog && dialog.open && !closing;
+    enableDrag(dialog, available);
+    const record = dialog.querySelector<HTMLDialogElement>("[data-window-record]");
+    const recordToggle = dialog.querySelector<HTMLButtonElement>("[data-window-record-toggle]");
+    const closeButton = dialog.querySelector<HTMLButtonElement>("[data-window-close]");
+    const dismissRecord = (focusTarget: HTMLElement | null = recordToggle) => {
+      if (!record?.open) return false;
+      if (drag?.dialog === record) stopDrag();
+      record.close();
+      record.classList.remove("is-open", "is-positioned", "is-behind");
+      record.style.removeProperty("left");
+      record.style.removeProperty("top");
+      recordToggle?.setAttribute("aria-expanded", "false");
+      focusTarget?.focus({ preventScroll: true });
+      return true;
+    };
+
+    if (record && recordToggle) {
+      const recordClose = record.querySelector<HTMLButtonElement>("[data-window-close]");
+      recordToggle.addEventListener("click", () => {
+        if (!available() || !recordViewport.matches) return;
+        if (!record.open) {
+          record.show();
+          const parent = dialog.getBoundingClientRect();
+          const gap = 16;
+          const edge = 23;
+          const fitsRight = parent.right + gap + record.offsetWidth <= window.innerWidth - edge;
+          const fitsLeft = parent.left - gap - record.offsetWidth >= edge;
+          const left = fitsRight ? parent.right + gap : fitsLeft ? parent.left - gap - record.offsetWidth : parent.right;
+          positionWindow(record, left, parent.top + (fitsRight || fitsLeft ? 24 : 72));
+          record.classList.add("is-open");
+          recordToggle.setAttribute("aria-expanded", "true");
+        }
+        record.classList.remove("is-behind");
+        recordClose?.focus({ preventScroll: true });
+      });
+      const updateStack = (event: Event) => {
+        if (record.open && event.target instanceof Element) {
+          record.classList.toggle("is-behind", !record.contains(event.target));
+        }
+      };
+      dialog.addEventListener("pointerdown", updateStack);
+      dialog.addEventListener("focusin", updateStack);
+      record.addEventListener("keydown", event => event.stopPropagation());
+      recordClose?.addEventListener("click", () => dismissRecord());
+      enableDrag(record, () => available() && record.open);
+      dialog.addEventListener("popup:closing", () => dismissRecord(null));
+      dialog.addEventListener("popup:open", () => dismissRecord(null));
+      recordViewport.addEventListener("change", () => {
+        if (!recordViewport.matches) {
+          const restoreFocus = record.contains(document.activeElement) || document.activeElement === recordToggle;
+          dismissRecord(null);
+          if (restoreFocus) closeButton?.focus({ preventScroll: true });
+        }
+      });
+    }
     const loadFeature = loadFeatures?.[dialog.id];
     if (loadFeature) {
       let feature: ReturnType<WindowFeature> | undefined;
@@ -132,39 +228,22 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
       if (active !== dialog || closing || !dialog.classList.contains("is-positioned")) return;
       positionWindow(dialog, Number.parseFloat(dialog.style.left), Number.parseFloat(dialog.style.top));
     });
-    const handle = dialog.querySelector<HTMLElement>("[data-window-handle]");
-    handle?.addEventListener("pointerdown", (event) => {
-      if (active !== dialog || closing || !event.isPrimary || event.button !== 0) return;
-      if (event.target instanceof Element && event.target.closest("a, button, input, select, textarea")) return;
-      event.preventDefault();
-      dialog.classList.add("is-dragging");
-      const rect = dialog.getBoundingClientRect();
-      positionWindow(dialog, rect.left, rect.top);
-      drag = {
-        dialog,
-        handle,
-        pointerId: event.pointerId,
-        offsetX: event.clientX - Number.parseFloat(dialog.style.left),
-        offsetY: event.clientY - Number.parseFloat(dialog.style.top),
-      };
-      handle.setPointerCapture(event.pointerId);
-    });
-    handle?.addEventListener("lostpointercapture", (event) => {
-      if (drag?.pointerId === event.pointerId) stopDrag();
-    });
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
+      if (dismissRecord()) return;
       if (dismissWindowHelp(dialog)) return;
       close();
     });
-    dialog.querySelector<HTMLButtonElement>("[data-window-close]")?.addEventListener("click", () => close());
+    closeButton?.addEventListener("click", () => close());
     dialog.addEventListener("click", (event) => {
       if (event.target !== dialog) return;
       const rect = dialog.getBoundingClientRect();
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) close();
     });
     dialog.addEventListener("close", () => {
-      if (active === dialog && !dialog.open) finishClose();
+      if (dialog.open) return;
+      dismissRecord(null);
+      if (active === dialog) finishClose();
     });
   });
 
@@ -181,8 +260,12 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
   window.addEventListener("blur", stopDrag);
   window.addEventListener("resize", () => {
     stopDrag();
-    if (!active || closing || !active.classList.contains("is-positioned")) return;
-    positionWindow(active, Number.parseFloat(active.style.left), Number.parseFloat(active.style.top));
+    if (!active || closing) return;
+    if (active.classList.contains("is-positioned")) {
+      positionWindow(active, Number.parseFloat(active.style.left), Number.parseFloat(active.style.top));
+    }
+    const record = active.querySelector<HTMLDialogElement>("[data-window-record]");
+    if (record?.open) positionWindow(record, Number.parseFloat(record.style.left), Number.parseFloat(record.style.top));
   });
 
   reducedMotion.addEventListener("change", () => {

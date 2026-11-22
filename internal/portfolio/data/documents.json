@@ -3,12 +3,14 @@
     "slug": "boas-vindas",
     "title": "boas vindas",
     "kind": "note",
-    "content": "documents/boas-vindas.md"
+    "content": "documents/boas-vindas.md",
+    "updatedAt": "2026-11-20"
   },
   {
     "slug": "licenca",
     "title": "licença",
     "kind": "note",
-    "content": "documents/licenca.md"
+    "content": "documents/licenca.md",
+    "updatedAt": "2026-11-20"
   }
 ]

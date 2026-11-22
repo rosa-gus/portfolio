@@ -18,6 +18,7 @@ import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
+import { initializeGameCredits } from "./game-credits";
 import { initializeWindows } from "./windows";
 import { migrateStorageValue, storageKey } from "./storage";
 import { initializeSociety } from "./society";
@@ -31,6 +32,7 @@ initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
 initializeDocuments();
+initializeGameCredits();
 const windows = initializeWindows({
   beforeOpen: () => projectArchive.close(false, true),
   loadFeatures: {
@@ -275,7 +277,19 @@ reducedMotion.addEventListener("change", () => {
   showAboutImage();
 });
 
+const archiveOpenID = new URLSearchParams(window.location.search).get("open");
+const initialArchiveItem = archiveOpenID
+  ? Array.from(document.querySelectorAll<HTMLButtonElement>(
+    "#case [data-archive-surface] button[data-archive-id]:is([data-window-trigger], [data-archive-folder], [data-archive-project])",
+  )).find((item) =>
+    item.dataset.archiveId === archiveOpenID && !item.disabled && !item.closest("[hidden]"),
+  )
+  : undefined;
+
 initializePanelNavigation({
+  initialPanel: initialArchiveItem
+    ? { id: "case", updateHistory: initialArchiveItem.hasAttribute("data-window-trigger") }
+    : undefined,
   onChange: (panelID) => {
     if (panelID !== "case") {
       projectArchive.close(false, true);
@@ -285,5 +299,13 @@ initializePanelNavigation({
     else deactivateAboutMedia();
   },
 });
+
+if (initialArchiveItem) {
+  window.requestAnimationFrame(() => {
+    if (initialArchiveItem.isConnected && !initialArchiveItem.closest("[hidden], [inert]")) {
+      initialArchiveItem.click();
+    }
+  });
+}
 
 initializeSociety();

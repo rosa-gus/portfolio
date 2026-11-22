@@ -24,8 +24,7 @@ from `app.css`.
 - `.text-action` provides consistent presentation and interaction for textual
   actions.
 - `GameMetadata` shares the initial title and description layout between games.
-  Optional metadata uses its children slot and `.game-metadata__fields`;
-  `game-metadata.css` owns the typography and spacing for both Ski and Snake.
+  `GameCredits` renders dotted credit rows on the games' opening screens.
 
 Ordinary paragraphs do not need a dedicated class when their role is clear from
 their container. Add a token only when it represents a recurring decision;

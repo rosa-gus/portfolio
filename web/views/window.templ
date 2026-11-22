@@ -25,6 +25,7 @@ type WindowSlots struct {
 	Touch templ.Component
 	Help templ.Component
 	Tips templ.Component
+	Record []windowRecordField
 }
 
 func windowStyle(options WindowOptions) map[string]string {
@@ -51,14 +52,23 @@ templ Window(options WindowOptions, slots WindowSlots) {
 			@windowFrame(options, slots) {
 				{ children... }
 			}
+			if len(slots.Record) > 0 {
+				@windowRecord(options.ID + "-record", slots.Record)
+			}
 		</dialog>
 	}
 }
 
 templ windowFrame(options WindowOptions, slots WindowSlots) {
+	{{ hasRecord := !options.Inline && len(slots.Record) > 0 }}
+	if options.Decoration == "tab" {
+		@windowTitle(options, hasRecord)
+	}
 	<div class={ "window__sheet", templ.KV("document-fold", options.Decoration == "fold") }>
 		<header class="window__heading" data-window-handle>
-			<h2 class="window__title" id={ options.ID + "-title" } { options.TitleAttributes... }>{ options.Title }</h2>
+			if options.Decoration != "tab" {
+				@windowTitle(options, hasRecord)
+			}
 			if slots.Information != nil {
 				<div class="window__information meta-text">@slots.Information</div>
 			}
@@ -100,6 +110,41 @@ templ windowFrame(options WindowOptions, slots WindowSlots) {
 			</div>
 		}
 	</div>
+}
+
+templ windowTitle(options WindowOptions, hasRecord bool) {
+	<h2 class="window__title" id={ options.ID + "-title" } { options.TitleAttributes... }>
+		if hasRecord {
+			<span class="window__title-text">{ options.Title }</span>
+			<button type="button" class="window__record-toggle" data-window-record-toggle aria-describedby={ options.ID + "-record-description" } aria-controls={ options.ID + "-record" } aria-haspopup="dialog" aria-expanded="false">{ options.Title }</button>
+			<span id={ options.ID + "-record-description" } hidden>Abre os metadados</span>
+		} else {
+			{ options.Title }
+		}
+	</h2>
+}
+
+templ windowRecord(id string, fields []windowRecordField) {
+	<dialog id={ id } class="window window--record" data-window-record data-window-decoration="tab" aria-labelledby={ id + "-title" }>
+		@windowFrame(WindowOptions{ID: id, Title: "metadados", Decoration: "tab", CloseAttributes: templ.Attributes{"aria-label": "Fechar metadados"}}, WindowSlots{}) {
+			<dl class="window__record-fields">
+				for _, field := range fields {
+					<div>
+						<dt>{ field.Label }</dt>
+						<dd>
+							if field.Date != "" {
+								<time datetime={ field.Date }>{ documentDateLabel(field.Date) }</time>
+							} else if field.URL != "" {
+								<a class="text-action" href={ externalURL(field.URL) } target="_blank" rel="noreferrer">{ field.Value }<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span></a>
+							} else {
+								{ field.Value }
+							}
+						</dd>
+					</div>
+				}
+			</dl>
+		}
+	</dialog>
 }
 
 // Rotate IBM Plex Mono's local upward glyph; FE0E forces text presentation.
