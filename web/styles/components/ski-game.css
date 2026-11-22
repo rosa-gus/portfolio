@@ -1,8 +1,15 @@
+.ski-game canvas[data-ski-canvas] {
+  background-color: light-dark(var(--color-surface-canvas), #1d161b);
+}
+
 @layer components {
   .ski-game canvas {
     --ski-track-tone: light-dark(#c9afb9, #55464e);
     --ski-track-ridge-tone: light-dark(#faf0f1, #8a7682);
     --ski-snow-tone: light-dark(#9b7888, #a38b97);
+    --ski-wind-tone: light-dark(#916f7e, #d2b9c5);
+    --ski-terrain-shadow-tone: light-dark(#bc9eaa, #624f5d);
+    --ski-terrain-highlight-tone: light-dark(#fff3f4, #806775);
     image-rendering: pixelated;
   }
   .ski-game__board.is-playing { touch-action: none; user-select: none; -webkit-touch-callout: none; }

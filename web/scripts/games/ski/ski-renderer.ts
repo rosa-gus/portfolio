@@ -1,7 +1,8 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
-import { SKI_MAX_HEADING, SKI_TRAIL_LIFETIME, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
+import { SKI_MAX_HEADING, SKI_METERS_PER_PIXEL, SKI_TRAIL_LIFETIME, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
 import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, type SkiFeedback } from "./ski-feedback";
 import { drawSkierPose, prepareSkierPose, type SkiPose } from "./ski-skier";
+import { drawSkiTerrain } from "./ski-terrain";
 import { drawYetiRun } from "./ski-yeti";
 
 const glidingNames = [
@@ -45,6 +46,24 @@ const glidingSprite = (signedHeading: number, stride: number, reducedMotion: boo
   if (heading >= SKI_MAX_HEADING - 0.08) return side === "left" ? "skier-right" : "skier-left";
   if (reducedMotion || heading < Math.PI * 0.28) return `skier-diagonal-${side}`;
   return `skier-diagonal-${side}-${stride < 0.5 ? "01" : "02"}`;
+};
+
+const drawWindSnow = (context: CanvasRenderingContext2D, grains: SkiFeedback["windSnow"], color: string, opacity: number) => {
+  context.fillStyle = color;
+  for (const grain of grains) {
+    if (grain.age <= 0) continue;
+    const life = grain.age / grain.life;
+    const length = Math.round(2 + (2 + 3 * life) * grain.strength);
+    const x = Math.round(grain.x);
+    const y = Math.round(grain.y);
+    context.globalAlpha = Math.min(life * 5, 1, (1 - life) * 2.3) * grain.strength * 0.38 * opacity;
+    context.fillRect(grain.vx > 0 ? x - length + 1 : x, y, length, 1);
+    if (length > 5) {
+      context.globalAlpha *= 0.35;
+      context.fillRect(grain.vx > 0 ? x - length - 2 : x + length + 1, y, 2, 1);
+    }
+  }
+  context.globalAlpha = 1;
 };
 
 const drawSkiTrails = (context: CanvasRenderingContext2D, game: SkiEngine, groove: string, ridge: string) => {
@@ -108,6 +127,14 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, { images, po
   const style = getComputedStyle(canvas);
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, game.width, game.height);
+  if (!reducedMotion) {
+    drawSkiTerrain(context, game.width, game.height, game.distance / SKI_METERS_PER_PIXEL,
+      style.getPropertyValue("--ski-terrain-shadow-tone").trim(), style.getPropertyValue("--ski-terrain-highlight-tone").trim());
+  }
+  if (!reducedMotion && feedback.windSnow.length) {
+    drawWindSnow(context, feedback.windSnow, style.getPropertyValue("--ski-wind-tone").trim(),
+      Math.max(0, 1 - feedback.endAge / SKI_CAPTURE_DURATION));
+  }
   drawSkiTrails(context, game, style.getPropertyValue("--ski-track-tone").trim(),
     style.getPropertyValue("--ski-track-ridge-tone").trim());
   const draw = (name: Sprite, x: number, y: number, anchorY = images[name].height) => {
@@ -197,9 +224,6 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, { images, po
   context.textBaseline = "middle";
   const drawCaption = (text: string, x: number, y: number, opacity: number) => {
     context.globalAlpha = opacity;
-    const width = context.measureText(text).width + 16;
-    context.fillStyle = style.getPropertyValue("--color-surface-canvas").trim();
-    context.fillRect(Math.round(x - width / 2), y - 12, Math.ceil(width), 24);
     context.fillStyle = style.getPropertyValue("--color-text-primary").trim();
     context.fillText(text, Math.round(x), y);
   };

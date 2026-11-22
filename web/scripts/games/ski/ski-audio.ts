@@ -1,5 +1,6 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import type { SkiEngine, SkiEvent } from "./ski-engine";
+import type { yetiStride } from "./ski-yeti";
 
 const urls = {
   slide: new URL("./audio/ski-slide-loop.wav", import.meta.url),
@@ -12,14 +13,16 @@ const urls = {
 };
 type Sound = keyof typeof urls;
 
-export const createSkiAudio = () => {
+export const createSkiAudio = (strideAt: typeof yetiStride) => {
   let context: AudioContext | null = null;
   let master: GainNode | null = null;
   let muted = false;
   let generation = 0;
   let slide: { source: AudioBufferSourceNode; gain: GainNode; lowpass: BiquadFilterNode } | null = null;
   let slidePending = false;
-  let nextStep = 0;
+  let lastYetiStep = -1;
+  let tracksAt: number | null = null;
+  let escapeAt = -Infinity;
   let nextBell = 0;
   let duckUntil = 0;
   const buffers = new Map<Sound, Promise<AudioBuffer | null>>();
@@ -47,11 +50,14 @@ export const createSkiAudio = () => {
     } catch { /* Audio is optional; the simulation and visual feedback continue. */ }
   };
 
-  const play = async (name: Sound, volume: number, clip?: { duration: number; delay?: number; rate?: number }) => {
+  const play = async (name: Sound, volume: number,
+    clip?: { duration: number; delay?: number; rate?: number; maxLatency?: number }) => {
     if (muted) return;
     const token = generation;
+    const requestedAt = context?.currentTime ?? 0;
     const buffer = await buffers.get(name);
     if (!buffer || token !== generation || !context || !master || context.state !== "running" || muted) return;
+    if (clip?.maxLatency !== undefined && context.currentTime - requestedAt > clip.maxLatency) return;
     const source = context.createBufferSource();
     const gain = context.createGain();
     source.buffer = buffer;
@@ -99,7 +105,7 @@ export const createSkiAudio = () => {
   };
 
   const events = (items: readonly SkiEvent[]) => {
-    if (items.length && context) duckUntil = context.currentTime + 0.3;
+    if (context && items.some(event => event.type !== "escape")) duckUntil = context.currentTime + 0.3;
     for (const event of items) {
       if (event.type === "collision") void play(event.kind, 0.7);
       if (event.type === "fall") {
@@ -111,12 +117,38 @@ export const createSkiAudio = () => {
         void play("bell", 0.3);
         nextBell = context.currentTime + 0.12;
       }
-      if (event.type === "yeti-appear") { nextStep = 0; void play("appear", 0.45); }
+      if (event.type === "yeti-appear") { lastYetiStep = -1; void play("appear", 0.45); }
     }
   };
 
   const update = (game: SkiEngine, carve: number) => {
-    if (game.phase !== "running" || !context || context.state !== "running") return;
+    if (game.phase !== "running") return;
+    if (game.stage !== "tracks") tracksAt = null;
+    else if (tracksAt === null && game.objects.some(object => object.kind === "tracks" && object.y >= 0 && object.y <= game.height)) {
+      tracksAt = game.elapsed;
+    }
+
+    const yeti = game.yeti;
+    let proximity = 0;
+    if (yeti) {
+      const gap = Math.hypot(yeti.x - game.player.x, yeti.y - game.player.y);
+      proximity = Math.max(0, 1 - gap / 420);
+      const { stride, quickStep } = strideAt(yeti.age);
+      const quick = quickStep >= 0;
+      const step = stride * 2 + Number(quick);
+      if (step !== lastYetiStep) {
+        lastYetiStep = step;
+        if (step > 0) {
+          const volume = (0.07 + 0.55 * proximity ** 1.6) * (quick ? 0.72 : 1);
+          void play("step", volume, { duration: quick ? 0.10 : 0.15, rate: quick ? 1.14 : 0.92, maxLatency: 0.10 });
+        }
+      }
+    } else if (lastYetiStep >= 0) {
+      lastYetiStep = -1;
+      escapeAt = game.elapsed;
+    }
+
+    if (!context || context.state !== "running") return;
     if (!muted && !slide && !slidePending && buffers.has("slide")) void startSlide();
     if (slide) {
       // Keep the loop behind discrete cues: quiet even at full speed, with a soft
@@ -124,14 +156,14 @@ export const createSkiAudio = () => {
       const speed = Math.min(1, game.speed / 360);
       const volume = (0.025 + carve * 0.009) * speed ** 1.6;
       const duck = context.currentTime < duckUntil ? 0.45 : 1;
-      slide.gain.gain.setTargetAtTime(muted ? 0 : volume * duck, context.currentTime, 0.22);
+      // Start the hush while the glimpse is still entering the viewport.
+      const trackDip = tracksAt !== null && game.elapsed - tracksAt < 0.85;
+      const terrainMix = game.glimpse ? 0.40 : trackDip ? 0.68 : yeti ? 0.84 - proximity * 0.28 : 1;
+      const easing = game.elapsed - escapeAt < 1.7 ? 0.58 : terrainMix < 0.7 ? 0.12 : 0.22;
+      slide.gain.gain.setTargetAtTime(muted ? 0 : volume * terrainMix * duck, context.currentTime, easing);
       slide.source.playbackRate.setTargetAtTime(0.94 + speed * 0.06, context.currentTime, 0.35);
-      slide.lowpass.frequency.setTargetAtTime(1150 + speed * 650 + carve * 300, context.currentTime, 0.2);
-    }
-    if (game.yeti && game.yeti.age >= nextStep) {
-      const proximity = Math.max(0, 1 - Math.hypot(game.yeti.x - game.player.x, game.yeti.y - game.player.y) / 400);
-      void play("step", 0.12 + proximity * 0.65);
-      nextStep = game.yeti.age + 1 / 3;
+      const cutoff = (1150 + speed * 650 + carve * 300) * (0.64 + terrainMix * 0.36);
+      slide.lowpass.frequency.setTargetAtTime(cutoff, context.currentTime, easing);
     }
   };
 
@@ -153,5 +185,10 @@ export const createSkiAudio = () => {
     stop();
     void play("step", 0.85, { delay, duration: 0.22, rate: 0.72 });
   };
-  return { unlock, events, update, stop, setMuted, capture };
+  const reset = () => {
+    tracksAt = null;
+    escapeAt = -Infinity;
+    lastYetiStep = -1;
+  };
+  return { unlock, events, update, stop, reset, setMuted, capture };
 };

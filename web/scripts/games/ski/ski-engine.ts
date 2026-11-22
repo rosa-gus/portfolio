@@ -27,6 +27,7 @@ export type SkiSlalom = {
 export const SKI_WIDTH = 640;
 export const SKI_HEIGHT = 360;
 export const SKI_STEP = 1 / 60;
+export const SKI_METERS_PER_PIXEL = 0.16;
 export const SKI_MAX_HEADING = Math.PI / 2;
 const TURN_RATE = Math.PI * 0.85;
 const BALANCE_TICKS = Math.round(0.7 / SKI_STEP);
@@ -150,7 +151,7 @@ export class SkiEngine {
     const level = this.distance < 3000 ? 1 : this.distance < 6000 ? 2 : 3;
     const gates = [4, 6, 8][level - 1];
     const spacing = [330, 305, 285][level - 1];
-    const endDistance = this.distance + (gates * spacing + this.height + 70 - this.player.y + 12) * 0.16;
+    const endDistance = this.distance + (gates * spacing + this.height + 70 - this.player.y + 12) * SKI_METERS_PER_PIXEL;
     // Keep each challenge separate and leave normal terrain between events.
     if (endDistance + 100 >= this.nextYeti) return;
     const halfWidth = this.layout === "portrait" ? [75, 66, 59] : [96, 84, 74];
@@ -325,7 +326,7 @@ export class SkiEngine {
     this.player.x = clamp(previousX + this.velocity.x * dt, 26, this.width - 26);
     const travel = this.velocity.y * dt;
     const fastPass = this.velocity.y >= base * SKI_NEAR_MISS_MIN_DESCENT_RATIO;
-    this.distance += travel * 0.16;
+    this.distance += travel * SKI_METERS_PER_PIXEL;
     this.spawnDistance += travel;
     if (this.skisOnSnow) {
       this.trailDistance += Math.hypot(this.player.x - previousX, travel);

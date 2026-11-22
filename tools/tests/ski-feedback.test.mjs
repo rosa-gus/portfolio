@@ -55,6 +55,49 @@ test("a fall sends a low spray to the side and leaves a short snow trail", () =>
   }
 });
 
+test("wind lifts a staggered patch of snow between quiet stretches", () => {
+  for (const layout of ["landscape", "portrait"]) {
+    const game = new SkiEngine(() => 0.5, layout);
+    const feedback = new SkiFeedback();
+    game.start();
+    for (let tick = 0; tick < 110; tick++) feedback.step(game, 4, SKI_STEP, []);
+    assert.ok(feedback.windSnow.length <= 3);
+
+    let gust = [];
+    for (let tick = 0; tick < 10 && !gust.length; tick++) {
+      feedback.step(game, 4, SKI_STEP, []);
+      gust = feedback.windSnow.filter(grain => Math.abs(grain.vx) >= 120);
+    }
+    assert.ok(gust.length >= 13);
+    assert.ok(gust.every(grain => Math.sign(grain.vx) === Math.sign(gust[0].vx)));
+    assert.ok(Math.max(...gust.map(grain => grain.y)) - Math.min(...gust.map(grain => grain.y)) <= 30);
+    assert.ok(gust.every(grain => grain.age < 0));
+    assert.ok(new Set(gust.map(grain => grain.age)).size > 1);
+
+    for (let tick = 0; tick < 90; tick++) feedback.step(game, 4, SKI_STEP, []);
+    assert.ok(feedback.windSnow.length <= 3, "the gust has dispersed");
+    feedback.reset();
+    assert.deepEqual(feedback.windSnow, []);
+  }
+});
+
+test("wind follows the terrain without taking its direction from the skier", () => {
+  const game = new SkiEngine(() => 0.5);
+  const feedback = new SkiFeedback();
+  game.start();
+  for (let tick = 0; tick < 9; tick++) feedback.step(game, 0, SKI_STEP, []);
+  const grain = feedback.windSnow[0];
+  const { x, y, vx, vy } = grain;
+  game.player.heading = -Math.sign(vx);
+  feedback.step(game, 5, SKI_STEP, []);
+  assert.equal(Math.sign(grain.x - x), Math.sign(vx));
+  assert.equal(grain.y, y + (vy * SKI_STEP - 5));
+  game.pause();
+  const paused = structuredClone(feedback.windSnow);
+  feedback.step(game, 0, SKI_STEP, []);
+  assert.deepEqual(feedback.windSnow, paused);
+});
+
 test("capture snow starts at contact and clears before the results", () => {
   const game = new SkiEngine(() => 0.5);
   game.phase = "over";

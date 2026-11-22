@@ -1,10 +1,11 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import "../../../styles/components/game-metadata.css";
 import "../../../styles/components/ski-game.css";
-import { SkiEngine, SKI_STEP, SKI_MAX_HEADING } from "./ski-engine";
+import { SkiEngine, SKI_STEP, SKI_MAX_HEADING, SKI_METERS_PER_PIXEL } from "./ski-engine";
 import { drawSki, loadSkiSprites, type SkiSprites, type SkiTheme } from "./ski-renderer";
 import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, SkiFeedback } from "./ski-feedback";
 import { createSkiAudio } from "./ski-audio";
+import { yetiStride } from "./ski-yeti";
 import { storageKey } from "../../storage";
 import { fitWindowMedia } from "../../window-layout";
 
@@ -37,7 +38,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
   };
   sizeBoard();
   const feedback = new SkiFeedback();
-  const audio = createSkiAudio();
+  const audio = createSkiAudio(yetiStride);
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const touchControls = matchMedia("(any-pointer: coarse)");
   const toggle = dialog.querySelector<HTMLButtonElement>("[data-ski-toggle]")!;
@@ -194,7 +195,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
         const before = game.distance;
         game.tick(input());
         if (game.player.heading === 0) downhillRequested = false;
-        feedback.step(game, (game.distance - before) / 0.16, SKI_STEP, game.events);
+        feedback.step(game, (game.distance - before) / SKI_METERS_PER_PIXEL, SKI_STEP, game.events);
         if ((game.phase as string) === "over") {
           audio.capture(SKI_CAPTURE_CONTACT);
           clearInput(); persist();
@@ -218,6 +219,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
     stop(); clearInput();
     if (game.phase === "over" || game.phase === "ready") {
       applyViewportLayout();
+      audio.reset();
       feedback.reset(); runBestScore = bestScore;
     }
     game.start(); render();

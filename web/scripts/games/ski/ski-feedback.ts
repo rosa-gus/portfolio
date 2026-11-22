@@ -2,14 +2,21 @@
 import type { SkiEngine, SkiEvent } from "./ski-engine";
 
 type Snow = { x: number; y: number; vx: number; vy: number; age: number; life: number; size: number };
+type WindSnow = { x: number; y: number; vx: number; vy: number; age: number; life: number; strength: number };
 type Caption = { text: string; x: number; y: number; age: number; life: number; count?: number; points?: number };
 
 export const SKI_CAPTURE_DURATION = 0.4;
 export const SKI_CAPTURE_CONTACT = 0.13;
 
+const visualRandom = (sequence: number) => {
+  const value = Math.sin(sequence * 127.1) * 43758.5453;
+  return value - Math.floor(value);
+};
+
 /** Presentation clock and particles. Never consumes the engine's world RNG. */
 export class SkiFeedback {
   snow: Snow[] = [];
+  windSnow: WindSnow[] = [];
   captions: Caption[] = [];
   retreat: { x: number; y: number; age: number } | null = null;
   impact = 0;
@@ -21,23 +28,72 @@ export class SkiFeedback {
   private previousX: number | null = null;
   private snowBudget = 0;
   private sequence = 0;
+  private windSequence = 0;
+  private windDirection = 1;
+  private windGrainIn = 0.12;
+  private windGustIn = 1.9;
   private warned = false;
   private lastYetiStep = -1;
 
   reset() {
     this.snow = [];
+    this.windSnow = [];
     this.captions = [];
     this.retreat = null;
     this.impact = this.endAge = this.carve = this.previousHeading = this.snowBudget = this.sequence = 0;
     this.stride = this.skierLean = 0;
     this.previousX = null;
+    this.windSequence = 0;
+    this.windDirection = 1;
+    this.windGrainIn = 0.12;
+    this.windGustIn = 1.9;
     this.warned = false;
     this.lastYetiStep = -1;
   }
 
   private random() {
-    const value = Math.sin(++this.sequence * 127.1) * 43758.5453;
-    return value - Math.floor(value);
+    return visualRandom(++this.sequence);
+  }
+
+  private windRandom() {
+    return visualRandom(911 + ++this.windSequence);
+  }
+
+  private liftWindSnow(x: number, y: number, gust: boolean) {
+    this.windSnow.push({ x, y,
+      vx: this.windDirection * (gust ? 120 + this.windRandom() * 85 : 48 + this.windRandom() * 40),
+      vy: (this.windRandom() - 0.5) * 14,
+      age: gust ? -this.windRandom() * 0.22 : 0,
+      life: gust ? 0.66 + this.windRandom() * 0.34 : 0.48 + this.windRandom() * 0.24,
+      strength: gust ? 0.78 + this.windRandom() * 0.22 : 0.42 + this.windRandom() * 0.23 });
+  }
+
+  private stepWind(width: number, height: number, travel: number, dt: number) {
+    for (const grain of this.windSnow) {
+      grain.age += dt;
+      grain.x += grain.vx * (0.7 + 0.6 * Math.max(0, grain.age) / grain.life) * dt;
+      grain.y += grain.vy * dt - travel;
+    }
+    this.windSnow = this.windSnow.filter(grain => grain.age < grain.life && grain.y >= -2
+      && grain.x > -12 && grain.x < width + 12);
+
+    this.windGustIn -= dt;
+    this.windGrainIn -= dt;
+    if (this.windGustIn <= 0) {
+      // One gust lifts a patch of snow. The staggered lifetimes break it up as it drifts.
+      if (this.windRandom() < 0.5) this.windDirection *= -1;
+      const x = width * (0.2 + this.windRandom() * 0.6);
+      const y = height * (0.65 + this.windRandom() * 0.3);
+      const count = 13 + Math.floor(this.windRandom() * 5);
+      for (let i = 0; i < count; i++) {
+        this.liftWindSnow(x + (this.windRandom() - 0.5) * 50, y + (this.windRandom() - 0.5) * 30, true);
+      }
+      this.windGustIn = 3.6 + this.windRandom() * 2.9;
+      this.windGrainIn = 0.95;
+    } else if (this.windGrainIn <= 0) {
+      this.liftWindSnow(this.windRandom() * width, height * (0.25 + this.windRandom() * 0.7), false);
+      this.windGrainIn = 0.34 + this.windRandom() * 0.32;
+    }
   }
 
   private puff(x: number, y: number, count: number, direction = 0, lowSpray = false, lifeScale = 1) {
@@ -83,6 +139,7 @@ export class SkiFeedback {
     this.stride = game.phase === "running" && !game.balance && lateralTravel > 0.01
       ? (this.stride + lateralTravel / 44) % 1 : 0;
     if (game.phase === "running") {
+      this.stepWind(game.width, game.height, travel, dt);
       const balance = game.balance;
       const falling = balance?.pose === "fall";
       const slidingOnSnow = falling && balance.ticks * dt <= 0.18;

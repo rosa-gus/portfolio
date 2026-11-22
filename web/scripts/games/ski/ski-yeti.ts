@@ -9,12 +9,16 @@ const SHOULDER_ROW = 10;
 const JAW_ROW = 16;
 const HIP_ROW = 26;
 
-export const drawYetiRun = (context: CanvasRenderingContext2D, sprites: YetiRunSprites, x: number, y: number,
-  age: number, direction: number) => {
+export const yetiStride = (age: number) => {
   const stride = Math.floor(age / STRIDE_DURATION);
   const beat = age - stride * STRIDE_DURATION;
   const plantDuration = stride % 2 === 0 ? 0.22 : 0.19;
-  const quickStep = beat - plantDuration;
+  return { stride, quickStep: beat - plantDuration };
+};
+
+export const drawYetiRun = (context: CanvasRenderingContext2D, sprites: YetiRunSprites, x: number, y: number,
+  age: number, direction: number) => {
+  const { quickStep } = yetiStride(age);
   const image = sprites[quickStep >= 0 ? "yeti-run-02" : "yeti-run-01"];
   const { width, height } = image;
   const left = Math.round(x - width * SCALE / 2);
