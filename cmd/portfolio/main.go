@@ -24,11 +24,38 @@ func main() {
 	}
 	publicURL := sitepath.PublicURL(origin, "")
 
+	server := &http.Server{
+		Addr:              ":8080",
+		Handler:           newHandler(publicURL),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		slog.Info("portfolio available", "url", publicURL)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server stopped unexpectedly", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("failed to shut down server", "error", err)
+	}
+}
+
+func newHandler(publicURL string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /assets/", http.FileServerFS(web.Static()))
 	mux.Handle("GET /favicon/", http.FileServerFS(web.Static()))
 	mux.Handle("GET /projects/", http.FileServerFS(web.Static()))
+	mux.Handle("GET /ski/", http.FileServerFS(web.Static()))
 
 	mux.HandleFunc("GET /manifest.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, web.Static(), "manifest.json")
@@ -78,29 +105,7 @@ func main() {
 		}
 	})
 
-	server := &http.Server{
-		Addr:              ":8080",
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	go func() {
-		slog.Info("portfolio available", "url", publicURL)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("server stopped unexpectedly", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		slog.Error("failed to shut down server", "error", err)
-	}
+	return mux
 }
 
 func envOrDefault(name, fallback string) string {

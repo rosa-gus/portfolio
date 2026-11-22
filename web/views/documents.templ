@@ -16,22 +16,20 @@ templ DocumentIcon(kind portfolio.DocumentKind) {
 templ DocumentNotes(documents []portfolio.Document, basePath string) {
 for _, document := range documents {
 if document.Kind == portfolio.DocumentNote {
-<dialog class="document-note" id={ "note-" + document.Slug } data-document-note={ document.Slug }
-	aria-labelledby={ "note-title-" + document.Slug }>
-	<section class="document-note__sheet document-fold">
-		<header class="document-note__heading" data-document-note-handle>
-			<div class="document-note__controls control-text">
-				<h2 id={ "note-title-" + document.Slug }>{ underscoreIdentifier(document.Title) + ".md" }</h2><button
-					type="button" data-document-note-close>[FECHAR]</button>
-			</div>
-		</header>
-		@ScrollArea("Conteúdo de " + document.Title, "vertical") {
-		<div class="prose project-content__prose document-prose">
-			@renderMarkdown(document.Content, basePath)
-		</div>
-		}
-	</section>
-</dialog>
+@Window(WindowOptions{
+    ID: "note-" + document.Slug,
+    Title: underscoreIdentifier(document.Title) + ".md",
+    Class: "document-note",
+    Width: "36rem", Height: "28rem", Decoration: "fold",
+    Attributes: templ.Attributes{"data-document-note": document.Slug},
+}, WindowSlots{}) {
+    @ScrollArea("Conteúdo de " + document.Title, "vertical") {
+        <div class="prose project-content__prose document-prose">
+            @renderMarkdown(document.Content, basePath)
+        </div>
+    }
+}
+
 }
 }
 }

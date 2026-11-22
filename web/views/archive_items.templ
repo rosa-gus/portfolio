@@ -14,7 +14,7 @@ templ ArchiveItem(item portfolio.ArchiveItem, basePath string) {
 		case portfolio.ArchiveProject:
 			@ArchiveProjectItem(item.ID, item.Project, basePath)
 		case portfolio.ArchiveApp:
-			@ArchiveAppItem(item.ID)
+			@ArchiveAppItem(item.ID, item.Ref)
 		case portfolio.ArchiveLink:
 			@ArchiveLinkItem(item)
 	}
@@ -45,7 +45,7 @@ templ ArchiveCollectionItem(id string, folder portfolio.ArchiveFolder) {
 
 templ ArchiveDocumentItem(id string, document portfolio.Document, basePath string) {
 	if document.Kind == portfolio.DocumentNote {
-		<button class="project-archive__item" type="button" data-archive-item data-archive-id={ id } data-document-note-trigger={ document.Slug } aria-haspopup="dialog" aria-controls={ "note-" + document.Slug }>
+		<button class="project-archive__item" type="button" data-archive-item data-archive-id={ id } data-document-note-trigger={ document.Slug } data-window-trigger={ "note-" + document.Slug } aria-haspopup="dialog" aria-controls={ "note-" + document.Slug }>
 			@DocumentIcon(document.Kind)
 			<span class="project-archive__item-title">{ underscoreIdentifier(document.Title) }</span>
 			<span class="project-archive__item-meta">NOTA / MD</span>
@@ -91,22 +91,25 @@ templ ArchiveProjectItem(id string, project portfolio.Project, basePath string) 
 	</button>
 }
 
-templ ArchiveAppItem(id string) {
+templ ArchiveAppItem(id string, ref string) {
 	<button
 		class="project-archive__item"
 		type="button"
 		data-archive-item
 		data-archive-id={ id }
-		data-popup-trigger="snake"
+		data-popup-trigger={ ref }
+		data-window-trigger={ ref + "-game" }
 		aria-haspopup="dialog"
-		aria-controls="snake-game"
+		aria-controls={ ref + "-game" }
 	>
-		<span class="project-archive__item-icon snake-icon" aria-hidden="true">
-			<span
-				class="snake-icon__body"
-			></span><span class="snake-icon__food"></span>
-		</span>
-		<span class="project-archive__item-title">snake</span>
+		if ref == "ski" {
+			<span class="project-archive__item-icon ski-icon" aria-hidden="true">{ "//" }</span>
+		} else {
+			<span class="project-archive__item-icon snake-icon" aria-hidden="true">
+				<span class="snake-icon__body"></span><span class="snake-icon__food"></span>
+			</span>
+		}
+		<span class="project-archive__item-title">{ ref }</span>
 		<span class="project-archive__item-meta">JOGO / TS</span>
 	</button>
 }

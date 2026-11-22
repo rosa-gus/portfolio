@@ -297,6 +297,9 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 				if archive.HasApp("snake") {
 					@SnakeGame()
 				}
+				if archive.HasApp("ski") {
+					@SkiGame(basePath)
+				}
 				<nav class="command-bar" aria-label="Seções principais">
 					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
 					<a data-panel-target="career" href="#career">Carreira</a>

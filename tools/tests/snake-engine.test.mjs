@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SnakeEngine } from "../../web/scripts/snake/snake-engine.ts";
+import { SnakeEngine } from "../../web/scripts/games/snake/snake-engine.ts";
 
 test("only one turn per tick; reversing direction is rejected", () => {
   const game = new SnakeEngine(() => 0.5);

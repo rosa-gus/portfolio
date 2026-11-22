@@ -1,6 +1,6 @@
 import type { Cell, Direction, SnakeEngine } from "./snake-engine";
 import { createSnakeAudio } from "./snake-audio";
-import { migrateStorageValue, storageKey } from "../storage";
+import { migrateStorageValue, storageKey } from "../../storage";
 
 export const initializeSnakeGame = () => {
   const dialog = document.querySelector<HTMLDialogElement>('[data-popup="snake"]');
@@ -140,6 +140,7 @@ export const initializeSnakeGame = () => {
     dialog.classList.remove("has-witch");
   });
   dialog.addEventListener("close", pause);
+  dialog.addEventListener("window:help", pause);
   window.addEventListener("blur", pause);
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
   toggle.addEventListener("click", play);

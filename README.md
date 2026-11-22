@@ -114,7 +114,7 @@ Supported entries (examples are independent, not a replacement catalog):
 ```
 
 `document` automatically uses the note popup or article page according to
-`documents.json`. The built-in app is `snake`; introducing a new app requires
+`documents.json`. The built-in apps are `snake` and `ski`; introducing a new app requires
 its component and behavior. Link `icon` is a short text mark. Links require
 an absolute HTTP(S) `url` or one profile `source`: `contact.githubURL`,
 `contact.linkedInURL`, or `contact.sourceURL`. A channel with an empty profile URL
@@ -236,6 +236,8 @@ covers remain independent. Image dimensions are collected during the normal asse
 Copyright © 2026 Luis Gustavo R.C.
 
 Source code: [GNU AGPL v3](LICENSE.txt).
+Ski TypeScript: [GNU GPL v3](web/scripts/games/ski/LICENSE.md).
+Ski sprites: [CC0 1.0](web/assets/ski/LICENSE.md).
 Portfolio copy, case studies, media, and identities have separate terms;
 see [CONTENT_NOTICE.md](CONTENT_NOTICE.md).
 

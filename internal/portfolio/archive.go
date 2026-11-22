@@ -213,7 +213,7 @@ func ResolveArchive(catalog ArchiveCatalog, projects []Project, documents []Docu
 				}
 			}
 		case ArchiveApp:
-			if config.Ref != "snake" {
+			if config.Ref != "snake" && config.Ref != "ski" {
 				return fail("unknown app: " + config.Ref)
 			}
 		case ArchiveLink:

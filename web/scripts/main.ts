@@ -18,7 +18,9 @@ import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
-import { initializeSnakeGame } from "./snake/snake-game";
+import { initializeWindows } from "./windows";
+import { initializeSkiGame } from "./games/ski/ski-game";
+import { initializeSnakeGame } from "./games/snake/snake-game";
 import { migrateStorageValue, storageKey } from "./storage";
 import { initializeSociety } from "./society";
 
@@ -31,7 +33,9 @@ initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
 initializeSnakeGame();
-const documents = initializeDocuments({ beforeOpen: () => projectArchive.close(false, true) });
+initializeSkiGame();
+initializeDocuments();
+const windows = initializeWindows({ beforeOpen: () => projectArchive.close(false, true) });
 
 type Theme = "light" | "dark";
 type ThemePreference = Theme | "system";
@@ -273,7 +277,7 @@ initializePanelNavigation({
   onChange: (panelID) => {
     if (panelID !== "case") {
       projectArchive.close(false, true);
-      documents.close(false, true);
+      windows.close(false, true);
     }
     if (panelID === "about") activateAboutMedia();
     else deactivateAboutMedia();

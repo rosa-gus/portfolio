@@ -1,0 +1,93 @@
+package views
+
+
+// WindowOptions configures the shared frame; dimensions are trusted CSS lengths.
+type WindowOptions struct {
+	ID string
+	Title string
+	Class string
+	Width string
+	Height string
+	MinWidth string
+	MinHeight string
+	MaxWidth string
+	MaxHeight string
+	Decoration string
+	Inline bool
+	Attributes templ.Attributes
+	TitleAttributes templ.Attributes
+	CloseAttributes templ.Attributes
+}
+
+type WindowSlots struct {
+	Information templ.Component
+	Commands templ.Component
+	Touch templ.Component
+	Help templ.Component
+}
+
+func windowStyle(options WindowOptions) map[string]string {
+	style := map[string]string{}
+	for key, value := range map[string]string{
+		"width": options.Width, "height": options.Height,
+		"min-width": options.MinWidth, "min-height": options.MinHeight,
+		"max-width": options.MaxWidth, "max-height": options.MaxHeight,
+	} {
+		if value != "" { style["--window-" + key] = value }
+	}
+	return style
+}
+
+templ Window(options WindowOptions, slots WindowSlots) {
+	if options.Inline {
+		<section id={ options.ID } class={ "window window--inline " + options.Class } data-window data-window-decoration={ options.Decoration } style={ windowStyle(options) } aria-labelledby={ options.ID + "-title" } { options.Attributes... }>
+			@windowFrame(options, slots) {
+				{ children... }
+			}
+		</section>
+	} else {
+		<dialog id={ options.ID } class={ "window " + options.Class } data-window data-window-decoration={ options.Decoration } style={ windowStyle(options) } aria-labelledby={ options.ID + "-title" } { options.Attributes... }>
+			@windowFrame(options, slots) {
+				{ children... }
+			}
+		</dialog>
+	}
+}
+
+templ windowFrame(options WindowOptions, slots WindowSlots) {
+	<div class={ "window__sheet", templ.KV("document-fold", options.Decoration == "fold") }>
+		<header class="window__heading" data-window-handle>
+			<h2 class="window__title" id={ options.ID + "-title" } { options.TitleAttributes... }>{ options.Title }</h2>
+			if slots.Information != nil {
+				<div class="window__information meta-text">@slots.Information</div>
+			}
+			<button class="window__close" type="button" data-window-close { options.CloseAttributes... }>[FECHAR]</button>
+		</header>
+		<div class="window__body" data-window-body>
+			{ children... }
+		</div>
+		if slots.Commands != nil || slots.Touch != nil || slots.Help != nil {
+			<div class="window__commands" data-window-commands role="group" aria-label={ "Comandos de " + options.Title }>
+				<div class="window__command-bar control-text">
+						if slots.Commands != nil {
+							<div class="window__actions">@slots.Commands</div>
+						}
+					if slots.Help != nil {
+						<button class="window__help-toggle" type="button" data-window-help-toggle aria-expanded="false" aria-controls={ options.ID + "-help" }>[CONTROLES]</button>
+					}
+				</div>
+					if slots.Touch != nil {
+						<div class="window__touch">@slots.Touch</div>
+					}
+				if slots.Help != nil {
+					<div class="window__help meta-text" id={ options.ID + "-help" } data-window-help hidden>@slots.Help</div>
+				}
+			</div>
+		}
+	</div>
+}
+
+// Rotate IBM Plex Mono's local upward glyph; FE0E forces text presentation.
+templ ArrowGlyph(direction string) {
+	<span class={ "ui-arrow ui-arrow--" + direction } aria-hidden="true">{ "↑\uFE0E" }</span>
+}

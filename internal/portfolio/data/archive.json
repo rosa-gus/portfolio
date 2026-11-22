@@ -97,6 +97,11 @@
       "ref": "snake"
     },
     {
+      "id": "ski",
+      "type": "app",
+      "ref": "ski"
+    },
+    {
       "id": "github",
       "type": "link",
       "source": "contact.githubURL",

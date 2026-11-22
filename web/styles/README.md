@@ -28,6 +28,28 @@ Ordinary paragraphs do not need a dedicated class when their role is clear from
 their container. Add a token only when it represents a recurring decision;
 component-specific exceptions belong to the component that requires them.
 
+## Windows
+
+`Window` in `web/views/window.templ` provides modal and inline frames with
+optional information, command, touch, and help slots. `WindowOptions` accepts
+preferred `Width`/`Height` and optional `MinWidth`, `MinHeight`, `MaxWidth`, and
+`MaxHeight` as trusted CSS lengths. Omit height to size to content. Decoration
+is `tab`, `fold`, or empty for a plain frame.
+
+Notes use a 36rem × 28rem folded frame; Snake uses a 26rem tabbed frame; Ski
+uses a 48rem tabbed frame. Collections share the inline frame while retaining
+archive navigation. Empty slots occupy no space.
+
+Use `data-window-trigger="<window-id>"` to open a modal. `windows.ts` owns focus,
+dragging, viewport bounds, and closing. `window-layout.ts` fits
+`data-window-media` canvases to the available body, preserving their aspect
+ratio when commands expand or the viewport changes. Only the body scrolls;
+commands stay accessible and scroll internally when necessary.
+
+`ArrowGlyph` renders IBM Plex Mono's upward arrow with the text variation
+selector, rotated through `.ui-arrow` for each direction. Use it for window
+controls instead of bare arrow characters.
+
 ## Theme colors and active states
 
 Use semantic theme tokens directly: `--color-surface-*`, `--color-text-*`,

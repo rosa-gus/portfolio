@@ -1,0 +1,37 @@
+package views
+
+
+templ SkiGame(basePath string) {
+	@Window(WindowOptions{
+		ID: "ski-game", Title: "ski.ts", Class: "ski-game", Width: "48rem", Decoration: "tab",
+		Attributes: templ.Attributes{"data-popup": "ski", "data-ski-assets": string(siteURL(basePath, "/ski/sprites"))},
+	}, WindowSlots{Information: skiInformation(), Commands: skiCommands(), Touch: skiTouch(), Help: skiHelp()}) {
+		<div class="window__media ski-game__board" data-window-media style="--window-aspect:16 / 9;">
+			<canvas width="640" height="360" tabindex="0" data-ski-canvas aria-label="Pista de esqui. Esquerda e direita orientam os esquis; a direção se mantém ao soltar. Baixo aponta para a descida. Espaço pausa." role="img"></canvas>
+			<p class="window__message" data-ski-message role="status">Uma pista pela frente.</p>
+		</div>
+	}
+}
+
+templ skiInformation() {
+	<span>DISTÂNCIA <strong data-ski-distance>0000 m</strong></span><span>MELHOR <strong data-ski-best>0000 m</strong></span>
+}
+
+templ skiCommands() {
+	<button type="button" data-ski-toggle disabled>[INICIAR]</button><button type="button" data-ski-restart hidden>[REINICIAR]</button>
+}
+
+templ skiTouch() {
+	<div class="ski-game__touch" aria-label="Controles de esqui por toque">
+		<button type="button" data-ski-control="left" aria-label="Virar à esquerda">@ArrowGlyph("left")</button>
+		<button type="button" data-ski-control="downhill" aria-label="Apontar os esquis para baixo">[DESCER]</button>
+		<button type="button" data-ski-control="right" aria-label="Virar à direita">@ArrowGlyph("right")</button>
+	</div>
+}
+
+templ skiHelp() {
+	<p><kbd>@ArrowGlyph("left") @ArrowGlyph("right")<span>/ A D</span></kbd><span>Orientar os esquis</span></p>
+	<p><kbd>@ArrowGlyph("down")<span>/ S</span></kbd><span>Apontar para baixo</span></p>
+	<p><kbd>ESPAÇO</kbd><span>Pausar a descida</span></p>
+	<p>Arraste na pista para escolher a orientação. Ela se mantém ao soltar.</p>
+}

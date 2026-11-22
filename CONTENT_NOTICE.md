@@ -16,6 +16,10 @@ The canonical source repository is
 For clarity, this includes the Go source, `templ` layout and component
 structure, TypeScript, CSS, tests, build utilities, and configuration files.
 
+Exception: the TypeScript files in `web/scripts/games/ski/` are by rosa gus,
+2026, and licensed under `GPL-3.0-only`. See that directory's
+[`LICENSE.md`](web/scripts/games/ski/LICENSE.md).
+
 ## Reserved content
 
 The AGPL license for the source code does not grant permission to reuse the
@@ -36,6 +40,11 @@ These materials may be replaced when adapting the software. Any use of them
 requires permission from the applicable rights holder unless an exception
 under applicable law permits that use. No trademark, publicity, personality,
 or endorsement rights are granted by the source-code license.
+
+Exception: the PNG sprites in `web/assets/ski/`, including runtime copies and
+exports of those sprites, are by rosa gus, 2026, and dedicated to the public
+domain under `CC0-1.0`. See their
+[`LICENSE.md`](web/assets/ski/LICENSE.md).
 
 Facts and ideas are not made exclusive by this notice, and this notice does not
 limit quotation, fair use, fair dealing, or other rights provided by law.
