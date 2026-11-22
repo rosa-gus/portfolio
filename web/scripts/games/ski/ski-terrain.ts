@@ -3,7 +3,14 @@ const SECTION_LENGTH = 1040;
 const SECTION_FADE = 160;
 const CELL_WIDTH = 96;
 const CELL_HEIGHT = 56;
-const sections = ["smooth", "swept", "rippled", "smooth", "rippled", "swept"] as const;
+const sections = [
+  "smooth",
+  "swept",
+  "rippled",
+  "smooth",
+  "rippled",
+  "swept",
+] as const;
 
 const cellSeed = (row: number, column: number) => {
   const origin = Math.imul(row, 0x9e3779b1) ^ Math.imul(column, 0x85ebca6b);
@@ -12,10 +19,20 @@ const cellSeed = (row: number, column: number) => {
 };
 
 /** The marks belong to the slope, so their shape and color stay fixed as it scrolls. */
-export const drawSkiTerrain = (context: CanvasRenderingContext2D, width: number, height: number,
-  travel: number, shadow: string, highlight: string) => {
+export const drawSkiTerrain = (
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  travel: number,
+  shadow: string,
+  highlight: string,
+) => {
   const scroll = Math.round(travel);
-  for (let row = Math.floor(scroll / CELL_HEIGHT); row * CELL_HEIGHT < scroll + height; row++) {
+  for (
+    let row = Math.floor(scroll / CELL_HEIGHT);
+    row * CELL_HEIGHT < scroll + height;
+    row++
+  ) {
     const stagger = row % 2 ? -CELL_WIDTH / 2 : 0;
     for (let column = 0; column * CELL_WIDTH + stagger < width; column++) {
       const seed = cellSeed(row, column);
@@ -23,9 +40,14 @@ export const drawSkiTerrain = (context: CanvasRenderingContext2D, width: number,
       const x = column * CELL_WIDTH + stagger + 8 + ((seed >>> 8) & 31);
       const worldY = row * CELL_HEIGHT + 5 + ((seed >>> 13) % 43);
       const y = worldY - scroll;
-      const section = sections[Math.floor(worldY / SECTION_LENGTH) % sections.length];
+      const section =
+        sections[Math.floor(worldY / SECTION_LENGTH) % sections.length];
       const offset = worldY % SECTION_LENGTH;
-      const fade = Math.min(1, offset / SECTION_FADE, (SECTION_LENGTH - offset) / SECTION_FADE);
+      const fade = Math.min(
+        1,
+        offset / SECTION_FADE,
+        (SECTION_LENGTH - offset) / SECTION_FADE,
+      );
       const length = 10 + ((seed >>> 17) & 15);
       context.fillStyle = shadow;
 
@@ -43,8 +65,8 @@ export const drawSkiTerrain = (context: CanvasRenderingContext2D, width: number,
         context.globalAlpha = fade * 0.34;
         context.fillRect(x + 4, y + 2, length + 2, 1);
       } else if (section === "rippled" && chance < 143) {
-        const bend = (seed & 256) ? 1 : -1;
-        context.globalAlpha = fade * 0.40;
+        const bend = seed & 256 ? 1 : -1;
+        context.globalAlpha = fade * 0.4;
         context.fillRect(x, y + bend * 2, 4, 1);
         context.fillRect(x + 4, y + bend, 5, 1);
         context.fillRect(x + 9, y, length, 1);

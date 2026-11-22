@@ -27,24 +27,43 @@ export const createSnakeAudio = () => {
       const audioContext = context;
       for (const name of Object.keys(urls) as Sound[]) {
         if (!buffers.has(name)) {
-          buffers.set(name, fetch(urls[name]).then((response) => {
-            if (!response.ok) throw new Error("Audio unavailable");
-            return response.arrayBuffer();
-          }).then((bytes) => audioContext.decodeAudioData(bytes)).catch(() => null));
+          buffers.set(
+            name,
+            fetch(urls[name])
+              .then((response) => {
+                if (!response.ok) throw new Error("Audio unavailable");
+                return response.arrayBuffer();
+              })
+              .then((bytes) => audioContext.decodeAudioData(bytes))
+              .catch(() => null),
+          );
         }
       }
-    } catch { /* The game remains playable when audio is unavailable. */ }
+    } catch {
+      /* The game remains playable when audio is unavailable. */
+    }
   };
 
   const play = async (name: Sound) => {
     if (muted) return;
     const current = generation;
     const buffer = await buffers.get(name);
-    if (!buffer || muted || current !== generation || !context || !gain || context.state !== "running") return;
+    if (
+      !buffer ||
+      muted ||
+      current !== generation ||
+      !context ||
+      !gain ||
+      context.state !== "running"
+    )
+      return;
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(gain);
-    source.onended = () => { playing.delete(source); source.disconnect(); };
+    source.onended = () => {
+      playing.delete(source);
+      source.disconnect();
+    };
     playing.add(source);
     source.start();
   };

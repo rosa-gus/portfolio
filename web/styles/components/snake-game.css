@@ -1,8 +1,18 @@
 @layer components {
-  .snake-game { --snake-witch-tone: #7198ce; }
-  .snake-game canvas { color: var(--color-text-primary); }
-  .snake-game__directions { display: flex; justify-content: center; gap: 0.5rem; }
-  .snake-game__directions button { font-size: 1.3rem; }
+  .snake-game {
+    --snake-witch-tone: #7198ce;
+  }
+  .snake-game canvas {
+    color: var(--color-text-primary);
+  }
+  .snake-game__directions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .snake-game__directions button {
+    font-size: 1.3rem;
+  }
 
   .snake-game::backdrop {
     background-color: rgb(113 152 206 / 0);
@@ -18,14 +28,27 @@
   }
 
   @keyframes snake-wall-shake {
-    0%, 100% { translate: 0 0; }
-    20% { translate: -4px 1px; }
-    40% { translate: 4px -1px; }
-    60% { translate: -3px 0; }
-    80% { translate: 2px 0; }
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    20% {
+      translate: -4px 1px;
+    }
+    40% {
+      translate: 4px -1px;
+    }
+    60% {
+      translate: -3px 0;
+    }
+    80% {
+      translate: 2px 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .snake-game.is-open.is-wall-hit { animation: none; }
+    .snake-game.is-open.is-wall-hit {
+      animation: none;
+    }
   }
 }

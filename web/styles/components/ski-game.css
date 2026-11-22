@@ -12,42 +12,129 @@
     --ski-terrain-highlight-tone: light-dark(#fff3f4, #806775);
     image-rendering: pixelated;
   }
-  .ski-game__board.is-playing { touch-action: none; user-select: none; -webkit-touch-callout: none; }
-  .ski-game__touch-instructions { margin-top: 0.65rem; font: var(--type-font-control-compact); text-align: left; }
+  .ski-game__board.is-playing {
+    touch-action: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .ski-game__touch-instructions {
+    margin-top: 0.65rem;
+    font: var(--type-font-control-compact);
+    text-align: left;
+  }
 
-  .ski-game__distance-group { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.25rem 1rem; margin-left: auto; }
+  .ski-game__distance-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 1rem;
+    margin-left: auto;
+  }
   .ski-game .ski-game__best,
-  .ski-game .ski-game__best strong { color: var(--color-text-muted); }
+  .ski-game .ski-game__best strong {
+    color: var(--color-text-muted);
+  }
 
-  .ski-game__message.is-over { grid-template-columns: minmax(0, 14rem); font: 500 clamp(0.625rem, 2.5vw, 0.8125rem) / 1.3 var(--font-mono); }
-  .ski-game__message.is-over .ski-game__message-content { animation: ski-results-in 200ms ease-out both; }
-  .ski-game__wave-letter { display: inline-block; white-space: pre; animation: ski-game-over-wave 2.4s ease-in-out var(--wave-delay) infinite; }
-  .ski-game__results { margin-top: 0.45rem; font-variant-numeric: tabular-nums; }
-  .ski-game__result-score strong { font-size: clamp(1.125rem, 6vw, 2rem); line-height: 1.05; }
-  .ski-game__result-metrics { display: grid; gap: 0.25rem; margin: 0.6rem 0 0; }
-  .ski-game__result-metrics > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 0.75rem; text-align: start; }
-  .ski-game__result-metrics dt { color: var(--color-text-muted); }
-  .ski-game__result-metrics dd { margin: 0; text-align: end; }
-  .ski-game__result-record { color: var(--color-text-muted); }
-  .ski-game__result-record.is-new-record { color: var(--color-text-primary); font-weight: 600; }
-  .ski-game__result-record.is-new-record dt { color: inherit; }
-  @keyframes ski-results-in { from { opacity: 0; transform: translateY(4px); } }
+  .ski-game__message.is-over {
+    grid-template-columns: minmax(0, 14rem);
+    font: 500 clamp(0.625rem, 2.5vw, 0.8125rem) / 1.3 var(--font-mono);
+  }
+  .ski-game__message.is-over .ski-game__message-content {
+    animation: ski-results-in 200ms ease-out both;
+  }
+  .ski-game__wave-letter {
+    display: inline-block;
+    white-space: pre;
+    animation: ski-game-over-wave 2.4s ease-in-out var(--wave-delay) infinite;
+  }
+  .ski-game__results {
+    margin-top: 0.45rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ski-game__result-score strong {
+    font-size: clamp(1.125rem, 6vw, 2rem);
+    line-height: 1.05;
+  }
+  .ski-game__result-metrics {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0.6rem 0 0;
+  }
+  .ski-game__result-metrics > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 0.75rem;
+    text-align: start;
+  }
+  .ski-game__result-metrics dt {
+    color: var(--color-text-muted);
+  }
+  .ski-game__result-metrics dd {
+    margin: 0;
+    text-align: end;
+  }
+  .ski-game__result-record {
+    color: var(--color-text-muted);
+  }
+  .ski-game__result-record.is-new-record {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+  .ski-game__result-record.is-new-record dt {
+    color: inherit;
+  }
+  @keyframes ski-results-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
   @keyframes ski-game-over-wave {
-    0%, 50%, 100% { transform: translateY(0); }
-    25% { transform: translateY(-1.5px); }
-    75% { transform: translateY(1.5px); }
+    0%,
+    50%,
+    100% {
+      transform: translateY(0);
+    }
+    25% {
+      transform: translateY(-1.5px);
+    }
+    75% {
+      transform: translateY(1.5px);
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .ski-game__message.is-over .ski-game__message-content,
-    .ski-game__wave-letter { animation: none; }
+    .ski-game__wave-letter {
+      animation: none;
+    }
   }
 
-  .ski-game--portrait .window__heading { gap: 0.25rem 0.6rem; }
-  .ski-game--portrait .window__information { justify-content: flex-start; gap: 0.25rem 0.6rem; }
-  .ski-game--portrait .ski-game__distance-group { margin-left: 0; }
-  .ski-game--portrait .ski-game__best { display: none; }
-  .ski-game--portrait .window__body { padding-bottom: 0.35rem; }
-  .ski-game--portrait .window__command-bar { gap: 0 0.65rem; }
-  .ski-game--portrait .window__actions { flex: 0 1 auto; gap: 0 0.5rem; }
-  .ski-game--portrait .window__support { gap: 0 0.5rem; margin-left: 0; }
+  .ski-game--portrait .window__heading {
+    gap: 0.25rem 0.6rem;
+  }
+  .ski-game--portrait .window__information {
+    justify-content: flex-start;
+    gap: 0.25rem 0.6rem;
+  }
+  .ski-game--portrait .ski-game__distance-group {
+    margin-left: 0;
+  }
+  .ski-game--portrait .ski-game__best {
+    display: none;
+  }
+  .ski-game--portrait .window__body {
+    padding-bottom: 0.35rem;
+  }
+  .ski-game--portrait .window__command-bar {
+    gap: 0 0.65rem;
+  }
+  .ski-game--portrait .window__actions {
+    flex: 0 1 auto;
+    gap: 0 0.5rem;
+  }
+  .ski-game--portrait .window__support {
+    gap: 0 0.5rem;
+    margin-left: 0;
+  }
 }

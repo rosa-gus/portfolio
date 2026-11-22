@@ -40,7 +40,12 @@ export const prepareSkierPose = (sprite: HTMLImageElement): SkiPose | null => {
     for (let y = 0; y < height; y++) {
       for (let x = start; x < start + POLE_MARGIN; x++) {
         const index = pixel(x, y);
-        if (!poleColor.every((channel, offset) => channel === data[index + offset])) continue;
+        if (
+          !poleColor.every(
+            (channel, offset) => channel === data[index + offset],
+          )
+        )
+          continue;
         polePixels.data.set(poleColor, index);
         data[index + 3] = 0;
         pivots[side] = Math.min(pivots[side], y + 4);
@@ -53,10 +58,17 @@ export const prepareSkierPose = (sprite: HTMLImageElement): SkiPose | null => {
   return { body, poles, pivots };
 };
 
-export const drawSkierPose = (context: CanvasRenderingContext2D, pose: SkiPose, x: number, y: number, elapsed: number, lean: number) => {
+export const drawSkierPose = (
+  context: CanvasRenderingContext2D,
+  pose: SkiPose,
+  x: number,
+  y: number,
+  elapsed: number,
+  lean: number,
+) => {
   const { body, poles, pivots } = pose;
   const { width, height } = body;
-  const left = Math.round(x - width * SCALE / 2);
+  const left = Math.round(x - (width * SCALE) / 2);
   const top = Math.round(y - height * SCALE);
   const cycle = elapsed * Math.PI * 2 * 1.25;
   const shoulderX = Math.round(lean * 1.25);
@@ -64,8 +76,26 @@ export const drawSkierPose = (context: CanvasRenderingContext2D, pose: SkiPose, 
   const shoulderY = Math.sin(cycle) > liftThreshold ? -1 : 0;
   const headY = Math.sin(cycle - 0.65) > liftThreshold ? -1 : 0;
   const swing = Math.round(Math.sin(cycle - 0.5));
-  const drawPart = (layer: HTMLCanvasElement, sx: number, sy: number, w: number, h: number, dx = 0, dy = 0) => {
-    context.drawImage(layer, sx, sy, w, h, left + (sx + dx) * SCALE, top + (sy + dy) * SCALE, w * SCALE, h * SCALE);
+  const drawPart = (
+    layer: HTMLCanvasElement,
+    sx: number,
+    sy: number,
+    w: number,
+    h: number,
+    dx = 0,
+    dy = 0,
+  ) => {
+    context.drawImage(
+      layer,
+      sx,
+      sy,
+      w,
+      h,
+      left + (sx + dx) * SCALE,
+      top + (sy + dy) * SCALE,
+      w * SCALE,
+      h * SCALE,
+    );
   };
 
   for (const side of [0, 1] as const) {
@@ -73,10 +103,26 @@ export const drawSkierPose = (context: CanvasRenderingContext2D, pose: SkiPose, 
     const pivot = pivots[side];
     // Keep the grip with the arm, and overlap one row where the shaft swings.
     drawPart(poles, sx, 0, POLE_MARGIN, pivot + 1, shoulderX, shoulderY);
-    drawPart(poles, sx, pivot, POLE_MARGIN, height - pivot, shoulderX + (side === 0 ? swing : -swing), shoulderY);
+    drawPart(
+      poles,
+      sx,
+      pivot,
+      POLE_MARGIN,
+      height - pivot,
+      shoulderX + (side === 0 ? swing : -swing),
+      shoulderY,
+    );
   }
   // The shared neck and waist rows keep the outline connected through the lift.
   drawPart(body, 0, WAIST_ROW, width, height - WAIST_ROW);
-  drawPart(body, 0, NECK_ROW, width, WAIST_ROW - NECK_ROW + 1, shoulderX, shoulderY);
+  drawPart(
+    body,
+    0,
+    NECK_ROW,
+    width,
+    WAIST_ROW - NECK_ROW + 1,
+    shoulderX,
+    shoulderY,
+  );
   drawPart(body, 0, 0, width, NECK_ROW + 1, shoulderX, headY);
 };
