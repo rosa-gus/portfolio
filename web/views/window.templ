@@ -87,11 +87,15 @@ templ windowFrame(options WindowOptions, slots WindowSlots) {
 					if slots.Touch != nil {
 						<div class="window__touch">@slots.Touch</div>
 					}
-				if slots.Help != nil {
-					<div class="window__help meta-text" id={ options.ID + "-help" } data-window-help hidden>@slots.Help</div>
-				}
-				if slots.Tips != nil {
-					<div class="window__help meta-text" id={ options.ID + "-tips" } data-window-tips hidden>@slots.Tips</div>
+				if slots.Help != nil || slots.Tips != nil {
+					<div class="window__support-panels" data-window-support-panels>
+						if slots.Help != nil {
+							<div class="window__help meta-text" id={ options.ID + "-help" } data-window-help hidden>@slots.Help</div>
+						}
+						if slots.Tips != nil {
+							<div class="window__help meta-text" id={ options.ID + "-tips" } data-window-tips hidden>@slots.Tips</div>
+						}
+					</div>
 				}
 			</div>
 		}

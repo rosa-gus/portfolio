@@ -14,9 +14,6 @@
 @import "./components/pixel-icon.css" layer(components);
 @import "./components/project-archive.css" layer(components);
 @import "./components/documents.css" layer(components);
-@import "./components/game-metadata.css" layer(components);
-@import "./components/snake-game.css" layer(components);
-@import "./components/ski-game.css" layer(components);
 
 @import "./components/tooltip.css" layer(components);
 @import "../scripts/society/styles.css" layer(components);

@@ -19,8 +19,6 @@ import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
 import { initializeWindows } from "./windows";
-import { initializeSkiGame } from "./games/ski/ski-game";
-import { initializeSnakeGame } from "./games/snake/snake-game";
 import { migrateStorageValue, storageKey } from "./storage";
 import { initializeSociety } from "./society";
 
@@ -32,10 +30,14 @@ initializeProjectGalleries();
 initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
-initializeSnakeGame();
-initializeSkiGame();
 initializeDocuments();
-const windows = initializeWindows({ beforeOpen: () => projectArchive.close(false, true) });
+const windows = initializeWindows({
+  beforeOpen: () => projectArchive.close(false, true),
+  loadFeatures: {
+    "ski-game": () => import("./games/ski/ski-session").then(({ createSkiSession }) => createSkiSession),
+    "snake-game": () => import("./games/snake/snake-game").then(({ createSnakeGame }) => createSnakeGame),
+  },
+});
 
 type Theme = "light" | "dark";
 type ThemePreference = Theme | "system";

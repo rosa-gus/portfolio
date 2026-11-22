@@ -12,7 +12,7 @@ templ SnakeGame() {
 				<section data-snake-intro aria-label="Sobre o jogo" hidden>
 					@GameMetadata("SNAKE", "o clássico jogo da cobrinha.\nmas desconfie da magia.")
 				</section>
-				<p data-snake-message-text>Pronto para jogar?</p>
+				<p data-snake-message-text data-window-feature-status>Pronto para jogar?</p>
 			</div>
 		</div>
 	}
@@ -23,7 +23,7 @@ templ snakeInformation() {
 }
 
 templ snakeCommands() {
-	<button type="button" data-snake-toggle>[INICIAR]</button><button type="button" data-snake-restart hidden>[REINICIAR]</button>
+	<button type="button" data-snake-toggle disabled>[INICIAR]</button><button type="button" data-snake-restart hidden>[REINICIAR]</button><button type="button" data-snake-sound aria-label="Silenciar o jogo" aria-pressed="false" disabled>[SOM LIGADO]</button>
 }
 
 templ snakeTouch() {

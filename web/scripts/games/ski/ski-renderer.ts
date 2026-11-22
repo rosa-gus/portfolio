@@ -1,5 +1,5 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
-import { SKI_HEIGHT, SKI_MAX_HEADING, SKI_TRAIL_LIFETIME, SKI_WIDTH, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
+import { SKI_MAX_HEADING, SKI_TRAIL_LIFETIME, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
 import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, type SkiFeedback } from "./ski-feedback";
 
 const names = [
@@ -12,17 +12,17 @@ const names = [
   "pine", "rock", "tracks", "yeti-glimpse", "yeti-idle", "yeti-run-01", "yeti-run-02",
 ] as const;
 type Sprite = typeof names[number];
-type Theme = "light" | "dark";
-type Sprites = Record<Theme, Record<Sprite, HTMLImageElement>>;
+export type SkiTheme = "light" | "dark";
+export type SkiSprites = Record<Sprite, HTMLImageElement>;
 
-export const loadSkiSprites = async (base: string): Promise<Sprites> => {
-  const sprites = { light: {}, dark: {} } as Sprites;
-  await Promise.all((["light", "dark"] as const).flatMap(theme => names.map(async name => {
+export const loadSkiSprites = async (base: string, theme: SkiTheme): Promise<SkiSprites> => {
+  const sprites = {} as SkiSprites;
+  await Promise.all(names.map(async name => {
     const image = new Image();
     image.src = `${base}/${theme}/${name}.png`;
     await image.decode();
-    sprites[theme][name] = image;
-  })));
+    sprites[name] = image;
+  }));
   return sprites;
 };
 
@@ -92,14 +92,12 @@ const drawSkiTrails = (context: CanvasRenderingContext2D, game: SkiEngine, groov
 };
 
 /** Scene presentation only. All positions and progression come from the engine. */
-export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Sprites, feedback: SkiFeedback, balanceHint: string, reducedMotion = false) => {
+export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, bank: SkiSprites, feedback: SkiFeedback, balanceHint: string, reducedMotion = false) => {
   const context = canvas.getContext("2d");
   if (!context) return;
   const style = getComputedStyle(canvas);
-  const dark = getComputedStyle(document.documentElement).colorScheme === "dark";
-  const bank = sprites[dark ? "dark" : "light"];
   context.imageSmoothingEnabled = false;
-  context.clearRect(0, 0, SKI_WIDTH, SKI_HEIGHT);
+  context.clearRect(0, 0, game.width, game.height);
   drawSkiTrails(context, game, style.getPropertyValue("--ski-track-tone").trim(),
     style.getPropertyValue("--ski-track-ridge-tone").trim());
   const draw = (name: Sprite, x: number, y: number, anchorY = bank[name].height) => {
@@ -189,7 +187,7 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
     drawCaption(caption.text, caption.x, y, Math.min(1, (caption.life - caption.age) / 0.2));
   }
   if (game.phase === "running" && game.balance?.pose === "stumble" && !game.balance.corrected) {
-    const x = Math.max(100, Math.min(SKI_WIDTH - 100, game.player.x));
+    const x = Math.max(100, Math.min(game.width - 100, game.player.x));
     drawCaption(balanceHint, x, game.player.y + 17, 1);
   }
   context.globalAlpha = 1;

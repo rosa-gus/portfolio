@@ -1,24 +1,28 @@
-import type { Cell, Direction, SnakeEngine } from "./snake-engine";
+import "../../../styles/components/game-metadata.css";
+import "../../../styles/components/snake-game.css";
+import { SnakeEngine, type Cell, type Direction } from "./snake-engine";
 import { createSnakeAudio } from "./snake-audio";
 import { migrateStorageValue, storageKey } from "../../storage";
 
-export const initializeSnakeGame = () => {
-  const dialog = document.querySelector<HTMLDialogElement>('[data-popup="snake"]');
-  const canvas = dialog?.querySelector<HTMLCanvasElement>("[data-snake-canvas]");
+export const createSnakeGame = (dialog: HTMLDialogElement) => {
+  const canvas = dialog.querySelector<HTMLCanvasElement>("[data-snake-canvas]");
   const context = canvas?.getContext("2d");
-  const toggle = dialog?.querySelector<HTMLButtonElement>("[data-snake-toggle]");
-  const restart = dialog?.querySelector<HTMLButtonElement>("[data-snake-restart]");
-  const message = dialog?.querySelector<HTMLElement>("[data-snake-message]");
-  const messageText = dialog?.querySelector<HTMLElement>("[data-snake-message-text]");
-  const intro = dialog?.querySelector<HTMLElement>("[data-snake-intro]");
-  const score = dialog?.querySelector<HTMLElement>("[data-snake-score]");
-  const best = dialog?.querySelector<HTMLElement>("[data-snake-best]");
-  if (!dialog || !canvas || !context || !toggle || !restart || !message || !messageText || !intro || !score || !best) return;
-  let game: SnakeEngine | null = null;
-  let loading: Promise<void> | null = null;
+  const toggle = dialog.querySelector<HTMLButtonElement>("[data-snake-toggle]");
+  const restart = dialog.querySelector<HTMLButtonElement>("[data-snake-restart]");
+  const message = dialog.querySelector<HTMLElement>("[data-snake-message]");
+  const messageText = dialog.querySelector<HTMLElement>("[data-snake-message-text]");
+  const intro = dialog.querySelector<HTMLElement>("[data-snake-intro]");
+  const score = dialog.querySelector<HTMLElement>("[data-snake-score]");
+  const best = dialog.querySelector<HTMLElement>("[data-snake-best]");
+  const sound = dialog.querySelector<HTMLButtonElement>("[data-snake-sound]");
+  if (!canvas || !context || !toggle || !restart || !message || !messageText || !intro || !score || !best || !sound) {
+    throw new Error("Snake window is incomplete");
+  }
+  const game = new SnakeEngine();
   let timer = 0;
   let highScore = 0;
   let shakeTimer = 0;
+  let muted = false;
   const audio = createSnakeAudio();
   const clearShake = () => {
     window.clearTimeout(shakeTimer);
@@ -39,7 +43,6 @@ export const initializeSnakeGame = () => {
   } catch { /* The session record remains available if local storage is blocked. */ }
 
   const render = () => {
-    if (!game) return;
     const style = getComputedStyle(canvas);
     const ink = style.color;
     const cell = canvas.width / game.size;
@@ -94,12 +97,12 @@ export const initializeSnakeGame = () => {
   };
 
   const stop = () => { window.clearTimeout(timer); timer = 0; };
-  const pause = () => { stop(); audio.stop(); clearShake(); game?.pause(); render(); };
+  const pause = () => { stop(); audio.stop(); clearShake(); game.pause(); render(); };
   const schedule = () => {
     stop();
-    if (!game || game.phase !== "running" || !dialog.open || dialog.inert) return;
+    if (game.phase !== "running" || !dialog.open || dialog.inert) return;
     timer = window.setTimeout(() => {
-      for (const event of game?.tick() ?? []) {
+      for (const event of game.tick()) {
         if (event.type === "witch") {
           if (event.first) {
             void audio.play("witch");
@@ -114,7 +117,7 @@ export const initializeSnakeGame = () => {
     }, game.speed);
   };
   const play = () => {
-    if (!game || !dialog.open || dialog.inert) return;
+    if (!dialog.open || dialog.inert) return;
     if (game.phase === "running") pause();
     else {
       audio.unlock();
@@ -128,19 +131,6 @@ export const initializeSnakeGame = () => {
       schedule();
     }
   };
-  toggle.disabled = true;
-  dialog.addEventListener("popup:open", () => {
-    if (game) { render(); return; }
-    toggle.disabled = true;
-    messageText.textContent = "Carregando…";
-    loading ??= import("./snake-engine").then(({ SnakeEngine }) => {
-      game = new SnakeEngine();
-      render();
-    }).catch(() => {
-      messageText.textContent = "Não foi possível carregar. Feche e tente novamente.";
-      loading = null;
-    });
-  });
   dialog.addEventListener("popup:closing", () => {
     pause();
     dialog.classList.remove("has-witch");
@@ -154,15 +144,23 @@ export const initializeSnakeGame = () => {
     stop();
     audio.stop();
     clearShake();
-    game?.reset();
+    game.reset();
     play();
   });
+  sound.addEventListener("click", () => {
+    muted = !muted;
+    audio.setMuted(muted);
+    if (!muted) audio.unlock();
+    sound.setAttribute("aria-pressed", String(muted));
+    sound.textContent = muted ? "[SOM DESLIGADO]" : "[SOM LIGADO]";
+  });
+  sound.disabled = false;
   dialog.querySelectorAll<HTMLButtonElement>("[data-snake-direction]").forEach((button) => {
-    button.addEventListener("click", () => game?.turn(button.dataset.snakeDirection as Direction));
+    button.addEventListener("click", () => game.turn(button.dataset.snakeDirection as Direction));
   });
   const keys: Record<string, Direction> = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right" };
   dialog.addEventListener("keydown", (event) => {
-    if (!game || !dialog.open || dialog.inert || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (!dialog.open || dialog.inert || event.altKey || event.ctrlKey || event.metaKey) return;
     const direction = keys[event.key] ?? keys[event.key.toLowerCase()];
     if (direction) {
       event.preventDefault();
@@ -173,4 +171,5 @@ export const initializeSnakeGame = () => {
     }
   });
   new MutationObserver(() => { if (dialog.open) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "style"] });
+  return { open: render };
 };

@@ -1,8 +1,12 @@
 import { dismissWindowHelp, fitWindowMedia, initializeWindowLayout } from "./window-layout";
 
-type WindowOptions = { beforeOpen?: () => void };
+type WindowFeature = (dialog: HTMLDialogElement) => { open: () => void };
+type WindowOptions = {
+  beforeOpen?: () => void;
+  loadFeatures?: Record<string, () => Promise<WindowFeature>>;
+};
 
-export const initializeWindows = ({ beforeOpen }: WindowOptions = {}) => {
+export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = {}) => {
   initializeWindowLayout();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const windows = Array.from(document.querySelectorAll<HTMLDialogElement>("dialog[data-window]"));
@@ -105,6 +109,25 @@ export const initializeWindows = ({ beforeOpen }: WindowOptions = {}) => {
   });
 
   windows.forEach((dialog) => {
+    const loadFeature = loadFeatures?.[dialog.id];
+    if (loadFeature) {
+      let feature: ReturnType<WindowFeature> | undefined;
+      let loading = false;
+      dialog.addEventListener("popup:open", () => {
+        if (feature) { feature.open(); return; }
+        if (loading) return;
+        loading = true;
+        const status = dialog.querySelector<HTMLElement>("[data-window-feature-status]");
+        if (status) status.textContent = "Carregando…";
+        void loadFeature().then(create => {
+          if (active !== dialog || closing || !dialog.open) return;
+          feature = create(dialog);
+          feature.open();
+        }).catch(() => {
+          if (status) status.textContent = "Não foi possível carregar. Feche e tente novamente.";
+        }).finally(() => { loading = false; });
+      });
+    }
     dialog.addEventListener("window:layout", () => {
       if (active !== dialog || closing || !dialog.classList.contains("is-positioned")) return;
       positionWindow(dialog, Number.parseFloat(dialog.style.left), Number.parseFloat(dialog.style.top));

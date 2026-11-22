@@ -322,8 +322,8 @@ test("terrain phrases vary density and corridor width while preserving a travers
   assert.notEqual(rows[7][0], rows[8][0]);
 });
 
-const startSlalom = (distance, random = () => 0.5) => {
-  const game = new SkiEngine(random);
+const startSlalom = (distance, random = () => 0.5, layout = "landscape") => {
+  const game = new SkiEngine(random, layout);
   game.start();
   game.objects = [];
   game.distance = distance;
@@ -519,10 +519,10 @@ test("pursuit and reset remove the glimpse without turning it into a collidable 
   assert.equal(game.glimpseEncounter, 0);
 });
 
-test("every slalom tier can be traversed with the actual steering physics without collisions", () => {
+for (const layout of ["landscape", "portrait"]) test(`every ${layout} slalom tier is traversable without collisions`, () => {
   for (const distance of [700, 3500, 6500]) for (const seed of [0, 1, 2, 3]) {
     let value = seed;
-    const game = startSlalom(distance, () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 2 ** 32; });
+    const game = startSlalom(distance, () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 2 ** 32; }, layout);
     let ended = false;
     for (let i = 0; i < 1800 && !ended; i++) {
       const rows = new Map();
@@ -540,7 +540,7 @@ test("every slalom tier can be traversed with the actual steering physics withou
         const [left, right] = gaps.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0];
         // Anticipate the next turn by taking the inner side of the opening,
         // with twenty pixels of clearance beyond the largest collision radius.
-        const target = (left + right) / 2 < 320 ? right - 47 : left + 47;
+        const target = (left + right) / 2 < game.width / 2 ? right - 47 : left + 47;
         heading = Math.atan2(target - game.player.x, Math.max(45, gate[0].y - game.player.y));
       }
       game.tick({ steer: 0, heading });
@@ -550,6 +550,22 @@ test("every slalom tier can be traversed with the actual steering physics withou
     }
     assert.ok(ended);
   }
+});
+
+test("portrait bounds cover terrain, player, and pursuit", () => {
+  const game = new SkiEngine(() => 0.5, "portrait");
+  assert.deepEqual([game.width, game.height, game.player.x, game.player.y], [400, 500, 200, 150]);
+  assert.ok(game.objects.some(object => object.y > 360 && object.y < game.height));
+  game.start();
+  game.objects = [];
+  game.player.x -= 1;
+  game.distance = SKI_FIRST_YETI + 1;
+  game.tick();
+  assert.ok(game.yeti.x >= game.width - 75 && game.yeti.x <= game.width - 70);
+  game.yeti = null;
+  game.nextYeti = Infinity;
+  advance(game, 210, { steer: 1 });
+  assert.equal(game.player.x, game.width - 26);
 });
 
 test("reset clears pursuit, records of the run, heading, and trails", () => {

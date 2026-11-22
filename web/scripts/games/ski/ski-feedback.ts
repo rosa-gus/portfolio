@@ -94,7 +94,7 @@ export class SkiFeedback {
         const gap = Math.hypot(game.yeti.x - game.player.x, game.yeti.y - game.player.y);
         if (gap < 85 && !this.warned) {
           this.warned = true;
-          this.captions.push({ text: "ele está perto.", x: 320, y: 42, age: 0, life: 1.3 });
+          this.captions.push({ text: "ele está perto.", x: game.width / 2, y: 42, age: 0, life: 1.3 });
         } else if (gap > 125) this.warned = false;
         const step = Math.floor(game.yeti.age * 3);
         if (step !== this.lastYetiStep && game.yeti.y > 0) this.puff(game.yeti.x, game.yeti.y - 2, 4);
@@ -107,10 +107,10 @@ export class SkiFeedback {
     for (const event of events) {
       switch (event.type) {
         case "slalom-start":
-          this.captions.push({ text: "slalom à frente.", x: 320, y: 42, age: 0, life: 1.8 });
+          this.captions.push({ text: "slalom à frente.", x: game.width / 2, y: 42, age: 0, life: 1.8 });
           break;
         case "slalom-end":
-          this.captions.push({ text: "pista aberta.", x: 320, y: 42, age: 0, life: 1.3 });
+          this.captions.push({ text: "pista aberta.", x: game.width / 2, y: 42, age: 0, life: 1.3 });
           break;
         case "collision":
           this.impact = 0.24;
@@ -121,26 +121,27 @@ export class SkiFeedback {
           this.puff(event.x, event.y - 3, 22, event.side === "left" ? -1 : 1, true);
           break;
         case "near-miss": {
+          const x = Math.max(110, Math.min(game.width - 110, event.x));
           const recent = this.captions.find(caption => caption.count !== undefined && caption.age < 0.25);
           if (recent) {
             recent.count = (recent.count ?? 1) + 1;
             recent.points = (recent.points ?? 0) + event.points;
             recent.text = `por pouco ×${recent.count} +${recent.points}`;
-            recent.x = Math.max(110, Math.min(530, event.x));
+            recent.x = x;
             recent.age = 0;
           } else {
             this.captions.push({ text: `por pouco +${event.points}`, count: 1, points: event.points,
-              x: Math.max(110, Math.min(530, event.x)), y: event.y - 66, age: 0, life: 1 });
+              x, y: event.y - 66, age: 0, life: 1 });
           }
           this.puff(event.x, event.y - 3, 8);
           break;
         }
         case "yeti-appear":
-          this.captions.push({ text: "companhia na pista.", x: 320, y: 42, age: 0, life: 1.6 });
+          this.captions.push({ text: "companhia na pista.", x: game.width / 2, y: 42, age: 0, life: 1.6 });
           break;
         case "escape":
           this.retreat = { x: event.x, y: event.y, age: 0 };
-          this.captions.push({ text: "ficou para trás.", x: 320, y: 66, age: 0, life: 1.4 });
+          this.captions.push({ text: "ficou para trás.", x: game.width / 2, y: 66, age: 0, life: 1.4 });
           break;
         case "capture":
           this.endAge = 0;

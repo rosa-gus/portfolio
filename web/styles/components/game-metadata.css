@@ -1,10 +1,12 @@
-.game-message.is-ready { padding: clamp(0.5rem, 2vw, 1rem); }
-.game-message:is(.is-ready, .is-paused) { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-.game-metadata { width: min(100%, 23rem); text-align: left; }
-.game-metadata__title { font: 400 clamp(1.8rem, 5vw, 3rem) / 0.95 var(--font-serif); letter-spacing: var(--type-tracking-title); }
-.game-metadata__description { margin-top: 0.5rem; font: 400 clamp(0.625rem, 1.5vw, 0.75rem) / 1.4 var(--font-mono); color: var(--color-text-muted); }
-.game-metadata__fields { display: grid; gap: 0.25rem; margin-top: clamp(0.5rem, 2vw, 1.25rem); font: 500 clamp(0.5625rem, 1.4vw, 0.6875rem) / 1.5 var(--font-mono); font-variant-numeric: tabular-nums; }
-.game-metadata__fields > div { display: grid; grid-template-columns: 10ch minmax(0, 1fr); align-items: baseline; gap: 0.75rem; }
-.game-metadata__fields dt { color: var(--color-text-muted); }
-.game-metadata__fields dd { margin: 0; }
-.game-metadata__inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
+@layer components {
+  .game-message.is-ready { padding: clamp(0.5rem, 2vw, 1rem); }
+  .game-message:is(.is-ready, .is-paused) { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .game-metadata { width: min(100%, 23rem); text-align: left; }
+  .game-metadata__title { font: 400 clamp(1.8rem, 5vw, 3rem) / 0.95 var(--font-serif); letter-spacing: var(--type-tracking-title); }
+  .game-metadata__description { margin-top: 0.5rem; font: 400 clamp(0.625rem, 1.5vw, 0.75rem) / 1.4 var(--font-mono); color: var(--color-text-muted); }
+  .game-metadata__fields { display: grid; gap: 0.25rem; margin-top: clamp(0.5rem, 2vw, 1.25rem); font: 500 clamp(0.5625rem, 1.4vw, 0.6875rem) / 1.5 var(--font-mono); font-variant-numeric: tabular-nums; }
+  .game-metadata__fields > div { display: grid; grid-template-columns: 10ch minmax(0, 1fr); align-items: baseline; gap: 0.75rem; }
+  .game-metadata__fields dt { color: var(--color-text-muted); }
+  .game-metadata__fields dd { margin: 0; }
+  .game-metadata__inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
+}
