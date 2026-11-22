@@ -16,6 +16,7 @@ export class SkiFeedback {
   endAge = 0;
   carve = 0;
   stride = 0;
+  skierLean = 0;
   private previousHeading = 0;
   private previousX: number | null = null;
   private snowBudget = 0;
@@ -28,7 +29,7 @@ export class SkiFeedback {
     this.captions = [];
     this.retreat = null;
     this.impact = this.endAge = this.carve = this.previousHeading = this.snowBudget = this.sequence = 0;
-    this.stride = 0;
+    this.stride = this.skierLean = 0;
     this.previousX = null;
     this.warned = false;
     this.lastYetiStep = -1;
@@ -74,7 +75,9 @@ export class SkiFeedback {
     }
     const turn = (game.player.heading - this.previousHeading) / dt;
     this.previousHeading = game.player.heading;
-    this.carve = Math.min(1, Math.abs(Math.sin(game.player.heading)) * 0.5 + Math.abs(turn) * 0.25);
+    const leanTarget = Math.sin(game.player.heading);
+    this.carve = Math.min(1, Math.abs(leanTarget) * 0.5 + Math.abs(turn) * 0.25);
+    this.skierLean += (leanTarget - this.skierLean) * (1 - Math.exp(-dt * 12));
     const lateralTravel = Math.abs(game.player.x - (this.previousX ?? game.player.x));
     this.previousX = game.player.x;
     this.stride = game.phase === "running" && !game.balance && lateralTravel > 0.01

@@ -1,36 +1,46 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import { SKI_MAX_HEADING, SKI_TRAIL_LIFETIME, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
 import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, type SkiFeedback } from "./ski-feedback";
+import { drawSkierPose, prepareSkierPose, type SkiPose } from "./ski-skier";
+import { drawYetiRun } from "./ski-yeti";
 
-const names = [
+const glidingNames = [
   "skier-front", "skier-left", "skier-right",
   "skier-diagonal-left", "skier-diagonal-left-01", "skier-diagonal-left-02",
   "skier-diagonal-right", "skier-diagonal-right-01", "skier-diagonal-right-02",
+] as const;
+const names = [
+  ...glidingNames,
   "skier-stumble-left", "skier-stumble-right", "skier-fall-left", "skier-fall-right",
   "skier-recover-left", "skier-recover-right",
   "shadow-pine", "shadow-rock", "shadow-skis",
   "pine", "rock", "tracks", "yeti-glimpse", "yeti-idle", "yeti-run-01", "yeti-run-02",
 ] as const;
 type Sprite = typeof names[number];
+type GlidingSprite = typeof glidingNames[number];
 export type SkiTheme = "light" | "dark";
-export type SkiSprites = Record<Sprite, HTMLImageElement>;
+export type SkiSprites = {
+  images: Record<Sprite, HTMLImageElement>;
+  poses: Record<GlidingSprite, SkiPose | null>;
+};
 
 export const loadSkiSprites = async (base: string, theme: SkiTheme): Promise<SkiSprites> => {
-  const sprites = {} as SkiSprites;
+  const images = {} as SkiSprites["images"];
   await Promise.all(names.map(async name => {
     const image = new Image();
     image.src = `${base}/${theme}/${name}.png`;
     await image.decode();
-    sprites[name] = image;
+    images[name] = image;
   }));
-  return sprites;
+  const poses = {} as SkiSprites["poses"];
+  for (const name of glidingNames) poses[name] = prepareSkierPose(images[name]);
+  return { images, poses };
 };
 
-const skierSprite = (game: SkiEngine, stride: number, reducedMotion: boolean): Sprite => {
-  if (game.balance) return `skier-${game.balance.pose}-${game.balance.side}`;
-  const heading = Math.abs(game.player.heading);
+const glidingSprite = (signedHeading: number, stride: number, reducedMotion: boolean): GlidingSprite => {
+  const heading = Math.abs(signedHeading);
   if (heading <= 0.15) return "skier-front";
-  const side = game.player.heading < 0 ? "left" : "right";
+  const side = signedHeading < 0 ? "left" : "right";
   // The original lateral poses face opposite to their filenames.
   if (heading >= SKI_MAX_HEADING - 0.08) return side === "left" ? "skier-right" : "skier-left";
   if (reducedMotion || heading < Math.PI * 0.28) return `skier-diagonal-${side}`;
@@ -92,7 +102,7 @@ const drawSkiTrails = (context: CanvasRenderingContext2D, game: SkiEngine, groov
 };
 
 /** Scene presentation only. All positions and progression come from the engine. */
-export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, bank: SkiSprites, feedback: SkiFeedback, balanceHint: string, reducedMotion = false) => {
+export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, { images, poses }: SkiSprites, feedback: SkiFeedback, balanceHint: string, reducedMotion = false) => {
   const context = canvas.getContext("2d");
   if (!context) return;
   const style = getComputedStyle(canvas);
@@ -100,8 +110,8 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, bank: SkiSpr
   context.clearRect(0, 0, game.width, game.height);
   drawSkiTrails(context, game, style.getPropertyValue("--ski-track-tone").trim(),
     style.getPropertyValue("--ski-track-ridge-tone").trim());
-  const draw = (name: Sprite, x: number, y: number, anchorY = bank[name].height) => {
-    const image = bank[name];
+  const draw = (name: Sprite, x: number, y: number, anchorY = images[name].height) => {
+    const image = images[name];
     context.drawImage(image, Math.round(x - image.width), Math.round(y - anchorY * 2), image.width * 2, image.height * 2);
   };
   const ending = game.phase === "over";
@@ -130,10 +140,20 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, bank: SkiSpr
   }
   scene.push({ y: game.player.y, render: () => {
     if (!captured) {
-      draw(skierSprite(game, feedback.stride, reducedMotion), playerX, game.player.y);
+      if (game.balance) {
+        draw(`skier-${game.balance.pose}-${game.balance.side}`, playerX, game.player.y);
+        return;
+      }
+      const name = glidingSprite(game.player.heading, feedback.stride, reducedMotion);
+      const pose = poses[name];
+      if (pose && !reducedMotion && (game.phase === "running" || game.phase === "paused")) {
+        drawSkierPose(context, pose, playerX, game.player.y, game.elapsed, feedback.skierLean);
+      } else {
+        draw(name, playerX, game.player.y);
+      }
       return;
     }
-    const front = bank["skier-front"];
+    const front = images["skier-front"];
     const x = Math.round(playerX);
     const y = Math.round(game.player.y);
     // The bottom rows of the front sprite contain the ski tips.
@@ -148,11 +168,12 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, bank: SkiSpr
     const direction = Math.sign(game.player.x - enemy.x) || 1;
     const x = enemy.x + (game.player.x - enemy.x) * approach + direction * settle * 11;
     const y = enemy.y + (game.player.y + 4 - enemy.y) * approach - settle * 15;
-    const sprite = captured || (ending && reducedMotion) ? "yeti-idle"
-      : Math.floor((enemy.age + (ending ? feedback.endAge : 0)) * 6) % 2 ? "yeti-run-02" : "yeti-run-01";
     // At contact the yeti overlaps the skier, then the skier's skis remain in front.
     scene.push({ y: ending && !captured && !reducedMotion && approach > 0.85 ? game.player.y + 1 : y,
-      render: () => draw(sprite, x, y) });
+      render: () => {
+        if (captured || reducedMotion) draw("yeti-idle", x, y);
+        else drawYetiRun(context, images, x, y, enemy.age + (ending ? feedback.endAge : 0), direction);
+      } });
   }
   if (feedback.retreat) {
     const enemy = feedback.retreat;
