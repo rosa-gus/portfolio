@@ -1,0 +1,18 @@
+package views
+
+import "strings"
+
+templ GameMetadata(title string, description string) {
+	<div class="game-metadata">
+		<h2 class="game-metadata__title">{ title }</h2>
+		<p class="game-metadata__description">
+			for index, line := range strings.Split(description, "\n") {
+				if index > 0 {
+					<br/>
+				}
+				{ line }
+			}
+		</p>
+		{ children... }
+	</div>
+}

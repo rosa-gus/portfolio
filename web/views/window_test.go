@@ -26,7 +26,7 @@ func TestWindowSlotsAndDimensions(t *testing.T) {
 		Decoration: "tab", Attributes: templ.Attributes{"data-popup": "sample"},
 	}, WindowSlots{
 		Information: windowTestContent("DISTANCE"), Commands: windowTestContent("ACTIONS"),
-		Touch: windowTestContent("TOUCH"), Help: windowTestContent("HELP"),
+		Touch: windowTestContent("TOUCH"), Help: windowTestContent("HELP"), Tips: windowTestContent("TIPS"),
 	})
 	if err := component.Render(templ.WithChildren(context.Background(), windowTestContent("BODY")), &output); err != nil {
 		t.Fatal(err)
@@ -38,12 +38,33 @@ func TestWindowSlotsAndDimensions(t *testing.T) {
 		`--window-min-height:10rem;`, `--window-max-width:60rem;`, `--window-max-height:40rem;`,
 		`data-popup="sample"`, `data-window-handle`, `data-window-close`,
 		`aria-expanded="false"`, `aria-controls="sample-help"`,
-		`data-window-help hidden`, `DISTANCE`, `ACTIONS`, `TOUCH`, `HELP`, `BODY`,
+		`data-window-help hidden`, `aria-controls="sample-tips"`, `data-window-tips hidden`,
+		`DISTANCE`, `ACTIONS`, `TOUCH`, `HELP`, `TIPS`, `BODY`,
 	} {
 		assertContains(t, html, want)
 	}
 	if strings.Index(html, "BODY") > strings.Index(html, "ACTIONS") {
 		t.Fatal("commands should follow the content body")
+	}
+}
+
+func TestSkiSeparatesControlsAndTipsWithoutYetiSpoilers(t *testing.T) {
+	for _, item := range []struct {
+		component templ.Component
+		want      string
+		unwanted  []string
+	}{
+		{skiHelp(), "Orientar os esquis", []string{"Ganhe 10 pontos", "slalom", "yeti"}},
+		{skiTips(), "Ganhe 10 pontos", []string{"Orientar os esquis", "yeti", "Yeti"}},
+	} {
+		var output bytes.Buffer
+		if err := item.component.Render(context.Background(), &output); err != nil {
+			t.Fatal(err)
+		}
+		assertContains(t, output.String(), item.want)
+		for _, unwanted := range item.unwanted {
+			assertNotContains(t, output.String(), unwanted)
+		}
 	}
 }
 

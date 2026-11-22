@@ -23,6 +23,9 @@ from `app.css`.
 - `.control-text` applies the monospace treatment used by control groups.
 - `.text-action` provides consistent presentation and interaction for textual
   actions.
+- `GameMetadata` shares the initial title and description layout between games.
+  Optional metadata uses its children slot and `.game-metadata__fields`;
+  `game-metadata.css` owns the typography and spacing for both Ski and Snake.
 
 Ordinary paragraphs do not need a dedicated class when their role is clear from
 their container. Add a token only when it represents a recurring decision;
@@ -31,7 +34,10 @@ component-specific exceptions belong to the component that requires them.
 ## Windows
 
 `Window` in `web/views/window.templ` provides modal and inline frames with
-optional information, command, touch, and help slots. `WindowOptions` accepts
+optional information, command, touch, help, and tips slots. Controls and tips
+share the command-bar support area and open one panel at a time. Both pause games
+through `window:help`; Escape dismisses the current panel and restores its toggle.
+`WindowOptions` accepts
 preferred `Width`/`Height` and optional `MinWidth`, `MinHeight`, `MaxWidth`, and
 `MaxHeight` as trusted CSS lengths. Omit height to size to content. Decoration
 is `tab`, `fold`, or empty for a plain frame.

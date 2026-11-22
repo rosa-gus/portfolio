@@ -8,7 +8,12 @@ templ SnakeGame() {
 	}, WindowSlots{Information: snakeInformation(), Commands: snakeCommands(), Touch: snakeTouch(), Help: snakeHelp()}) {
 		<div class="window__media snake-game__board" data-window-media>
 			<canvas width="400" height="400" tabindex="0" data-snake-canvas aria-label="Tabuleiro do snake. Controle com as setas ou WASD." role="img"></canvas>
-			<p class="window__message" data-snake-message role="status">Pronto para jogar?</p>
+			<div class="window__message game-message" data-snake-message role="status">
+				<section data-snake-intro aria-label="Sobre o jogo" hidden>
+					@GameMetadata("SNAKE", "o clássico jogo da cobrinha.\nmas desconfie da magia.")
+				</section>
+				<p data-snake-message-text>Pronto para jogar?</p>
+			</div>
 		</div>
 	}
 }

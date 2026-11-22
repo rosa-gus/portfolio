@@ -24,6 +24,7 @@ type WindowSlots struct {
 	Commands templ.Component
 	Touch templ.Component
 	Help templ.Component
+	Tips templ.Component
 }
 
 func windowStyle(options WindowOptions) map[string]string {
@@ -66,14 +67,21 @@ templ windowFrame(options WindowOptions, slots WindowSlots) {
 		<div class="window__body" data-window-body>
 			{ children... }
 		</div>
-		if slots.Commands != nil || slots.Touch != nil || slots.Help != nil {
+		if slots.Commands != nil || slots.Touch != nil || slots.Help != nil || slots.Tips != nil {
 			<div class="window__commands" data-window-commands role="group" aria-label={ "Comandos de " + options.Title }>
 				<div class="window__command-bar control-text">
 						if slots.Commands != nil {
 							<div class="window__actions">@slots.Commands</div>
 						}
-					if slots.Help != nil {
-						<button class="window__help-toggle" type="button" data-window-help-toggle aria-expanded="false" aria-controls={ options.ID + "-help" }>[CONTROLES]</button>
+					if slots.Help != nil || slots.Tips != nil {
+						<div class="window__support">
+							if slots.Help != nil {
+								<button class="window__help-toggle" type="button" data-window-help-toggle aria-expanded="false" aria-controls={ options.ID + "-help" }>[CONTROLES]</button>
+							}
+							if slots.Tips != nil {
+								<button class="window__help-toggle" type="button" data-window-tips-toggle aria-expanded="false" aria-controls={ options.ID + "-tips" }>[DICAS]</button>
+							}
+						</div>
 					}
 				</div>
 					if slots.Touch != nil {
@@ -81,6 +89,9 @@ templ windowFrame(options WindowOptions, slots WindowSlots) {
 					}
 				if slots.Help != nil {
 					<div class="window__help meta-text" id={ options.ID + "-help" } data-window-help hidden>@slots.Help</div>
+				}
+				if slots.Tips != nil {
+					<div class="window__help meta-text" id={ options.ID + "-tips" } data-window-tips hidden>@slots.Tips</div>
 				}
 			</div>
 		}

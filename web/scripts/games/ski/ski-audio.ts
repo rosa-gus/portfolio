@@ -16,9 +16,11 @@ export const createSkiAudio = () => {
   let master: GainNode | null = null;
   let muted = false;
   let generation = 0;
-  let slide: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
+  let slide: { source: AudioBufferSourceNode; gain: GainNode; lowpass: BiquadFilterNode } | null = null;
   let slidePending = false;
   let nextStep = 0;
+  let nextBell = 0;
+  let duckUntil = 0;
   const buffers = new Map<Sound, Promise<AudioBuffer | null>>();
   const playing = new Set<AudioBufferSourceNode>();
 
@@ -69,19 +71,31 @@ export const createSkiAudio = () => {
     if (!buffer || !context || !master || context.state !== "running") return;
     const source = context.createBufferSource();
     const gain = context.createGain();
+    const highpass = context.createBiquadFilter();
+    const lowpass = context.createBiquadFilter();
     source.buffer = buffer;
     source.loop = true;
+    highpass.type = "highpass";
+    highpass.frequency.value = 140;
+    highpass.Q.value = 0.5;
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 1600;
+    lowpass.Q.value = 0.5;
     gain.gain.value = 0;
-    source.connect(gain).connect(master);
-    slide = { source, gain };
-    source.onended = () => { source.disconnect(); gain.disconnect(); };
+    source.connect(highpass).connect(lowpass).connect(gain).connect(master);
+    slide = { source, gain, lowpass };
+    source.onended = () => { source.disconnect(); highpass.disconnect(); lowpass.disconnect(); gain.disconnect(); };
     source.start();
   };
 
   const events = (items: readonly SkiEvent[]) => {
+    if (items.length && context) duckUntil = context.currentTime + 0.3;
     for (const event of items) {
       if (event.type === "collision") void play(event.kind, 0.7);
-      if (event.type === "near-miss") void play("bell", 0.3);
+      if (event.type === "near-miss" && context && context.currentTime >= nextBell) {
+        void play("bell", 0.3);
+        nextBell = context.currentTime + 0.12;
+      }
       if (event.type === "yeti-appear") { nextStep = 0; void play("appear", 0.45); }
     }
   };
@@ -90,9 +104,14 @@ export const createSkiAudio = () => {
     if (game.phase !== "running" || !context || context.state !== "running") return;
     if (!muted && !slide && !slidePending && buffers.has("slide")) void startSlide();
     if (slide) {
-      // Speed and carving shape a single continuous source instead of retriggering it.
-      slide.gain.gain.setTargetAtTime(muted ? 0 : (0.09 + carve * 0.13) * Math.min(1, game.speed / 300), context.currentTime, 0.08);
-      slide.source.playbackRate.setTargetAtTime(0.85 + Math.min(1, game.speed / 360) * 0.25, context.currentTime, 0.12);
+      // Keep the loop behind discrete cues: quiet even at full speed, with a soft
+      // attack, less bright friction, and only a small change in pitch.
+      const speed = Math.min(1, game.speed / 360);
+      const volume = (0.03 + carve * 0.004) * speed ** 1.6;
+      const duck = context.currentTime < duckUntil ? 0.45 : 1;
+      slide.gain.gain.setTargetAtTime(muted ? 0 : volume * duck, context.currentTime, 0.22);
+      slide.source.playbackRate.setTargetAtTime(0.94 + speed * 0.06, context.currentTime, 0.35);
+      slide.lowpass.frequency.setTargetAtTime(1200 + speed * 800, context.currentTime, 0.3);
     }
     if (game.yeti && game.yeti.age >= nextStep) {
       const proximity = Math.max(0, 1 - Math.hypot(game.yeti.x - game.player.x, game.yeti.y - game.player.y) / 400);
@@ -103,6 +122,8 @@ export const createSkiAudio = () => {
 
   const stop = () => {
     generation++;
+    duckUntil = 0;
+    nextBell = 0;
     slidePending = false;
     if (slide) { slide.source.stop(); slide = null; }
     for (const source of playing) source.stop();

@@ -9,9 +9,11 @@ export const initializeSnakeGame = () => {
   const toggle = dialog?.querySelector<HTMLButtonElement>("[data-snake-toggle]");
   const restart = dialog?.querySelector<HTMLButtonElement>("[data-snake-restart]");
   const message = dialog?.querySelector<HTMLElement>("[data-snake-message]");
+  const messageText = dialog?.querySelector<HTMLElement>("[data-snake-message-text]");
+  const intro = dialog?.querySelector<HTMLElement>("[data-snake-intro]");
   const score = dialog?.querySelector<HTMLElement>("[data-snake-score]");
   const best = dialog?.querySelector<HTMLElement>("[data-snake-best]");
-  if (!dialog || !canvas || !context || !toggle || !restart || !message || !score || !best) return;
+  if (!dialog || !canvas || !context || !toggle || !restart || !message || !messageText || !intro || !score || !best) return;
   let game: SnakeEngine | null = null;
   let loading: Promise<void> | null = null;
   let timer = 0;
@@ -80,7 +82,11 @@ export const initializeSnakeGame = () => {
     best.textContent = String(highScore).padStart(3, "0");
     const labels = { ready: "Pronto para jogar?", running: "", paused: "Jogo pausado", over: "Fim de jogo", won: "Tabuleiro completo!" };
     message.hidden = game.phase === "running";
-    if (message.textContent !== labels[game.phase]) message.textContent = labels[game.phase];
+    message.classList.toggle("is-ready", game.phase === "ready");
+    message.classList.toggle("is-paused", game.phase === "paused");
+    intro.hidden = game.phase !== "ready";
+    messageText.hidden = game.phase === "ready";
+    if (messageText.textContent !== labels[game.phase]) messageText.textContent = labels[game.phase];
     const actions = { ready: "[INICIAR]", running: "[PAUSAR]", paused: "[CONTINUAR]", over: "[JOGAR NOVAMENTE]", won: "[JOGAR NOVAMENTE]" };
     toggle.textContent = actions[game.phase];
     toggle.disabled = false;
@@ -126,12 +132,12 @@ export const initializeSnakeGame = () => {
   dialog.addEventListener("popup:open", () => {
     if (game) { render(); return; }
     toggle.disabled = true;
-    message.textContent = "Carregando…";
+    messageText.textContent = "Carregando…";
     loading ??= import("./snake-engine").then(({ SnakeEngine }) => {
       game = new SnakeEngine();
       render();
     }).catch(() => {
-      message.textContent = "Não foi possível carregar. Feche e tente novamente.";
+      messageText.textContent = "Não foi possível carregar. Feche e tente novamente.";
       loading = null;
     });
   });

@@ -24,15 +24,35 @@ export const fitWindowMedia = (root: HTMLElement) => {
   media.style.setProperty("--window-media-width", `${size.width}px`);
 };
 
+const supportPanels = (root: HTMLElement) => (["help", "tips"] as const).flatMap(name => {
+  const panel = root.querySelector<HTMLElement>(`[data-window-${name}]`);
+  const toggle = root.querySelector<HTMLButtonElement>(`[data-window-${name}-toggle]`);
+  return panel && toggle ? [{ name, panel, toggle }] : [];
+});
+
+export const toggleWindowPanel = (root: HTMLElement, name: "help" | "tips") => {
+  const panels = supportPanels(root);
+  const selected = panels.find(item => item.name === name);
+  if (!selected) return;
+  const opening = selected.panel.hidden;
+  for (const item of panels) {
+    item.panel.hidden = item !== selected || !opening;
+    item.toggle.setAttribute("aria-expanded", String(!item.panel.hidden));
+  }
+  // Both panels pause games through the existing help lifecycle event.
+  if (opening) root.dispatchEvent(new Event("window:help"));
+};
+
 export const dismissWindowHelp = (root: HTMLElement) => {
-  const panel = root.querySelector<HTMLElement>("[data-window-help]");
-  const toggle = root.querySelector<HTMLButtonElement>("[data-window-help-toggle]");
-  if (!panel || panel.hidden || !toggle) return false;
-  panel.hidden = true;
-  toggle.setAttribute("aria-expanded", "false");
-  toggle.focus({ preventScroll: true });
-  fitWindowMedia(root);
-  return true;
+  for (const { panel, toggle } of supportPanels(root)) {
+    if (panel.hidden) continue;
+    panel.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.focus({ preventScroll: true });
+    fitWindowMedia(root);
+    return true;
+  }
+  return false;
 };
 
 export const initializeWindowLayout = () => {
@@ -46,15 +66,12 @@ export const initializeWindowLayout = () => {
         root.dispatchEvent(new Event("window:layout"));
       });
     };
-    const toggle = root.querySelector<HTMLButtonElement>("[data-window-help-toggle]");
-    const panel = root.querySelector<HTMLElement>("[data-window-help]");
-    toggle?.addEventListener("click", () => {
-      if (!panel) return;
-      panel.hidden = !panel.hidden;
-      toggle.setAttribute("aria-expanded", String(!panel.hidden));
-      if (!panel.hidden) root.dispatchEvent(new Event("window:help"));
-      schedule();
-    });
+    for (const { name, toggle } of supportPanels(root)) {
+      toggle.addEventListener("click", () => {
+        toggleWindowPanel(root, name);
+        schedule();
+      });
+    }
     if (typeof ResizeObserver !== "undefined") {
       // Observe chrome height and root width, never media height: avoid fit loops.
       const sizes = new WeakMap<Element, number>();

@@ -93,7 +93,7 @@
 .window__commands { padding: 0 1rem; max-height: min(45dvh, 20rem); overflow-y: auto; }
 .window__command-bar { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 0 1rem; }
 .window__actions { display: flex; align-items: center; flex: 1; flex-wrap: wrap; gap: 0 1rem; min-width: 0; }
-.window__help-toggle { margin-left: auto; }
+.window__support { display: flex; align-items: center; flex-wrap: wrap; gap: 0 1rem; margin-left: auto; }
 .window__help { display: grid; gap: 0.5rem; padding: 0.5rem 0 1rem; color: var(--color-text-muted); }
 .window__help p { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .window__help kbd { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 9rem; font: inherit; color: var(--color-text-primary); }

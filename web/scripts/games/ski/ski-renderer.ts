@@ -1,8 +1,8 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
-import { SKI_HEIGHT, SKI_WIDTH, type SkiEngine } from "./ski-engine";
+import { SKI_HEIGHT, SKI_WIDTH, SKI_YETI_GLIMPSE_DURATION, type SkiEngine } from "./ski-engine";
 import type { SkiFeedback } from "./ski-feedback";
 
-const names = ["skier-down", "skier-left", "skier-right", "pine", "rock", "tracks", "yeti-idle", "yeti-run-01", "yeti-run-02"] as const;
+const names = ["skier-down", "skier-left", "skier-right", "pine", "rock", "tracks", "yeti-glimpse", "yeti-idle", "yeti-run-01", "yeti-run-02"] as const;
 type Sprite = typeof names[number];
 type Theme = "light" | "dark";
 type Sprites = Record<Theme, Record<Sprite, HTMLImageElement>>;
@@ -47,6 +47,16 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
     y: object.y,
     render: () => draw(object.kind, object.x, object.y),
   }));
+  if (game.glimpse) {
+    const peek = game.glimpse;
+    const tree = game.objects.find(object => object.id === peek.treeId);
+    if (tree) scene.push({ y: tree.y - 0.1, render: () => {
+      // Draw before the anchor tree so its branches conceal part of the face.
+      context.globalAlpha = Math.max(0, Math.min(1, peek.age / 0.12, (SKI_YETI_GLIMPSE_DURATION - peek.age) / 0.18));
+      draw("yeti-glimpse", tree.x + peek.side * 19, tree.y - 3);
+      context.globalAlpha = 1;
+    } });
+  }
   scene.push({ y: game.player.y, render: () => {
     if (game.phase === "over" && feedback.endAge > 0.18) return;
     if (game.stumble > 0) context.globalAlpha = 0.75;

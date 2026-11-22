@@ -16,6 +16,16 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const toggle = dialog.querySelector<HTMLButtonElement>("[data-ski-toggle]")!;
   const restart = dialog.querySelector<HTMLButtonElement>("[data-ski-restart]")!;
   const message = dialog.querySelector<HTMLElement>("[data-ski-message]")!;
+  const messageText = dialog.querySelector<HTMLElement>("[data-ski-message-text]")!;
+  const intro = dialog.querySelector<HTMLElement>("[data-ski-intro]")!;
+  const resultVersion = dialog.querySelector<HTMLElement>("[data-ski-result-version]")!;
+  const gameOverText = dialog.querySelector<HTMLElement>("[data-ski-game-over]")!;
+  const results = dialog.querySelector<HTMLElement>("[data-ski-results]")!;
+  const resultScore = dialog.querySelector<HTMLElement>("[data-ski-result-score]")!;
+  const resultDistance = dialog.querySelector<HTMLElement>("[data-ski-result-distance]")!;
+  const resultNearMisses = dialog.querySelector<HTMLElement>("[data-ski-result-near-misses]")!;
+  const resultBest = dialog.querySelector<HTMLElement>("[data-ski-result-best]")!;
+  const resultRecordLabel = dialog.querySelector<HTMLElement>("[data-ski-result-record-label]")!;
   const distance = dialog.querySelector<HTMLElement>("[data-ski-distance]")!;
   const record = dialog.querySelector<HTMLElement>("[data-ski-best]")!;
   const score = dialog.querySelector<HTMLElement>("[data-ski-score]")!;
@@ -24,12 +34,19 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const keys = new Set<string>();
   const touches = new Map<number, string>();
   const bestKey = storageKey("ski-best-distance");
-  let best = 0;
-  let storedBest = 0;
-  try {
-    const saved = Number(localStorage.getItem(bestKey));
-    if (Number.isSafeInteger(saved) && saved >= 0) best = storedBest = saved;
-  } catch { /* The record still works in memory. */ }
+  const bestScoreKey = storageKey("ski-best-score");
+  const readRecord = (key: string) => {
+    try {
+      const saved = Number(localStorage.getItem(key));
+      if (Number.isSafeInteger(saved) && saved >= 0) return saved;
+    } catch { /* Records still work in memory. */ }
+    return 0;
+  };
+  let best = readRecord(bestKey);
+  let storedBest = best;
+  let bestScore = readRecord(bestScoreKey);
+  let storedBestScore = bestScore;
+  let runBestScore = bestScore;
   let frame = 0;
   let previous = 0;
   let accumulator = 0;
@@ -37,18 +54,38 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const available = () => dialog.open && !dialog.inert && !document.hidden;
   const setText = (element: HTMLElement, value: string) => { if (element.textContent !== value) element.textContent = value; };
   const persist = () => {
-    if (best <= storedBest) return;
-    try { localStorage.setItem(bestKey, String(best)); storedBest = best; } catch { /* Storage is optional. */ }
+    best = Math.max(best, Math.floor(game.distance));
+    bestScore = Math.max(bestScore, game.score);
+    try {
+      if (best > storedBest) { localStorage.setItem(bestKey, String(best)); storedBest = best; }
+      if (bestScore > storedBestScore) { localStorage.setItem(bestScoreKey, String(bestScore)); storedBestScore = bestScore; }
+    } catch { /* Storage is optional. */ }
   };
   const render = () => {
     best = Math.max(best, Math.floor(game.distance));
+    bestScore = Math.max(bestScore, game.score);
     drawSki(canvas, game, sprites, feedback, reducedMotion.matches);
     setText(distance, `${String(Math.floor(game.distance)).padStart(4, "0")} m`);
     setText(record, `${String(best).padStart(4, "0")} m`);
     setText(score, String(game.score).padStart(4, "0"));
     const labels = { ready: "Uma pista pela frente.", running: "", paused: "Descida pausada", over: "Fim da descida. Alguém alcançou você." };
     message.hidden = game.phase === "running" || (game.phase === "over" && feedback.endAge < 0.7);
-    setText(message, labels[game.phase]);
+    message.classList.toggle("is-over", game.phase === "over");
+    message.classList.toggle("is-ready", game.phase === "ready");
+    message.classList.toggle("is-paused", game.phase === "paused");
+    intro.hidden = game.phase !== "ready";
+    resultVersion.hidden = game.phase !== "over";
+    messageText.hidden = game.phase === "ready" || game.phase === "over";
+    gameOverText.hidden = game.phase !== "over";
+    results.hidden = game.phase !== "over";
+    setText(messageText, labels[game.phase]);
+    if (game.phase === "over") {
+      setText(resultScore, String(game.score));
+      setText(resultDistance, `${Math.floor(game.distance)} m`);
+      setText(resultNearMisses, String(game.nearMisses));
+      setText(resultBest, String(bestScore));
+      setText(resultRecordLabel, game.score > runBestScore ? "NOVO RECORDE" : "MELHOR PONTUAÇÃO");
+    }
     const actions = { ready: "[INICIAR]", running: "[PAUSAR]", paused: "[CONTINUAR]", over: "[NOVA DESCIDA]" };
     setText(toggle, actions[game.phase]);
     toggle.disabled = false;
@@ -104,7 +141,7 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
     if (game.phase === "running") { pause(); return; }
     audio.unlock();
     stop(); clearInput();
-    if (game.phase === "over" || game.phase === "ready") feedback.reset();
+    if (game.phase === "over" || game.phase === "ready") { feedback.reset(); runBestScore = bestScore; }
     game.start(); render();
     canvas.focus({ preventScroll: true });
     frame = requestAnimationFrame(loop);

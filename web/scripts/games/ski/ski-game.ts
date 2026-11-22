@@ -4,13 +4,13 @@ export const initializeSkiGame = () => {
   const dialog = document.querySelector<HTMLDialogElement>('[data-popup="ski"]');
   if (!dialog) return;
   const toggle = dialog.querySelector<HTMLButtonElement>("[data-ski-toggle]")!;
-  const message = dialog.querySelector<HTMLElement>("[data-ski-message]")!;
+  const message = dialog.querySelector<HTMLElement>("[data-ski-message-text]")!;
   let session: { open: () => void } | undefined;
   let loading: Promise<void> | undefined;
   dialog.addEventListener("popup:open", () => {
     if (session) { session.open(); return; }
     toggle.disabled = true;
-    message.hidden = false;
+    dialog.querySelector<HTMLElement>("[data-ski-message]")!.hidden = false;
     message.textContent = "Preparando a descida…";
     loading ??= import("./ski-session").then(async ({ createSkiSession }) => {
       session = await createSkiSession(dialog);
