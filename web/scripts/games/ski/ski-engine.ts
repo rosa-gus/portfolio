@@ -38,6 +38,8 @@ const BALANCE_HEADING = 0.28;
 const STUMBLE_SPEED = 0.52;
 const FALL_SPEED = 0.2;
 const TRAIL_SPACING = 8;
+const OBSTACLE_EDGE_INSET = 36;
+const EDGE_BANK_SPACING = 40;
 export const SKI_TRAIL_LIFETIME = 0.8;
 export const SKI_DISTANCE_INTERVAL = 10;
 export const SKI_DISTANCE_POINTS = 10;
@@ -165,7 +167,10 @@ export class SkiEngine {
     this.laneCenter = this.width / 2 + side * course.amplitude;
     // Dense banks leave one explicit opening. Their hitboxes overlap, so a
     // stationary line at the center or the edges cannot bypass every gate.
-    for (const [start, end] of [[36, this.laneCenter - course.halfWidth], [this.laneCenter + course.halfWidth, this.width - 36]]) {
+    for (const [start, end] of [
+      [OBSTACLE_EDGE_INSET, this.laneCenter - course.halfWidth],
+      [this.laneCenter + course.halfWidth, this.width - OBSTACLE_EDGE_INSET],
+    ]) {
       const intervals = Math.ceil((end - start) / 44);
       for (let i = 0; i <= intervals; i++) {
         this.objects.push({ id: ++this.sequence, kind: this.random() < 0.7 ? "pine" : "rock",
@@ -214,16 +219,28 @@ export class SkiEngine {
     // Six-row phrases alternate open snow, suggested turns, tighter passes, and rest.
     // Limit corridor movement so consecutive rows always leave a reachable route.
     const section = resting ? 3 : initialGap !== undefined ? 0 : Math.floor(this.terrainRow / 6) % 4;
+    const sectionRow = this.terrainRow % 6;
     const turnOffsets = [0, 70, 140, 70, 0, -70];
-    const offset = section === 1 ? turnOffsets[this.terrainRow % 6] : section === 2 ? -80 : 0;
+    const offset = section === 1 ? turnOffsets[sectionRow] : section === 2 ? -80 : 0;
     const target = this.width / 2 + this.laneDirection * offset * this.width / SKI_WIDTH;
     if (initialGap === undefined) this.laneCenter += clamp(target - this.laneCenter, -30, 30);
     const gap = initialGap ?? this.laneCenter;
     const halfWidth = [120, 88, 70, 145][section];
-    for (const side of [0, 1]) {
+    // The last three tight rows extend one bank inward, opposite the corridor's turn.
+    // Overlapping collision radii close the edge even when the other obstacle is skipped.
+    const edgeBankSize = section === 2 && this.stage === "descent" ? Math.max(0, sectionRow - 2) : 0;
+    for (const side of [-1, 1]) {
+      if (side === this.laneDirection && edgeBankSize > 0) {
+        for (let i = 0; i < edgeBankSize; i++) {
+          const inset = OBSTACLE_EDGE_INSET + i * EDGE_BANK_SPACING;
+          const x = side < 0 ? inset : this.width - inset;
+          this.objects.push({ id: ++this.sequence, kind: this.random() < 0.7 ? "pine" : "rock", x, y, hit: false });
+        }
+        continue;
+      }
       if (this.random() < (section === 0 || section === 3 ? 0.45 : 0.1)) continue;
       this.objects.push({ id: ++this.sequence, kind: this.random() < 0.7 ? "pine" : "rock",
-        x: clamp(gap + (side === 0 ? -1 : 1) * (halfWidth + this.random() * 45), 36, this.width - 36), y, hit: false });
+        x: clamp(gap + side * (halfWidth + this.random() * 45), OBSTACLE_EDGE_INSET, this.width - OBSTACLE_EDGE_INSET), y, hit: false });
     }
     if (initialGap === undefined && (section === 0 || section === 3)) this.prepareGlimpse(y, gap, halfWidth);
     if (this.stage === "tracks") {

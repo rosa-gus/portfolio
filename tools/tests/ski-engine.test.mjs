@@ -310,16 +310,44 @@ test("terrain phrases vary density and corridor width while preserving a travers
     // Each tick asks for one new row without depending on a particular player route.
     game.spawnDistance = 135;
     game.tick();
+    if (i >= 15 && i <= 17) continue; // The edge bank replaces one side of these rows.
     const obstacles = game.objects.filter(object => object.kind !== "tracks");
     assert.equal(obstacles.length, 2);
     assert.ok(obstacles[1].x - obstacles[0].x >= 140);
-    rows.push(obstacles.map(object => object.x));
+    rows[i] = obstacles.map(object => object.x);
   }
   const width = row => row[1] - row[0];
   assert.ok(width(rows[0]) > width(rows[6]));
   assert.ok(width(rows[6]) > width(rows[12]));
   assert.ok(width(rows[18]) > width(rows[12]));
   assert.notEqual(rows[7][0], rows[8][0]);
+});
+
+test("edge banks grow inward over three rows and alternate sides in both layouts", () => {
+  for (const layout of ["landscape", "portrait"]) {
+    // Force ordinary obstacles to be skipped so the bank must close the edge on its own.
+    const game = new SkiEngine(() => 0, layout);
+    game.start();
+    const rows = [];
+    for (let i = 0; i < 48; i++) {
+      game.objects = [];
+      game.spawnDistance = 135;
+      game.tick();
+      rows.push(game.objects.map(object => object.x));
+    }
+    for (const [start, fromEdge] of [[15, inset => inset], [39, inset => game.width - inset]]) {
+      assert.deepEqual(rows[start - 1], []);
+      assert.deepEqual(rows[start + 3], []);
+      for (const [step, count] of [1, 2, 3].entries()) {
+        const bank = rows[start + step];
+        assert.equal(bank.length, count);
+        for (let inset = 26; inset <= 36 + step * 40; inset++) {
+          assert.ok(bank.some(x => Math.abs(x - fromEdge(inset)) < 23), `unblocked edge at inset ${inset}`);
+        }
+        assert.ok(bank.every(x => Math.abs(x - game.width / 2) >= 70), "the middle remains open");
+      }
+    }
+  }
 });
 
 const startSlalom = (distance, random = () => 0.5, layout = "landscape") => {

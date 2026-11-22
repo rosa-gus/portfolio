@@ -38,9 +38,9 @@ const createScene = ({ dismissed = false, reduced = false } = {}) => {
     cancelAnimationFrame(id) { frames.delete(id); },
   };
   runInNewContext(source, scope);
-  scope.initializeSociety();
+  const stop = scope.initializeSociety();
   return {
-    document, window, canvas, values, fills, preference,
+    document, window, canvas, values, fills, preference, stop,
     attached: () => attached,
     frameAt(time) { const pending = [...frames.values()]; frames.clear(); for (const callback of pending) callback(time); },
   };
@@ -98,4 +98,16 @@ test("reduced motion disables society and changes clean up an active scene", () 
   scene.preference.matches = true;
   scene.preference.dispatchEvent(new Event("change"));
   assert.equal(scene.attached(), false);
+});
+
+test("leaving Cases stops society immediately without marking it dismissed", () => {
+  const scene = createScene();
+  scene.frameAt(0);
+  const fills = scene.fills.length;
+  scene.stop();
+  scene.frameAt(16);
+  scene.document.dispatchEvent(new Event("pointerdown"));
+  assert.equal(scene.attached(), false);
+  assert.equal(scene.fills.length, fills);
+  assert.equal(scene.values.has(storageKey("society-dismissed")), false);
 });

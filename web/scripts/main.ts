@@ -286,17 +286,22 @@ const initialArchiveItem = archiveOpenID
   )
   : undefined;
 
+let stopSociety: ReturnType<typeof initializeSociety>;
+
 initializePanelNavigation({
   initialPanel: initialArchiveItem
     ? { id: "case", updateHistory: initialArchiveItem.hasAttribute("data-window-trigger") }
     : undefined,
   onChange: (panelID) => {
     if (panelID !== "case") {
+      stopSociety?.();
+      stopSociety = undefined;
       projectArchive.close(false, true);
       windows.close(false, true);
     }
     if (panelID === "about") activateAboutMedia();
     else deactivateAboutMedia();
+    if (panelID === "case") stopSociety = initializeSociety();
   },
 });
 
@@ -307,5 +312,3 @@ if (initialArchiveItem) {
     }
   });
 }
-
-initializeSociety();

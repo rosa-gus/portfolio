@@ -1,7 +1,8 @@
 # Archive society
 
-A decorative society of asterisks on the fully visible portfolio. It never loads
-content, dims the page, captures input, or delays navigation.
+A decorative society of asterisks that appears only in the home page's Cases
+panel (`/#case`), also the default panel at `/`. It never loads content, dims
+the page, captures input, or delays navigation.
 
 ## Files
 
