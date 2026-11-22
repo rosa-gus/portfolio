@@ -102,13 +102,9 @@ templ ArchiveAppItem(id string, ref string) {
 		aria-haspopup="dialog"
 		aria-controls={ ref + "-game" }
 	>
-		if ref == "ski" {
-			<span class="project-archive__item-icon ski-icon" aria-hidden="true">{ "//" }</span>
-		} else {
-			<span class="project-archive__item-icon snake-icon" aria-hidden="true">
-				<span class="snake-icon__body"></span><span class="snake-icon__food"></span>
-			</span>
-		}
+		<span class="project-archive__item-icon project-archive__item-icon--app" aria-hidden="true">
+			@PixelIcon(ref)
+		</span>
 		<span class="project-archive__item-title">{ ref }</span>
 		<span class="project-archive__item-meta">JOGO / TS</span>
 	</button>

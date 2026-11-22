@@ -1,0 +1,18 @@
+.pixel-icon {
+  --pixel-size: 3px;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: calc(var(--pixel-columns) * var(--pixel-size));
+  height: calc(var(--pixel-rows) * var(--pixel-size));
+}
+
+.pixel-icon::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--pixel-size);
+  height: var(--pixel-size);
+  box-shadow: var(--pixel-shadow);
+  content: "";
+}

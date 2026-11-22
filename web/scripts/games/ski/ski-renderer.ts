@@ -1,5 +1,6 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import { SKI_HEIGHT, SKI_WIDTH, type SkiEngine } from "./ski-engine";
+import type { SkiFeedback } from "./ski-feedback";
 
 const names = ["skier-down", "skier-left", "skier-right", "pine", "rock", "tracks", "yeti-idle", "yeti-run-01", "yeti-run-02"] as const;
 type Sprite = typeof names[number];
@@ -18,7 +19,7 @@ export const loadSkiSprites = async (base: string): Promise<Sprites> => {
 };
 
 /** Scene presentation only. All positions and progression come from the engine. */
-export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Sprites) => {
+export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Sprites, feedback: SkiFeedback, reducedMotion = false) => {
   const context = canvas.getContext("2d");
   if (!context) return;
   const style = getComputedStyle(canvas);
@@ -47,13 +48,44 @@ export const drawSki = (canvas: HTMLCanvasElement, game: SkiEngine, sprites: Spr
     render: () => draw(object.kind, object.x, object.y),
   }));
   scene.push({ y: game.player.y, render: () => {
-    if (game.stumble > 0 && Math.floor(game.elapsed * 12) % 2 === 0) context.globalAlpha = 0.5;
-    draw(game.player.heading < -0.15 ? "skier-right" : game.player.heading > 0.15 ? "skier-left" : "skier-down", game.player.x, game.player.y);
+    if (game.phase === "over" && feedback.endAge > 0.18) return;
+    if (game.stumble > 0) context.globalAlpha = 0.75;
+    const wobble = reducedMotion ? 0 : Math.sin(game.elapsed * 48) * feedback.impact * 12;
+    draw(game.player.heading < -0.15 ? "skier-right" : game.player.heading > 0.15 ? "skier-left" : "skier-down", game.player.x + wobble, game.player.y);
     context.globalAlpha = 1;
   } });
   if (game.yeti) {
     const enemy = game.yeti;
     scene.push({ y: enemy.y, render: () => draw(game.phase === "over" ? "yeti-idle" : Math.floor(enemy.age * 6) % 2 ? "yeti-run-02" : "yeti-run-01", enemy.x, enemy.y) });
   }
+  if (feedback.retreat) {
+    const enemy = feedback.retreat;
+    scene.push({ y: enemy.y, render: () => {
+      context.globalAlpha = Math.max(0, 1 - enemy.age / 0.8);
+      draw("yeti-idle", enemy.x, enemy.y);
+      context.globalAlpha = 1;
+    } });
+  }
   scene.sort((a, b) => a.y - b.y).forEach(item => item.render());
+  if (!reducedMotion) {
+    context.fillStyle = style.getPropertyValue("--ski-snow-tone").trim();
+    for (const particle of feedback.snow) {
+      context.globalAlpha = Math.min(1, (1 - particle.age / particle.life) * 2);
+      context.fillRect(Math.round(particle.x), Math.round(particle.y), particle.size, particle.size);
+    }
+    context.globalAlpha = 1;
+  }
+  context.font = `500 13px ${style.getPropertyValue("--font-mono").trim() || "monospace"}`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  for (const caption of feedback.captions) {
+    context.globalAlpha = Math.min(1, (caption.life - caption.age) / 0.2);
+    const y = Math.round(caption.y - (reducedMotion ? 0 : caption.age * 16));
+    const width = context.measureText(caption.text).width + 16;
+    context.fillStyle = style.getPropertyValue("--color-surface-canvas").trim();
+    context.fillRect(Math.round(caption.x - width / 2), y - 12, Math.ceil(width), 24);
+    context.fillStyle = style.getPropertyValue("--color-text-primary").trim();
+    context.fillText(caption.text, Math.round(caption.x), y);
+  }
+  context.globalAlpha = 1;
 };

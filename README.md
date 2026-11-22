@@ -230,6 +230,17 @@ covers remain independent. Image dimensions are collected during the normal asse
 - About video: [brixiv / Pexels](https://www.pexels.com/@brixiv/).
 - Favicon source photograph: [Diane Helentjaris / Unsplash](https://unsplash.com/@dhelentjaris).
 - Project photograph credits: `media.coverCredit` in [projects.json](internal/portfolio/data/projects.json).
+- Ski sliding audio: [Cross-country skiing (SoundAction 018)](https://freesound.org/s/721700/)
+  by **alexarje**, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  The original is preserved as `ski-slide-source.wav`; `ski-slide-loop.wav` uses
+  only the first 1.25 seconds, with an equal-power crossfade and volume normalization
+  to create a continuous loop. Rebuild it with `python3 tools/prepare_ski_audio.py`.
+- Ski impact, near-miss bell, and yeti footstep effects: **[Kenney](https://kenney.nl/)**,
+  [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+  Original files: `impactWood_light_004.ogg`, `footstep_concrete_000.ogg`,
+  `impactBell_heavy_001.ogg`, and `footstep_snow_000.ogg`.
+  The separate yeti appearance sound (`yeti-appear.ogg`, originally
+  `monster_surprise.ogg`) is not part of the Kenney credit.
 
 ## License
 

@@ -87,8 +87,8 @@
   font: var(--type-font-control-compact);
 }
 
-.window__body { min-width: 0; min-height: 0; padding: 0.25rem 1rem 1rem; overflow: auto; overscroll-behavior: contain; }
-.window__body > .scroll-area { height: 100%; --scroll-area-surface: var(--color-surface-raised); }
+.window__body { display: grid; grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; padding: 0.25rem 1rem 1rem; overflow: hidden; }
+.window__body > .scroll-area { align-self: stretch; --scroll-area-surface: var(--color-surface-raised); }
 .window[data-window-decoration="fold"] .window__body { padding-bottom: 2rem; }
 .window__commands { padding: 0 1rem; max-height: min(45dvh, 20rem); overflow-y: auto; }
 .window__command-bar { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 0 1rem; }
@@ -104,6 +104,7 @@
 
 .window__media {
   position: relative;
+  align-self: start;
   width: var(--window-media-width, 100%);
   max-width: 100%;
   aspect-ratio: var(--window-aspect, 1);

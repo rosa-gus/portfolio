@@ -1,28 +1,3 @@
-.snake-icon {
-  width: 4.5rem;
-  height: 4.5rem;
-  color: var(--color-text-muted);
-}
-
-.snake-icon__body {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  left: 16px;
-  top: 20px;
-  background: currentColor;
-  box-shadow: 0 9px currentColor, 0 18px currentColor, 9px 18px currentColor, 18px 18px currentColor, 18px 9px currentColor;
-}
-
-.snake-icon__food {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  top: 17px;
-  right: 13px;
-  border: 1px solid currentColor;
-}
-
 .snake-game { --snake-witch-tone: #7198ce; }
 .snake-game canvas { color: var(--color-text-primary); }
 .snake-game__directions { display: flex; justify-content: center; gap: 0.5rem; }

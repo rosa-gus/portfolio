@@ -9,6 +9,12 @@ and `web/styles/components`.
 `ski-game.ts` loads the game when its popup opens. `ski-engine.ts` runs the
 simulation at 60 fixed steps per second; `ski-renderer.ts` draws the sprites;
 `ski-session.ts` handles input, pause, and the local distance record.
+`ski-feedback.ts` owns snow particles, impact wobble, floating captions, and the
+brief capture/escape presentation. Its random sequence is independent of the
+simulation. `ski-audio.ts` mixes the continuous ski loop and event sounds through
+Web Audio, unlocked by the play gesture. Closing, pausing, restarting, hiding the
+tab, or losing focus stops all sources, including pending asynchronous playback.
+The sound button mutes the game; reduced-motion mode omits particles and wobble.
 
 The horizontal window uses a 640×360 canvas. Left/right or A/D rotate the skis;
 the heading persists when released. Down or S turns downhill, and Space pauses.
@@ -16,6 +22,16 @@ Touch supports dragging to set a heading and held buttons. Pointing downhill
 gives maximum speed; diagonal and horizontal headings reduce descent.
 Obstacles slow the skier. Tracks precede the yeti; descent speed and steering
 allow escape. Closing the popup, hiding the tab, or losing focus pauses play.
+Collisions recover speed smoothly over 1.1 seconds. Every 10 meters earns 10
+points. Passing within 16 pixels beyond an obstacle's collision width earns a
+single +50 "por pouco" bonus, caption, and bell after fully clearing it. Hits,
+wide passes, footprints, and passes during collision recovery earn no bonus.
+Simulation events are consumed after each fixed step, including catch-up steps.
+
+Audio filenames describe their game roles: `impact-pine`, `impact-rock`,
+`near-miss-bell`, `yeti-step`, `yeti-appear`, and `ski-slide-loop`. The slide
+source is retained but not imported into the runtime bundle. See the root
+[README credits](../../../README.md#credits) and [audio notice](ski/audio/README.md).
 
 Original artwork stays in `web/assets/ski/`. Runtime copies in
 `web/assets/ski/sprites/{light,dark}` reduce the originals by exactly 32× using

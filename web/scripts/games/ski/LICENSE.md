@@ -12,3 +12,4 @@ Ski is inspired by [SkiFree by Chris Pirih](https://ski.ihoc.net/).
 
 Full license: [GNU GPL version 3](https://www.gnu.org/licenses/gpl-3.0.txt).
 Sprites have separate CC0-1.0 terms in `web/assets/ski/LICENSE.md`.
+Audio files have separate terms and credits in `audio/README.md`.

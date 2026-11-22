@@ -14,11 +14,15 @@ templ SkiGame(basePath string) {
 }
 
 templ skiInformation() {
-	<span>DISTÂNCIA <strong data-ski-distance>0000 m</strong></span><span>MELHOR <strong data-ski-best>0000 m</strong></span>
+	<span>PONTOS <strong data-ski-score>0000</strong></span>
+	<div class="ski-game__distance-group">
+		<span>DISTÂNCIA <strong data-ski-distance>0000 m</strong></span>
+		<span class="ski-game__best">MELHOR <strong data-ski-best>0000 m</strong></span>
+	</div>
 }
 
 templ skiCommands() {
-	<button type="button" data-ski-toggle disabled>[INICIAR]</button><button type="button" data-ski-restart hidden>[REINICIAR]</button>
+	<button type="button" data-ski-toggle disabled>[INICIAR]</button><button type="button" data-ski-restart hidden>[REINICIAR]</button><button type="button" data-ski-sound aria-label="Silenciar o jogo" aria-pressed="false">[SOM LIGADO]</button>
 }
 
 templ skiTouch() {
@@ -34,4 +38,5 @@ templ skiHelp() {
 	<p><kbd>@ArrowGlyph("down")<span>/ S</span></kbd><span>Apontar para baixo</span></p>
 	<p><kbd>ESPAÇO</kbd><span>Pausar a descida</span></p>
 	<p>Arraste na pista para escolher a orientação. Ela se mantém ao soltar.</p>
+	<p>Ganhe 10 pontos a cada 10 metros. Passe rente a árvores e pedras, sem bater, para ganhar +50 por pouco.</p>
 }

@@ -1,14 +1,12 @@
-.ski-icon {
-  width: 4.5rem;
-  height: 4.5rem;
-  color: var(--color-text-muted);
-  font: 500 2.3rem / 1 var(--font-mono);
-}
-
 .ski-game canvas {
   --ski-track-tone: light-dark(#c9afb9, #55464e);
+  --ski-snow-tone: light-dark(#9b7888, #a38b97);
   image-rendering: pixelated;
   touch-action: none;
 }
+
+.ski-game__distance-group { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.25rem 1rem; margin-left: auto; }
+.ski-game .ski-game__best,
+.ski-game .ski-game__best strong { color: var(--color-text-muted); }
 
 .ski-game__touch { display: flex; justify-content: space-between; gap: 0.5rem; font: var(--type-font-control-compact); }

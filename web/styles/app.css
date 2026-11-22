@@ -11,6 +11,7 @@
 @import "./components/home-controls.css" layer(components);
 @import "./components/responsive.css" layer(components);
 @import "./components/window.css" layer(components);
+@import "./components/pixel-icon.css" layer(components);
 @import "./components/project-archive.css" layer(components);
 @import "./components/documents.css" layer(components);
 @import "./components/snake-game.css" layer(components);

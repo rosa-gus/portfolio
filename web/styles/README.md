@@ -43,12 +43,23 @@ archive navigation. Empty slots occupy no space.
 Use `data-window-trigger="<window-id>"` to open a modal. `windows.ts` owns focus,
 dragging, viewport bounds, and closing. `window-layout.ts` fits
 `data-window-media` canvases to the available body, preserving their aspect
-ratio when commands expand or the viewport changes. Only the body scrolls;
-commands stay accessible and scroll internally when necessary.
+ratio when commands expand or the viewport changes. Wrap scrolling content in
+`ScrollArea`; the frame and body contain overflow without adding a second
+scrollbar. Commands stay accessible and scroll internally when necessary.
 
 `ArrowGlyph` renders IBM Plex Mono's upward arrow with the text variation
 selector, rotated through `.ui-arrow` for each direction. Use it for window
 controls instead of bare arrow characters.
+
+## Pixel icons
+
+`PixelIcon(name)` renders the named matrix from `web/views/pixel_icon.go`.
+Each `#` is a filled pixel; `.` is transparent. Snake and Ski share a 12×12
+grid. The Go helper generates CSS shadows, with no browser JavaScript.
+
+`pixel-icon.css` sets the pixel size through `--pixel-size` (3px by default).
+Pixels inherit `currentColor`; the archive provides the frame and theme color.
+Edit the matrix to change a drawing, or add a named matrix to reuse the renderer.
 
 ## Theme colors and active states
 

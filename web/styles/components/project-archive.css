@@ -128,6 +128,12 @@
   background: var(--color-surface-raised);
 }
 
+.project-archive__item-icon--app {
+  width: 4.5rem;
+  height: 4.5rem;
+  color: var(--color-text-muted);
+}
+
 .project-archive__item-icon--folder {
   width: 4.5rem;
   height: 4rem;

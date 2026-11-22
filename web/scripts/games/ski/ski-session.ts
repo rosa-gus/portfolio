@@ -1,6 +1,8 @@
 // Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
 import { SkiEngine, SKI_STEP, SKI_WIDTH, SKI_HEIGHT } from "./ski-engine";
 import { drawSki, loadSkiSprites } from "./ski-renderer";
+import { SkiFeedback } from "./ski-feedback";
+import { createSkiAudio } from "./ski-audio";
 import { storageKey } from "../../storage";
 
 /** Browser lifecycle, input, and persistence. Simulation lives in ski-engine. */
@@ -8,11 +10,17 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   const canvas = dialog.querySelector<HTMLCanvasElement>("[data-ski-canvas]")!;
   const sprites = await loadSkiSprites(dialog.dataset.skiAssets!);
   const game = new SkiEngine();
+  const feedback = new SkiFeedback();
+  const audio = createSkiAudio();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const toggle = dialog.querySelector<HTMLButtonElement>("[data-ski-toggle]")!;
   const restart = dialog.querySelector<HTMLButtonElement>("[data-ski-restart]")!;
   const message = dialog.querySelector<HTMLElement>("[data-ski-message]")!;
   const distance = dialog.querySelector<HTMLElement>("[data-ski-distance]")!;
   const record = dialog.querySelector<HTMLElement>("[data-ski-best]")!;
+  const score = dialog.querySelector<HTMLElement>("[data-ski-score]")!;
+  const sound = dialog.querySelector<HTMLButtonElement>("[data-ski-sound]")!;
+  let muted = false;
   const keys = new Set<string>();
   const touches = new Map<number, string>();
   const bestKey = storageKey("ski-best-distance");
@@ -34,11 +42,12 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   };
   const render = () => {
     best = Math.max(best, Math.floor(game.distance));
-    drawSki(canvas, game, sprites);
+    drawSki(canvas, game, sprites, feedback, reducedMotion.matches);
     setText(distance, `${String(Math.floor(game.distance)).padStart(4, "0")} m`);
     setText(record, `${String(best).padStart(4, "0")} m`);
+    setText(score, String(game.score).padStart(4, "0"));
     const labels = { ready: "Uma pista pela frente.", running: "", paused: "Descida pausada", over: "Fim da descida. Alguém alcançou você." };
-    message.hidden = game.phase === "running";
+    message.hidden = game.phase === "running" || (game.phase === "over" && feedback.endAge < 0.7);
     setText(message, labels[game.phase]);
     const actions = { ready: "[INICIAR]", running: "[PAUSAR]", paused: "[CONTINUAR]", over: "[NOVA DESCIDA]" };
     setText(toggle, actions[game.phase]);
@@ -51,8 +60,13 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   };
   const stop = () => {
     cancelAnimationFrame(frame); frame = 0; previous = 0; accumulator = 0;
+    audio.stop();
   };
-  const pause = () => { stop(); clearInput(); game.pause(); persist(); render(); };
+  const pause = () => {
+    stop(); clearInput(); game.pause();
+    if (game.phase === "over") feedback.endAge = Math.max(0.7, feedback.endAge);
+    persist(); render();
+  };
   const input = () => {
     const held = new Set([...keys, ...touches.values()]);
     const left = held.has("ArrowLeft") || held.has("a") || held.has("left");
@@ -65,25 +79,45 @@ export const createSkiSession = async (dialog: HTMLDialogElement) => {
   };
   const loop = (now: number) => {
     frame = 0;
-    if (!available() || game.phase !== "running") { pause(); return; }
+    if (!available() || (game.phase !== "running" && game.phase !== "over")) { pause(); return; }
     if (previous) accumulator += Math.min((now - previous) / 1000, 0.1);
     previous = now;
-    while (accumulator >= SKI_STEP && game.phase === "running") {
-      game.tick(input()); accumulator -= SKI_STEP;
+    while (accumulator >= SKI_STEP) {
+      if (game.phase === "running") {
+        const before = game.distance;
+        game.tick(input());
+        feedback.step(game, (game.distance - before) / 0.16, SKI_STEP, game.events);
+        audio.events(game.events);
+        if ((game.phase as string) === "over") { audio.stop(); clearInput(); persist(); }
+      } else {
+        feedback.step(game, 0, SKI_STEP, []);
+      }
+      accumulator -= SKI_STEP;
     }
+    audio.update(game, feedback.carve);
     render();
-    if (game.phase === "running") frame = requestAnimationFrame(loop);
+    if (game.phase === "running" || (game.phase === "over" && feedback.endAge < 1)) frame = requestAnimationFrame(loop);
     else { clearInput(); persist(); }
   };
   const play = () => {
     if (!available()) return;
     if (game.phase === "running") { pause(); return; }
-    stop(); clearInput(); game.start(); render();
+    audio.unlock();
+    stop(); clearInput();
+    if (game.phase === "over" || game.phase === "ready") feedback.reset();
+    game.start(); render();
     canvas.focus({ preventScroll: true });
     frame = requestAnimationFrame(loop);
   };
   toggle.addEventListener("click", play);
-  restart.addEventListener("click", () => { stop(); persist(); game.reset(); play(); });
+  restart.addEventListener("click", () => { stop(); persist(); game.reset(); feedback.reset(); play(); });
+  sound.addEventListener("click", () => {
+    muted = !muted;
+    audio.setMuted(muted);
+    if (!muted) audio.unlock();
+    sound.setAttribute("aria-pressed", String(muted));
+    setText(sound, muted ? "[SOM DESLIGADO]" : "[SOM LIGADO]");
+  });
   dialog.addEventListener("popup:closing", pause);
   dialog.addEventListener("window:help", pause);
   dialog.addEventListener("close", pause);
