@@ -255,6 +255,7 @@ templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, b
 				</main>
 			</div>
 			@ProjectImageViewer()
+			@AppWindows(portfolio.HomeArchive, basePath, profile.Contact.SourceURL)
 		</body>
 	</html>
 }

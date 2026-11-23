@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SkiEngine, SKI_WIDTH, SKI_MAX_HEADING, SKI_NEAR_MISS_POINTS, SKI_NEAR_MISS_MIN_DESCENT_RATIO, SKI_YETI_ESCAPE_GAP, SKI_FIRST_YETI, SKI_NORMAL_INTERVAL, SKI_SLALOM_INTERVAL, SKI_YETI_INTERVAL } from "../../web/scripts/games/ski/ski-engine.ts";
+import { SkiEngine, SKI_WIDTH, SKI_MAX_HEADING, SKI_NEAR_MISS_POINTS, SKI_NEAR_MISS_MIN_DESCENT_RATIO, SKI_YETI_ESCAPE_GAP, SKI_NORMAL_INTERVAL, SKI_SLALOM_INTERVAL } from "../../web/scripts/games/ski/ski-engine.ts";
 
 const neutral = { steer: 0, downhill: false };
 const advance = (game, count, input = neutral) => {
@@ -219,13 +219,11 @@ test("missing the balance window causes one fall, then an automatic recovery", (
   assert.ok(game.speed >= 240);
 });
 
-test("clues precede pursuit and capture freezes the ended game", () => {
+test("capture freezes the ended game", () => {
   const game = new SkiEngine(rng());
   game.start();
   assert.equal(game.stage, "descent");
-  game.distance = SKI_FIRST_YETI - 350;
-  assert.equal(game.stage, "tracks");
-  game.distance = SKI_FIRST_YETI + 1;
+  game.distance = game.nextYeti + 1;
   game.tick();
   assert.equal(game.stage, "pursuit");
   game.yeti.x = game.player.x;
@@ -237,9 +235,68 @@ test("clues precede pursuit and capture freezes the ended game", () => {
   assert.equal(JSON.stringify(game), ended);
 });
 
+test("encounters vary in distance and side and leave just one clue", () => {
+  const distances = new Set();
+  const sides = new Set();
+  for (const [roll, expected] of [[0.05, "tracks"], [0.25, "tracks"], [0.5, "glimpse"], [0.9, "step"]]) {
+    let draws = 0;
+    const game = new SkiEngine(() => ++draws === 5 ? 0.75 : roll);
+    game.start();
+    game.nextSlalom = Infinity;
+    game.distance = game.nextYeti - 400;
+    game.objects = [];
+    game.player.x = 280;
+    assert.ok(game.nextYeti >= 2000 && game.nextYeti < 2700);
+    const tracks = new Set();
+    const trees = new Set();
+    let steps = 0;
+    while (game.distance < game.nextYeti && !game.yeti) {
+      game.tick();
+      if (game.glimpse) trees.add(game.glimpse.treeId);
+      for (const object of game.objects) {
+        if (object.kind === "tracks") tracks.add(object.id);
+      }
+      steps += game.events.filter(event => event.type === "yeti-distant-step").length;
+    }
+    assert.deepEqual([tracks.size, trees.size, steps], [
+      Number(expected === "tracks"), Number(expected === "glimpse"), Number(expected === "step"),
+    ]);
+    const appearance = game.events.find(event => event.type === "yeti-appear");
+    assert.ok(appearance);
+    sides.add(appearance.x);
+    distances.add(game.distance);
+  }
+  assert.equal(distances.size, 4);
+  assert.deepEqual(sides, new Set([70, SKI_WIDTH - 70]));
+});
+
+test("a single group of tracks reaches the viewport inside the ski corridor", () => {
+  for (const layout of ["landscape", "portrait"]) {
+    const game = new SkiEngine(() => 0.05, layout);
+    game.start();
+    game.objects = [];
+    game.nextSlalom = Infinity;
+    game.distance = game.nextYeti - 175;
+    game.terrainRow = 13;
+    game.laneCenter = game.player.x = game.width * 0.55;
+    game.spawnDistance = 135;
+    game.tick();
+
+    const tracks = game.objects.find(object => object.kind === "tracks");
+    assert.ok(tracks);
+    assert.ok(Math.abs(tracks.x - game.player.x) <= 34);
+    assert.ok(Math.abs(tracks.x - game.laneCenter) <= 26);
+    assert.ok(tracks.y > game.height);
+    advance(game, 30);
+    assert.ok(tracks.y > game.player.y && tracks.y <= game.height);
+    assert.deepEqual(game.objects.filter(object => object.kind === "tracks"), [tracks]);
+    assert.equal(game.yeti, null);
+  }
+});
+
 test("a fast downhill run can escape a pursuit; next encounter has a quiet interval", () => {
-  const game = new SkiEngine(rng());
-  game.start(); game.distance = SKI_FIRST_YETI + 1;
+  const game = new SkiEngine(() => 0.75);
+  game.start(); game.distance = game.nextYeti + 1;
   for (let i = 0; i < 1442 && game.escapes === 0; i++) {
     game.objects = [];
     game.tick({ steer: 0, downhill: true });
@@ -252,9 +309,148 @@ test("a fast downhill run can escape a pursuit; next encounter has a quiet inter
   assert.equal(game.stage, "descent");
 });
 
+test("the yeti closes the gap in one rush and loses ground while catching its breath", () => {
+  const game = new SkiEngine(() => 0.1);
+  game.start();
+  game.distance = game.nextYeti;
+  let tiredCues = 0;
+  const downhill = () => {
+    game.objects = [];
+    game.tick({ steer: 0, downhill: true });
+    tiredCues += game.events.filter(event => event.type === "yeti-tired").length;
+  };
+  downhill();
+  const entrance = game.events.find(event => event.type === "yeti-appear");
+  assert.ok(entrance);
+  while (game.yeti.age < 1 && tiredCues === 0) downhill();
+  assert.equal(tiredCues, 1);
+  assert.ok(game.yeti.y - entrance.y >= 40 && game.yeti.y - entrance.y <= 60);
+  assert.ok(Math.abs(game.yeti.x - game.player.x) < Math.abs(entrance.x - game.player.x) - 100);
+  assert.ok(game.yeti.strideAge > game.yeti.age);
+
+  const { y, strideAge } = game.yeti;
+  downhill();
+  const tiredLoss = y - game.yeti.y;
+  assert.ok(tiredLoss > 0);
+  assert.ok(game.yeti.strideAge - strideAge < 1 / 60);
+  while (game.yeti.age < 2.8) downhill();
+  const recoveredY = game.yeti.y;
+  downhill();
+  assert.ok(recoveredY - game.yeti.y < tiredLoss);
+  assert.equal(tiredCues, 1);
+  assert.equal(game.phase, "running");
+});
+
+test("both entrances keep the whole yeti on screen during its rush and leave room to react", () => {
+  for (const layout of ["landscape", "portrait"]) for (const side of [-1, 1]) {
+    const game = new SkiEngine(() => 0.1, layout);
+    game.yetiSide = side;
+    game.start();
+    game.distance = game.nextYeti;
+    game.player.x = side < 0 ? 26 : game.width - 26;
+    game.player.heading = side * SKI_MAX_HEADING;
+    let tired = false;
+    for (let tick = 0; tick < 60 && !tired; tick++) {
+      game.objects = [];
+      game.tick();
+      assert.ok(game.yeti.y >= 66);
+      assert.ok(game.player.y - game.yeti.y > 23);
+      assert.equal(game.phase, "running");
+      tired = game.events.some(event => event.type === "yeti-tired");
+    }
+    assert.ok(tired);
+  }
+});
+
+test("a delayed rush gives one warning and steady or distant pursuit does not rush", () => {
+  for (const [roll, nearby] of [[0.5, true], [0.5, false], [0.75, true]]) {
+    const game = new SkiEngine(() => roll);
+    game.start();
+    game.distance = game.nextYeti;
+    if (!nearby) game.player.x = 26;
+    const warningTimes = [];
+    let breathCount = 0;
+    for (let tick = 0; tick < 180; tick++) {
+      game.objects = [];
+      game.tick({ steer: 0, downhill: true });
+      if (game.events.some(event => event.type === "yeti-windup")) warningTimes.push(game.yeti.age);
+      breathCount += game.events.filter(event => event.type === "yeti-tired").length;
+    }
+    if (roll === 0.5 && nearby) {
+      assert.equal(warningTimes.length, 1);
+      assert.ok(game.yeti.blinkAt >= 0.8 && game.yeti.blinkAt <= 1.6);
+      assert.ok(game.yeti.blinkAt - warningTimes[0] >= 0.18);
+      assert.equal(breathCount, 1);
+    } else {
+      assert.deepEqual(warningTimes, []);
+      assert.equal(game.yeti.blinkAt, null);
+      assert.equal(breathCount, 0);
+    }
+  }
+});
+
+test("the front yeti waits on the slope, then leaves a path past the charge and pine", () => {
+  for (const layout of ["landscape", "portrait"]) for (const side of [-1, 1]) {
+    const game = new SkiEngine(() => 0.9, layout);
+    game.start();
+    game.nextSlalom = Infinity;
+    game.distance = game.nextYeti - 64;
+    game.player.x = side < 0 ? 26 : game.width - 26;
+    for (let tick = 0; tick < 150 && !game.yeti; tick++) game.tick();
+    assert.equal(game.yeti.attack.kind, "standing");
+    assert.ok(game.yeti.y > game.height + 64);
+    assert.equal(game.stage, "descent");
+    const line = game.yeti.x;
+    const pine = game.objects.find(object => object.kind === "pine" && object.y === game.yeti.y + 25);
+    assert.ok(pine);
+    for (let tick = 0; tick < 30 && game.yeti.y > game.height; tick++) {
+      game.tick();
+      assert.equal(game.yeti.attack.kind, "standing");
+      assert.equal(game.yeti.x, line);
+      assert.equal(game.yeti.strideAge, 0);
+      assert.ok(Math.abs(pine.y - game.yeti.y - 25) < 1e-8);
+      assert.ok(!game.events.some(event => event.type === "yeti-appear"));
+    }
+    assert.ok(game.yeti.y <= game.height);
+    const target = (line + pine.x) / 2;
+    let passed = false;
+    let turned = false;
+    let charges = 0;
+    let visibleStandingTicks = 0;
+    for (let tick = 0; tick < 540 && !game.escapes; tick++) {
+      if (passed) game.objects = [];
+      game.tick({ steer: 0, heading: Math.atan2(target - game.player.x, 84) });
+      if (game.yeti?.attack.kind === "standing") visibleStandingTicks++;
+      charges += game.events.filter(event => event.type === "yeti-appear" && event.front).length;
+      if (game.yeti?.attack.kind === "head-on") assert.equal(game.yeti.x, line);
+      if (game.yeti?.attack.kind === "turning") {
+        assert.ok(game.yeti.y < game.player.y);
+        turned = true;
+      }
+      assert.equal(game.events.some(event => event.type === "collision"), false);
+      assert.equal(game.phase, "running");
+      passed ||= pine.passed && game.yeti?.y < game.player.y;
+    }
+    assert.ok(visibleStandingTicks >= 12);
+    assert.equal(charges, 1);
+    assert.ok(passed && turned);
+    assert.equal(game.escapes, 1);
+  }
+});
+
+test("skiing straight into a head-on yeti ends the run", () => {
+  const game = new SkiEngine(() => 0.9);
+  game.start();
+  game.distance = game.nextYeti;
+  for (let tick = 0; tick < 60 && game.phase === "running"; tick++) game.tick();
+  assert.equal(game.phase, "over");
+  assert.ok(game.events.some(event => event.type === "capture"));
+  assert.equal(game.escapes, 0);
+});
+
 test("escaping requires a real gap rather than simply surviving a timer", () => {
-  const game = new SkiEngine(rng());
-  game.start(); game.distance = SKI_FIRST_YETI + 1; game.objects = [];
+  const game = new SkiEngine(() => 0.75);
+  game.start(); game.distance = game.nextYeti + 1; game.objects = [];
   game.tick();
   game.yeti.x = game.player.x;
   game.yeti.y = game.player.y - 90;
@@ -278,9 +474,10 @@ test("escaping requires a real gap rather than simply surviving a timer", () => 
 
 test("turning and collision recovery let the yeti gain ground without overshooting", () => {
   for (const hit of [false, true]) {
-    const game = new SkiEngine(rng());
-    game.start(); game.distance = SKI_FIRST_YETI + 1; game.objects = [];
+    const game = new SkiEngine(() => 0.75);
+    game.start(); game.distance = game.nextYeti + 1; game.objects = [];
     game.tick();
+    game.yeti.age = 3;
     game.yeti.x = game.player.x;
     game.yeti.y = game.player.y - 90;
     if (hit) {
@@ -418,14 +615,14 @@ test("pursuit and slalom stay separate even in experienced advanced runs", () =>
   for (const [distance, escapes, expected] of [[2000, 0, false], [6500, 0, false], [3500, 1, false], [6500, 1, false]]) {
     const game = new SkiEngine(() => 0.5);
     game.start(); game.objects = []; game.distance = distance; game.escapes = escapes;
-    game.yeti = { x: 70, y: 16, age: 0 };
+    game.yeti = { x: 70, y: 16, age: 0, strideAge: 0, blinkAt: null, attack: { kind: "pursuit" } };
     game.spawnDistance = 135;
     game.tick();
     assert.equal(Boolean(game.slalom), expected);
   }
 });
 
-test("finishing slalom reserves normal terrain before either challenge or yeti clues", () => {
+test("finishing slalom reserves normal terrain before the next challenge", () => {
   const game = startSlalom(700);
   game.slalom.spawned = game.slalom.gates;
   game.slalom.lastGateY = game.player.y - 12;
@@ -434,7 +631,7 @@ test("finishing slalom reserves normal terrain before either challenge or yeti c
   const finished = game.distance;
   assert.equal(game.slalom, null);
   assert.equal(game.nextSlalom, finished + SKI_SLALOM_INTERVAL);
-  assert.ok(game.nextYeti >= finished + SKI_NORMAL_INTERVAL + 380);
+  assert.ok(game.nextYeti > finished + SKI_NORMAL_INTERVAL);
   assert.equal(game.stage, "descent");
   game.nextSlalom = 0; // Even an overdue slalom must respect the shared interval.
   let normalRows = 0;
@@ -444,22 +641,73 @@ test("finishing slalom reserves normal terrain before either challenge or yeti c
     if (game.objects.some(object => object.kind === "pine" || object.kind === "rock")) normalRows++;
     assert.equal(game.slalom, null);
     assert.equal(game.yeti, null);
-    assert.equal(game.glimpse, null);
     assert.equal(game.stage, "descent");
   }
   assert.ok(normalRows >= 30, "ordinary obstacle rows occupy the interval");
 });
 
+test("three separate cracks reveal the yeti before the first pursuit and end in a pine corridor", () => {
+  for (const layout of ["landscape", "portrait"]) for (const roll of [0.05, 0.5, 0.9]) {
+    const game = new SkiEngine(() => roll, layout);
+    const beats = [];
+    let explanations = 0;
+    let lastGlimpseDuration = 0;
+    game.start();
+    for (let tick = 0; tick < 7500 && game.stage !== "pursuit"; tick++) {
+      game.tick({ steer: 0, downhill: true });
+      if (game.events.some(event => event.type === "yeti-explanation")) {
+        explanations++;
+        assert.ok(Math.abs(game.elapsed - beats[2].elapsed - 1.3) < 1e-4);
+        const peek = game.glimpse;
+        assert.ok(peek && peek.age < 0.02);
+        const tree = game.objects.find(object => object.id === peek.treeId);
+        assert.ok(tree.y > 64 && tree.y < game.height);
+        const oppositeTree = game.objects.find(object => object.kind === "pine" &&
+          object.y === tree.y && Math.abs(object.x - tree.x) >= 175);
+        assert.ok(oppositeTree);
+        lastGlimpseDuration = peek.duration;
+        const distance = game.distance;
+        const x = game.player.x;
+        game.tick({ steer: 1 });
+        assert.ok(game.distance > distance && game.player.x > x);
+        game.tick({ steer: 0, downhill: true });
+      }
+      const crack = game.events.find(event => event.type === "yeti-crack");
+      if (!crack) continue;
+      assert.equal(game.phase, "running");
+      assert.equal(game.yeti, null);
+      const peek = game.glimpse;
+      if (crack.count === 3) assert.equal(peek, null);
+      else {
+        const tree = game.objects.find(object => object.id === peek.treeId);
+        assert.equal(tree.kind, "pine");
+        assert.ok(tree.y > 0 && tree.y < game.height);
+        if (crack.count === 2)
+          assert.ok(game.objects.some(object => object.id === peek.exitTreeId && object.kind === "pine"));
+      }
+      beats.push({ count: crack.count, side: crack.side, duration: peek?.duration, distance: game.distance, elapsed: game.elapsed });
+    }
+    assert.deepEqual(beats.map(beat => beat.count), [1, 2, 3]);
+    assert.deepEqual(beats.map(beat => beat.side), [beats[0].side, -beats[0].side, beats[0].side]);
+    assert.equal(explanations, 1);
+    assert.ok(lastGlimpseDuration > beats[1].duration && beats[1].duration > beats[0].duration);
+    assert.ok(game.yeti && game.distance - beats[2].distance > 170);
+    game.reset();
+    assert.equal(game.yetiScene, null);
+    assert.equal(game.glimpse, null);
+  }
+});
+
 test("escaping the yeti also postpones slalom and schedules a longer repeat interval", () => {
   const game = new SkiEngine(() => 0.5);
-  game.start(); game.objects = []; game.distance = SKI_FIRST_YETI + 1;
+  game.start(); game.objects = []; game.distance = game.nextYeti + 1;
   game.tick();
   game.yeti.age = 6;
   game.yeti.y = game.player.y - SKI_YETI_ESCAPE_GAP;
   game.tick();
   const finished = game.distance;
   assert.equal(game.yeti, null);
-  assert.equal(game.nextYeti, finished + SKI_YETI_INTERVAL);
+  assert.ok(game.nextYeti >= finished + 2200 && game.nextYeti < finished + 3200);
   game.nextSlalom = 0;
   game.distance = finished + SKI_NORMAL_INTERVAL - 100;
   game.spawnDistance = 135;
@@ -471,7 +719,7 @@ test("escaping the yeti also postpones slalom and schedules a longer repeat inte
 
 const startGlimpse = () => {
   const game = new SkiEngine(() => 0.5);
-  game.start(); game.objects = []; game.distance = 1800;
+  game.start(); game.objects = []; game.distance = game.nextYeti - 200;
   game.nextSlalom = Infinity; game.spawnDistance = 135;
   game.tick();
   return game;
@@ -479,7 +727,7 @@ const startGlimpse = () => {
 
 test("the yeti silently peeks behind a lateral pine only after its tree becomes visible", () => {
   const game = startGlimpse();
-  assert.equal(game.stage, "tracks");
+  assert.equal(game.stage, "descent");
   assert.ok(game.glimpse);
   const tree = game.objects.find(object => object.id === game.glimpse.treeId);
   assert.equal(tree.kind, "pine");
@@ -501,17 +749,14 @@ test("the yeti silently peeks behind a lateral pine only after its tree becomes 
   assert.equal(game.glimpse, null);
   assert.equal(game.yeti, null);
   assert.equal(game.balance, null);
-  game.distance = 1850; game.terrainRow = 0; game.spawnDistance = 135;
+  game.distance = game.nextYeti - 150; game.terrainRow = 0; game.spawnDistance = 135;
   game.tick();
   assert.equal(game.glimpse, null, "only one glimpse per encounter");
-  game.nextYeti = 5000; game.distance = 4800; game.terrainRow = 0; game.spawnDistance = 135;
-  game.tick();
-  assert.ok(game.glimpse, "a later encounter can have its own glimpse");
 });
 
 test("glimpses wait for open rows and never appear in slalom gates or their exit", () => {
   const narrow = new SkiEngine(() => 0.5);
-  narrow.start(); narrow.objects = []; narrow.distance = 1800; narrow.nextSlalom = Infinity;
+  narrow.start(); narrow.objects = []; narrow.distance = narrow.nextYeti - 200; narrow.nextSlalom = Infinity;
   narrow.terrainRow = 12; narrow.spawnDistance = 135;
   narrow.tick();
   assert.equal(narrow.glimpse, null);
@@ -537,14 +782,14 @@ test("pursuit and reset remove the glimpse without turning it into a collidable 
   assert.equal(game.balance, null);
   assert.equal(game.nearMisses, 0);
   assert.deepEqual(game.events, []);
-  game.distance = SKI_FIRST_YETI + 1;
+  game.distance = game.nextYeti + 1;
   game.tick();
   assert.equal(game.glimpse, null);
   assert.ok(game.yeti);
   assert.equal(game.events.filter(event => event.type === "yeti-appear").length, 1);
   game.reset();
   assert.equal(game.glimpse, null);
-  assert.equal(game.glimpseEncounter, 0);
+  assert.equal(game.yetiClue, "glimpse");
 });
 
 for (const layout of ["landscape", "portrait"]) test(`every ${layout} slalom tier is traversable without collisions`, () => {
@@ -587,7 +832,7 @@ test("portrait bounds cover terrain, player, and pursuit", () => {
   game.start();
   game.objects = [];
   game.player.x -= 1;
-  game.distance = SKI_FIRST_YETI + 1;
+  game.distance = game.nextYeti + 1;
   game.tick();
   assert.ok(game.yeti.x >= game.width - 75 && game.yeti.x <= game.width - 70);
   game.yeti = null;

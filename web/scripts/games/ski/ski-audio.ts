@@ -10,6 +10,8 @@ const urls = {
   bell: new URL("./audio/near-miss-bell.ogg", import.meta.url),
   step: new URL("./audio/yeti-step.ogg", import.meta.url),
   appear: new URL("./audio/yeti-appear.ogg", import.meta.url),
+  breath: new URL("./audio/yeti-breath.wav", import.meta.url),
+  crack: new URL("./audio/yeti-crack.wav", import.meta.url),
 };
 type Sound = keyof typeof urls;
 
@@ -66,10 +68,13 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
     name: Sound,
     volume: number,
     clip?: {
-      duration: number;
+      duration?: number;
       delay?: number;
       rate?: number;
       maxLatency?: number;
+      offset?: number;
+      pan?: number;
+      lowpass?: number;
     },
   ) => {
     if (muted) return;
@@ -92,16 +97,32 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
       return;
     const source = context.createBufferSource();
     const gain = context.createGain();
+    const stereo =
+      clip?.pan === undefined ? null : context.createStereoPanner();
+    const filter =
+      clip?.lowpass === undefined ? null : context.createBiquadFilter();
     source.buffer = buffer;
     gain.gain.value = volume;
-    source.connect(gain).connect(master);
+    let output: AudioNode = source.connect(gain);
+    if (filter && clip?.lowpass !== undefined) {
+      filter.type = "lowpass";
+      filter.frequency.value = clip.lowpass;
+      output = output.connect(filter);
+    }
+    if (stereo && clip?.pan !== undefined) {
+      stereo.pan.value = clip.pan;
+      output = output.connect(stereo);
+    }
+    output.connect(master);
     playing.add(source);
     source.onended = () => {
       playing.delete(source);
       source.disconnect();
       gain.disconnect();
+      filter?.disconnect();
+      stereo?.disconnect();
     };
-    if (clip) {
+    if (clip?.duration !== undefined) {
       const start = context.currentTime + (clip.delay ?? 0);
       source.playbackRate.value = clip.rate ?? 1;
       gain.gain.value = 0;
@@ -111,7 +132,7 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
         start + clip.duration / 3,
         clip.duration / 7,
       );
-      source.start(start, 0, clip.duration);
+      source.start(start, clip.offset ?? 0, clip.duration);
     } else {
       source.start();
     }
@@ -150,7 +171,16 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
   };
 
   const events = (items: readonly SkiEvent[]) => {
-    if (context && items.some((event) => event.type !== "escape"))
+    if (
+      context &&
+      items.some(
+        ({ type }) =>
+          type !== "escape" &&
+          type !== "yeti-distant-step" &&
+          type !== "yeti-tired" &&
+          type !== "yeti-explanation",
+      )
+    )
       duckUntil = context.currentTime + 0.3;
     for (const event of items) {
       if (event.type === "collision") void play(event.kind, 0.7);
@@ -172,6 +202,46 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
         lastYetiStep = -1;
         void play("appear", 0.45);
       }
+      if (
+        event.type === "yeti-windup" ||
+        (event.type === "yeti-appear" && event.rush)
+      )
+        void play("step", 0.48, { duration: 0.16, rate: 0.8, maxLatency: 0.1 });
+      if (event.type === "yeti-distant-step")
+        void play("step", 0.18, {
+          duration: 0.15,
+          rate: 0.84,
+          maxLatency: 0.1,
+        });
+      if (event.type === "yeti-tired")
+        void play("breath", 1.65, { maxLatency: 0.15 });
+      if (event.type === "yeti-crack") {
+        const pan = event.side * (event.count === 1 ? 0.65 : 0.48);
+        void play("crack", 0.24 + event.count * 0.07, {
+          offset: 1.74,
+          duration: 0.36,
+          rate: event.count === 1 ? 0.87 : 0.98,
+          pan,
+          lowpass: event.count === 1 ? 1600 : undefined,
+          maxLatency: 0.15,
+        });
+        void play("step", 0.055 + event.count * 0.015, {
+          delay: 0.12,
+          duration: 0.17,
+          rate: 0.74,
+          pan,
+          maxLatency: 0.15,
+        });
+        if (event.count === 3) {
+          void play("slide", 0.13, {
+            delay: 0.2,
+            duration: 0.24,
+            rate: 0.85,
+            pan,
+            maxLatency: 0.15,
+          });
+        }
+      }
     }
   };
 
@@ -188,12 +258,12 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
       tracksAt = game.elapsed;
     }
 
-    const yeti = game.yeti;
+    const yeti = game.yeti?.attack.kind === "standing" ? null : game.yeti;
     let proximity = 0;
     if (yeti) {
       const gap = Math.hypot(yeti.x - game.player.x, yeti.y - game.player.y);
       proximity = Math.max(0, 1 - gap / 420);
-      const { stride, quickStep } = strideAt(yeti.age);
+      const { stride, quickStep } = strideAt(yeti.strideAge);
       const quick = quickStep >= 0;
       const step = stride * 2 + Number(quick);
       if (step !== lastYetiStep) {

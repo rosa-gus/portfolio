@@ -27,6 +27,7 @@ type Caption = {
   life: number;
   count?: number;
   points?: number;
+  fixed?: boolean;
 };
 
 export const SKI_CAPTURE_DURATION = 0.4;
@@ -236,12 +237,18 @@ export class SkiFeedback {
           );
         this.snowBudget %= 1;
       }
-      if (game.yeti) {
+      if (game.yeti && game.yeti.attack.kind !== "standing") {
+        const { kind } = game.yeti.attack;
         const gap = Math.hypot(
           game.yeti.x - game.player.x,
           game.yeti.y - game.player.y,
         );
-        if (gap < 85 && !this.warned) {
+        if (
+          gap < 85 &&
+          !this.warned &&
+          kind !== "head-on" &&
+          kind !== "turning"
+        ) {
           this.warned = true;
           this.captions.push({
             text: "ele está perto.",
@@ -251,7 +258,7 @@ export class SkiFeedback {
             life: 1.3,
           });
         } else if (gap > 125) this.warned = false;
-        const step = Math.floor(game.yeti.age * 3);
+        const step = Math.floor(game.yeti.strideAge * 3);
         if (step !== this.lastYetiStep && game.yeti.y > 0)
           this.puff(game.yeti.x, game.yeti.y - 2, 4);
         this.lastYetiStep = step;
@@ -321,13 +328,34 @@ export class SkiFeedback {
         }
         case "yeti-appear":
           this.captions.push({
-            text: "companhia na pista.",
+            text: event.front ? "ele vem pela frente." : "companhia na pista.",
             x: game.width / 2,
             y: 42,
             age: 0,
             life: 1.6,
           });
           break;
+        case "yeti-windup":
+          if (game.yeti) this.puff(game.yeti.x, game.yeti.y, 12);
+          break;
+        case "yeti-explanation":
+        case "yeti-crack": {
+          const explains = event.type === "yeti-explanation";
+          const speaks = explains || event.count === 3;
+          this.captions.push({
+            text: explains
+              ? "“Deve ser um criossismo.”"
+              : speaks
+                ? "“terceira vez que ouço isso.”"
+                : "[estalo ao longe]",
+            x: game.width / 2,
+            y: speaks ? game.player.y - 78 : 58,
+            age: 0,
+            life: explains ? 1.8 : speaks ? 0.9 : 1.0,
+            fixed: true,
+          });
+          break;
+        }
         case "escape":
           this.retreat = { x: event.x, y: event.y, age: 0 };
           this.captions.push({

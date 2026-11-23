@@ -1,6 +1,7 @@
 package views
 
 import (
+"cmp"
 "fmt"
 "portfolio/internal/portfolio"
 )
@@ -35,6 +36,7 @@ if document.Kind == portfolio.DocumentNote {
 }
 
 templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document, basePath string, publicURL string) {
+{{ author := cmp.Or(document.Author, profile.Identity.DisplayName) }}
 <!doctype html>
 <html lang="pt-BR">
 
@@ -42,6 +44,7 @@ templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document,
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="description" content={ documentDescription(document) } />
+	<meta name="author" content={ author } />
 	@siteIcons(basePath)
 	@themeHead()
 	<title>{ document.Title + " / " + profile.Identity.DisplayName }</title>
@@ -63,30 +66,38 @@ templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document,
 
 <body>
 	<div class="article-page">
-		<header class="article-page__navigation control-text">
-			<a data-documents-back href={ siteURL(basePath, "/#case" ) }>[VOLTAR AOS DOCUMENTOS]</a>
+		<header class="project-page__header">
+			<a class="article-page__back" data-documents-back href={ siteURL(basePath, "/#case") }>[VOLTAR AOS DOCUMENTOS]</a>
 			@themeToggle()
 		</header>
-		<main class="article-page__sheet document-fold" id="content">
-			<header class="article-page__heading">
-				<p class="meta-text">ARTIGO / MD</p>
-				<h1>{ document.Title }</h1>
-				<p class="article-page__metadata meta-text">
-					if document.Date != "" {
-					<time datetime={ document.Date }>{ documentDateLabel(document.Date) }</time><span
-						class="inline-divider" aria-hidden="true"></span>
+		<main class="article-page__content" id="content">
+			<article class="article-page__column">
+				<header class="article-page__heading">
+					<h1>{ document.Title }</h1>
+					<p class="article-page__metadata meta-text">
+						<span><span aria-hidden="true">/ </span>{ author }</span>
+						if document.Date != "" {
+							<span class="article-page__metadata-item">
+								<span class="inline-divider" aria-hidden="true"></span>
+								<time datetime={ document.Date }>{ documentDateLabel(document.Date) }</time>
+							</span>
+						}
+						<span class="article-page__metadata-item">
+							<span class="inline-divider" aria-hidden="true"></span>
+							<span>{ fmt.Sprintf("%d MIN DE LEITURA", document.ReadingMinutes()) }</span>
+						</span>
+					</p>
+					if document.Summary != "" {
+						<p class="article-page__summary">{ document.Summary }</p>
 					}
-					<span>{ fmt.Sprintf("%d MIN DE LEITURA", document.ReadingMinutes()) }</span>
-				</p>
-				if document.Summary != "" {
-				<p class="article-page__summary">{ document.Summary }</p>
-				}
-			</header>
-			<div class="prose project-content__prose document-prose">
-				@renderMarkdown(document.Content, basePath)
-			</div>
+				</header>
+				<div class="prose project-content__prose document-prose">
+					@renderMarkdown(document.Content, basePath)
+				</div>
+			</article>
 		</main>
 	</div>
+	@AppWindows(portfolio.HomeArchive, basePath, profile.Contact.SourceURL)
 </body>
 
 </html>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { drawYetiRun } from "../../web/scripts/games/ski/ski-yeti.ts";
+import { drawYetiRun, yetiBlinkOpacity } from "../../web/scripts/games/ski/ski-yeti.ts";
 
 const images = {
   "yeti-run-01": { width: 28, height: 32 },
@@ -12,6 +12,15 @@ const drawFrame = (age, direction = 1) => {
   drawYetiRun({ drawImage: (...args) => calls.push(args) }, images, 100, 100, age, direction);
   return calls;
 };
+
+test("the appearance briefly darkens the scene once", () => {
+  assert.equal(yetiBlinkOpacity(0), 0);
+  const peak = yetiBlinkOpacity(0.04);
+  assert.ok(peak > yetiBlinkOpacity(0.02) && peak > yetiBlinkOpacity(0.08));
+  assert.ok(peak < 0.5);
+  assert.equal(yetiBlinkOpacity(0.17), 0);
+  assert.equal(yetiBlinkOpacity(2), 0);
+});
 
 test("the yeti holds a long plant and varies when it starts the quick step", () => {
   assert.equal(drawFrame(0.20)[0][0], images["yeti-run-01"]);

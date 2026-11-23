@@ -6,10 +6,8 @@ type WindowOptions = {
   loadFeatures?: Record<string, () => Promise<WindowFeature>>;
 };
 
-const syncArchiveWindowURL = (source: HTMLElement | null, open: boolean) => {
-  const id = source?.dataset.archiveId;
-  if (!source || !id) return;
-  if (!source.hasAttribute("data-popup-trigger") && !source.hasAttribute("data-document-note-trigger")) return;
+const syncWindowURL = (id: string | undefined, open: boolean) => {
+  if (!id) return;
 
   const url = new URL(window.location.href);
   const isInURL = url.searchParams.get("open") === id;
@@ -26,6 +24,7 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
   const windows = Array.from(document.querySelectorAll<HTMLDialogElement>("dialog[data-window]"));
   let active: HTMLDialogElement | null = null;
   let trigger: HTMLElement | null = null;
+  let openID: string | undefined;
   let timer = 0;
   let frame = 0;
   let closing = false;
@@ -98,7 +97,8 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
     dialog?.style.removeProperty("left");
     dialog?.style.removeProperty("top");
     dialog?.removeAttribute("aria-busy");
-    syncArchiveWindowURL(source, false);
+    syncWindowURL(openID, false);
+    openID = undefined;
     if (returnFocus && source?.isConnected && !source.closest("[hidden]")) source.focus({ preventScroll: true });
   };
 
@@ -123,19 +123,15 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
     }, 120);
   };
 
-  document.addEventListener("click", (event) => {
-    if (event.defaultPrevented || !(event.target instanceof Element)) return;
-    const source = event.target.closest<HTMLButtonElement>("[data-window-trigger]");
-    if (!source) return;
-    const dialog = windows.find((item) => item.id === source.dataset.windowTrigger);
-    if (!dialog) return;
+  const open = (dialog: HTMLDialogElement, source: HTMLElement | null, id?: string) => {
     close(false, true);
     beforeOpen?.();
     active = dialog;
     trigger = source;
+    openID = id;
     returnFocus = true;
     dialog.showModal();
-    syncArchiveWindowURL(source, true);
+    syncWindowURL(openID, true);
     fitWindowMedia(dialog);
     dialog.dispatchEvent(new Event("popup:open"));
     const viewport = dialog.querySelector<HTMLElement>("[data-scroll-area-viewport]");
@@ -146,6 +142,33 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
       dialog.classList.add("is-open");
       dialog.querySelector<HTMLButtonElement>("[data-window-close]")?.focus({ preventScroll: true });
     });
+  };
+
+  const openApp = (id: string, source: HTMLElement | null = null) => {
+    const dialog = windows.find((item) => item.dataset.popup === id);
+    if (!dialog) return false;
+    open(dialog, source, id);
+    return true;
+  };
+
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || !(event.target instanceof Element)) return;
+    const source = event.target.closest<HTMLElement>("[data-window-trigger]");
+    if (source) {
+      const dialog = windows.find((item) => item.id === source.dataset.windowTrigger);
+      if (!dialog) return;
+      const { archiveId, popupTrigger, documentNoteTrigger } = source.dataset;
+      const syncURL = popupTrigger !== undefined || documentNoteTrigger !== undefined;
+      open(dialog, source, syncURL ? archiveId : undefined);
+      return;
+    }
+
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest<HTMLAnchorElement>('a[href^="?open="]');
+    if (!link || (link.target && link.target !== "_self") || link.hasAttribute("download") || link.hash) return;
+    const params = new URLSearchParams(link.search);
+    const appID = params.get("open");
+    if (params.size === 1 && appID && openApp(appID, link)) event.preventDefault();
   });
 
   windows.forEach((dialog) => {
@@ -271,5 +294,5 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
   reducedMotion.addEventListener("change", () => {
     if (closing && reducedMotion.matches) finishClose();
   });
-  return { close };
+  return { close, openApp };
 };

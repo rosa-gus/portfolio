@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -94,16 +95,25 @@ func newHandler(publicURL string) http.Handler {
 		}
 	})
 
-	mux.HandleFunc("GET /article/{slug}", func(w http.ResponseWriter, r *http.Request) {
+	serveArticle := func(w http.ResponseWriter, r *http.Request) {
 		document, ok := portfolio.FindArticle(r.PathValue("slug"))
 		if !ok {
 			http.NotFound(w, r)
 			return
 		}
+		if path, hasSlash := strings.CutSuffix(r.URL.Path, "/"); hasSlash {
+			canonical := *r.URL
+			canonical.Path = path
+			canonical.RawPath = ""
+			http.Redirect(w, r, canonical.RequestURI(), http.StatusPermanentRedirect)
+			return
+		}
 		if err := views.ArticlePage(portfolio.Profile, document, "", publicURL).Render(r.Context(), w); err != nil {
 			http.Error(w, "The article could not be rendered.", http.StatusInternalServerError)
 		}
-	})
+	}
+	mux.HandleFunc("GET /article/{slug}", serveArticle)
+	mux.HandleFunc("GET /article/{slug}/{$}", serveArticle)
 
 	return mux
 }

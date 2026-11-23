@@ -1,5 +1,15 @@
 package views
 
+import "portfolio/internal/portfolio"
+
+templ AppWindows(archive portfolio.Archive, basePath string, repository string) {
+	if archive.HasApp("snake") {
+		@SnakeGame(repository)
+	}
+	if archive.HasApp("ski") {
+		@SkiGame(basePath, repository)
+	}
+}
 
 // WindowOptions configures the shared frame; dimensions are trusted CSS lengths.
 type WindowOptions struct {

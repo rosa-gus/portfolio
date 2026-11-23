@@ -33,13 +33,47 @@ export type SkiEvent =
   | { type: "collision"; kind: "pine" | "rock"; x: number; y: number }
   | { type: "near-miss"; x: number; y: number; points: number }
   | { type: "fall"; side: SkiBalance["side"]; x: number; y: number }
+  | { type: "yeti-appear"; x: number; y: number; front: boolean; rush: boolean }
   | {
-      type: "yeti-appear" | "escape" | "capture" | "slalom-end";
+      type: "escape" | "capture" | "slalom-end";
       x: number;
       y: number;
     }
   | { type: "ski-contact" }
+  | { type: "yeti-distant-step" }
+  | { type: "yeti-crack"; count: number; side: number }
+  | { type: "yeti-explanation" }
+  | { type: "yeti-windup" }
+  | { type: "yeti-tired" }
   | { type: "slalom-start"; level: number };
+type SkiYetiClue = "tracks" | "glimpse" | "step";
+type SkiGlimpse = {
+  treeId: number;
+  side: number;
+  age: number;
+  duration?: number;
+  exitTreeId?: number;
+};
+type SkiYetiScene = {
+  beats: readonly [number, number, number];
+  side: number;
+  heard: number;
+  pending: SkiGlimpse | null;
+  revealAt: number | null;
+};
+type SkiYetiMode = "immediate" | "delayed" | "steady" | "front";
+type SkiYetiAttack =
+  | { kind: "pursuit" | "standing" | "head-on" }
+  | { kind: "waiting" | "windup" | "sprint" | "turning"; until: number }
+  | { kind: "tired"; since: number };
+type SkiYeti = {
+  x: number;
+  y: number;
+  age: number;
+  strideAge: number;
+  blinkAt: number | null;
+  attack: SkiYetiAttack;
+};
 export type SkiSlalom = {
   level: number;
   gates: number;
@@ -76,12 +110,25 @@ export const SKI_NEAR_MISS_MIN_DESCENT_RATIO = 0.55;
 export const SKI_YETI_ESCAPE_GAP = 260;
 export const SKI_YETI_GLIMPSE_DURATION = 1.2;
 export const SKI_FIRST_SLALOM = 700;
-export const SKI_FIRST_YETI = 2000;
 export const SKI_NORMAL_INTERVAL = 900;
 export const SKI_SLALOM_INTERVAL = 1800;
-export const SKI_YETI_INTERVAL = 2600;
+const YETI_CLUE_MAX_LEAD = 340;
+const YETI_VISUAL_CLUE_MIN_LEAD = 90;
+const YETI_ENTRY_Y = 66; // Leave room for the 64-pixel sprite and its stride.
+const YETI_SPRINT_DURATION = 0.8;
+const YETI_RECOVERY_DURATION = 1.8;
+const YETI_WINDUP_DURATION = 0.22;
+const YETI_FRONT_LEAD = 128;
+const YETI_FRONT_PINE_OFFSET = 25;
+const YETI_FRONT_SPAWN_MARGIN = 84;
+const YETI_CORRIDOR_LEAD = 72;
+const YETI_CORRIDOR_TAIL = 106;
+const YETI_EXPLANATION_DELAY = 1.3;
 const clamp = (n: number, low: number, high: number) =>
   Math.max(low, Math.min(high, n));
+const inYetiCorridor = (distance: number, beat: number) =>
+  distance >= beat - YETI_CORRIDOR_LEAD &&
+  distance <= beat + YETI_CORRIDOR_TAIL;
 
 export class SkiEngine {
   phase: SkiPhase = "ready";
@@ -92,15 +139,20 @@ export class SkiEngine {
   velocity = { x: 0, y: 0 };
   objects: SkiObject[] = [];
   trails: SkiTrail[] = [];
-  yeti: { x: number; y: number; age: number } | null = null;
-  glimpse: { treeId: number; side: number; age: number } | null = null;
+  yeti: SkiYeti | null = null;
+  glimpse: SkiGlimpse | null = null;
   balance: SkiBalance | null = null;
   escapes = 0;
   nearMisses = 0;
   slalom: SkiSlalom | null = null;
   /** Events belong to the last simulation step; consumers read them after every tick. */
   events: SkiEvent[] = [];
-  private nextYeti = SKI_FIRST_YETI;
+  private nextYeti = 0;
+  private yetiSide = 1;
+  private yetiMode: SkiYetiMode = "steady";
+  private yetiClue: SkiYetiClue | null = null;
+  private yetiClueLead = 0;
+  private yetiScene: SkiYetiScene | null = null;
   private spawnDistance = 0;
   private trailDistance = 0;
   private trailConnected = false;
@@ -111,7 +163,6 @@ export class SkiEngine {
   private nextSlalom = SKI_FIRST_SLALOM;
   private normalUntil = 0;
   private recoveryRows = 0;
-  private glimpseEncounter = 0;
 
   private readonly random: () => number;
   readonly layout: SkiLayout;
@@ -149,12 +200,12 @@ export class SkiEngine {
     this.trails = [];
     this.yeti = null;
     this.glimpse = null;
-    this.glimpseEncounter = 0;
+    this.yetiScene = null;
     this.slalom = null;
     this.nextSlalom = SKI_FIRST_SLALOM;
     this.normalUntil = 0;
     this.recoveryRows = 0;
-    this.nextYeti = SKI_FIRST_YETI;
+    this.scheduleYeti(2000, 700);
     this.spawnDistance = this.trailDistance = this.sequence = 0;
     this.trailConnected = false;
     this.terrainRow = 0;
@@ -182,11 +233,161 @@ export class SkiEngine {
   }
 
   get stage(): "descent" | "tracks" | "pursuit" {
-    return this.yeti
+    return this.yeti && this.yeti.attack.kind !== "standing"
       ? "pursuit"
-      : this.distance >= this.nextYeti - 380
+      : this.objects.some((object) => object.kind === "tracks")
         ? "tracks"
         : "descent";
+  }
+
+  private scheduleYeti(earliest: number, spread: number) {
+    this.nextYeti = earliest + this.random() * spread;
+    this.yetiSide = this.random() < 0.5 ? -1 : 1;
+    const clue = this.random();
+    this.yetiClue = clue < 0.33 ? "tracks" : clue < 0.67 ? "glimpse" : "step";
+    // A glimpse may have to wait through a full stretch of narrow rows.
+    const visualLead = this.yetiClue === "glimpse" ? 295 : 170;
+    this.yetiClueLead =
+      this.yetiClue === "step"
+        ? 35 + this.random() * 55
+        : visualLead + this.random() * (YETI_CLUE_MAX_LEAD - visualLead);
+    const attack = this.random();
+    if (attack < 0.35) this.yetiMode = "immediate";
+    else if (attack < 0.65) this.yetiMode = "delayed";
+    else if (attack < 0.85) this.yetiMode = "steady";
+    else this.yetiMode = "front";
+  }
+
+  private startYeti() {
+    this.glimpse = null;
+    this.yetiClue = null;
+    const rush = this.yetiMode === "immediate";
+    const enemy: SkiYeti = {
+      x: this.yetiSide < 0 ? 70 : this.width - 70,
+      y: YETI_ENTRY_Y,
+      age: 0,
+      strideAge: 0,
+      blinkAt: rush ? 0 : null,
+      attack: { kind: "pursuit" },
+    };
+    if (rush) {
+      enemy.attack = { kind: "sprint", until: YETI_SPRINT_DURATION };
+    } else if (this.yetiMode === "delayed") {
+      enemy.attack = {
+        kind: "waiting",
+        until: 0.8 + this.random() * 0.8 - YETI_WINDUP_DURATION,
+      };
+    }
+    this.yeti = enemy;
+    this.events.push({
+      type: "yeti-appear",
+      x: enemy.x,
+      y: enemy.y,
+      front: false,
+      rush,
+    });
+  }
+
+  private get frontYetiY() {
+    return (
+      this.player.y +
+      YETI_FRONT_LEAD +
+      (this.nextYeti - this.distance) / SKI_METERS_PER_PIXEL
+    );
+  }
+
+  private placeFrontYeti() {
+    const x = clamp(this.player.x, 45, this.width - 45);
+    const y = this.frontYetiY;
+    this.yeti = {
+      x,
+      y,
+      age: 0,
+      strideAge: 0,
+      blinkAt: null,
+      attack: { kind: "standing" },
+    };
+    const escapeSide = x < this.width / 2 ? 1 : -1;
+    this.addPine(x + escapeSide * 100, y + YETI_FRONT_PINE_OFFSET);
+  }
+
+  private moveYeti(enemy: SkiYeti, base: number) {
+    const dt = SKI_STEP;
+    if (enemy.attack.kind === "standing") {
+      enemy.y = this.frontYetiY;
+      if (this.distance < this.nextYeti) return;
+      this.glimpse = null;
+      this.yetiClue = null;
+      enemy.attack = { kind: "head-on" };
+      this.events.push({
+        type: "yeti-appear",
+        x: enemy.x,
+        y: enemy.y,
+        front: true,
+        rush: false,
+      });
+    }
+    const gapY = this.player.y - enemy.y;
+    if (enemy.attack.kind === "waiting" && enemy.age >= enemy.attack.until) {
+      const gapX = this.player.x - enemy.x;
+      if (gapY >= 74 && Math.hypot(gapX, gapY) <= 220) {
+        enemy.attack = {
+          kind: "windup",
+          until: enemy.age + YETI_WINDUP_DURATION,
+        };
+        this.events.push({ type: "yeti-windup" });
+      } else {
+        enemy.attack = { kind: "pursuit" };
+      }
+    } else if (
+      enemy.attack.kind === "windup" &&
+      enemy.age >= enemy.attack.until
+    ) {
+      enemy.attack = {
+        kind: "sprint",
+        until: enemy.age + YETI_SPRINT_DURATION,
+      };
+      enemy.blinkAt = enemy.age;
+    }
+
+    const attack = enemy.attack;
+    const age = enemy.age;
+    enemy.age += dt;
+    if (attack.kind === "head-on") {
+      // Hold the line through the crossing so the skier can commit to a dodge.
+      enemy.y -= (120 + this.velocity.y * 0.45) * dt;
+      enemy.strideAge += 1.8 * dt;
+      if (enemy.y <= this.player.y - 48)
+        enemy.attack = { kind: "turning", until: enemy.age + 0.65 };
+      return;
+    }
+    if (attack.kind === "turning") {
+      enemy.y -= (72 + this.velocity.y * 0.32) * dt;
+      enemy.strideAge += 0.6 * dt;
+      if (enemy.age >= attack.until) enemy.attack = { kind: "pursuit" };
+      return;
+    }
+
+    const sprinting = attack.kind === "sprint";
+    const fatigue =
+      attack.kind === "tired"
+        ? 1 - clamp((age - attack.since) / YETI_RECOVERY_DURATION, 0, 1)
+        : 0;
+    enemy.strideAge += (sprinting ? 1.8 : 1 - fatigue * 0.34) * dt;
+    const lateralStep = (sprinting ? 245 : 100 - fatigue * 32) * dt;
+    enemy.x += clamp(this.player.x - enemy.x, -lateralStep, lateralStep);
+    const pursuit = clamp((base * 0.9 - this.velocity.y) * 0.5, -22, 36);
+    // Preserve a reaction gap if the skier slowed during a delayed windup.
+    const closingSpeed = sprinting
+      ? Math.min(53 + pursuit * 0.15, Math.max(0, (gapY - 28) / dt))
+      : pursuit - fatigue * 24;
+    enemy.y = Math.min(this.player.y, enemy.y + closingSpeed * dt);
+    if (sprinting && enemy.age >= attack.until) {
+      enemy.attack = { kind: "tired", since: enemy.age };
+      this.events.push({ type: "yeti-tired" });
+    } else if (attack.kind === "tired" && fatigue === 0) {
+      enemy.attack = { kind: "pursuit" };
+    }
   }
 
   private get rowSpacing() {
@@ -257,16 +458,7 @@ export class SkiEngine {
     if (course.spawned === course.gates) course.lastGateY = y;
   }
 
-  private prepareGlimpse(y: number, gap: number, halfWidth: number) {
-    if (
-      this.glimpseEncounter === this.nextYeti ||
-      this.yeti ||
-      this.slalom ||
-      this.distance < this.normalUntil ||
-      this.distance < this.nextYeti - 220 ||
-      this.distance >= this.nextYeti - 110
-    )
-      return;
+  private showGlimpse(y: number, gap: number, halfWidth: number) {
     // Reuse a tree on the far side of a wide row. If necessary, turn the existing
     // obstacle into a pine or add one outside the corridor; the peek has no hitbox.
     const side = this.player.x < this.width / 2 ? 1 : -1;
@@ -280,21 +472,126 @@ export class SkiEngine {
       tree.kind = "pine";
       tree.x = clamp(tree.x, 48, this.width - 48);
     } else {
-      tree = {
-        id: ++this.sequence,
-        kind: "pine",
-        x: clamp(gap + side * (halfWidth + 20), 48, this.width - 48),
+      tree = this.addPine(
+        clamp(gap + side * (halfWidth + 20), 48, this.width - 48),
         y,
-        hit: false,
-      };
-      this.objects.push(tree);
+      );
     }
     this.glimpse = {
       treeId: tree.id,
       side: tree.x < this.width / 2 ? 1 : -1,
       age: 0,
     };
-    this.glimpseEncounter = this.nextYeti;
+  }
+
+  private addPine(x: number, y: number) {
+    const pine: SkiObject = {
+      id: ++this.sequence,
+      kind: "pine",
+      x,
+      y,
+      hit: false,
+    };
+    this.objects.push(pine);
+    return pine;
+  }
+
+  private prepareSceneGlimpse(
+    rowDistance: number,
+    y: number,
+    gap: number,
+    halfWidth: number,
+  ) {
+    const scene = this.yetiScene;
+    if (
+      !scene ||
+      scene.pending ||
+      scene.heard >= scene.beats.length ||
+      rowDistance < scene.beats[scene.heard]
+    )
+      return;
+
+    const crossing = scene.heard === 1;
+    const side = crossing ? -scene.side : scene.side;
+    const tree =
+      this.objects.find(
+        (object) =>
+          object.y === y &&
+          object.kind === "pine" &&
+          side * (object.x - gap) >= halfWidth,
+      ) ??
+      this.addPine(
+        clamp(gap + side * (halfWidth + 18), 36, this.width - 36),
+        y,
+      );
+    const exit = crossing
+      ? this.addPine(clamp(tree.x + side * 38, 36, this.width - 36), y + 62)
+      : null;
+    scene.pending = {
+      treeId: tree.id,
+      side: -side,
+      age: 0,
+      duration: crossing ? 0.43 : 0.28,
+      exitTreeId: exit?.id,
+    };
+  }
+
+  private advanceGlimpse(dt: number) {
+    const scene = this.yetiScene;
+    if (scene?.pending) {
+      const pending = scene.pending;
+      const tree = this.objects.find((object) => object.id === pending.treeId);
+      if (!tree) scene.pending = null;
+      else if (tree.y <= this.player.y + (scene.heard === 2 ? 62 : -6)) {
+        scene.pending = null;
+        const count = ++scene.heard;
+        if (count === 3) scene.revealAt = this.elapsed + YETI_EXPLANATION_DELAY;
+        else this.glimpse = pending;
+        this.events.push({ type: "yeti-crack", count, side: -pending.side });
+      }
+    }
+    if (
+      scene &&
+      scene.revealAt !== null &&
+      this.elapsed + 1e-6 >= scene.revealAt
+    ) {
+      scene.revealAt = null;
+      const targetY = this.player.y + 62;
+      // Pick the pine now so the reveal stays visible even at full downhill speed.
+      const tree = this.objects
+        .filter((object) => {
+          const distance =
+            this.distance + (object.y - this.player.y) * SKI_METERS_PER_PIXEL;
+          return (
+            object.kind === "pine" &&
+            object.y > 64 &&
+            object.y <= this.height &&
+            scene.side * (object.x - this.width / 2) > 0 &&
+            inYetiCorridor(distance, scene.beats[2])
+          );
+        })
+        .sort((a, b) => Math.abs(a.y - targetY) - Math.abs(b.y - targetY))[0];
+      if (tree)
+        this.glimpse = {
+          treeId: tree.id,
+          side: -scene.side,
+          age: 0,
+          duration: 0.72,
+        };
+      this.events.push({ type: "yeti-explanation" });
+    }
+    if (this.glimpse) {
+      const peek = this.glimpse;
+      const tree = this.objects.find((object) => object.id === peek.treeId);
+      if (tree && tree.y <= this.height) peek.age += dt;
+      if (
+        !tree ||
+        this.slalom ||
+        this.yeti ||
+        peek.age >= (peek.duration ?? SKI_YETI_GLIMPSE_DURATION)
+      )
+        this.glimpse = null;
+    }
   }
 
   private spawnRow(y: number, initialGap?: number) {
@@ -313,6 +610,13 @@ export class SkiEngine {
         resting = true;
       }
     }
+    const rowDistance =
+      this.distance + (y - this.player.y) * SKI_METERS_PER_PIXEL;
+    const finalBeat = this.yetiScene?.beats[2];
+    const corridor =
+      finalBeat !== undefined &&
+      !resting &&
+      inYetiCorridor(rowDistance, finalBeat);
     // Six-row phrases alternate open snow, suggested turns, tighter passes, and rest.
     // Limit corridor movement so consecutive rows always leave a reachable route.
     const section = resting
@@ -325,18 +629,28 @@ export class SkiEngine {
     const offset =
       section === 1 ? turnOffsets[sectionRow] : section === 2 ? -80 : 0;
     const target =
-      this.width / 2 + (this.laneDirection * offset * this.width) / SKI_WIDTH;
+      this.width / 2 +
+      (corridor ? 0 : (this.laneDirection * offset * this.width) / SKI_WIDTH);
     if (initialGap === undefined)
       this.laneCenter += clamp(target - this.laneCenter, -30, 30);
     const gap = initialGap ?? this.laneCenter;
-    const halfWidth = [120, 88, 70, 145][section];
+    const halfWidth = corridor ? 92 : [120, 88, 70, 145][section];
     // The last three tight rows extend one bank inward, opposite the corridor's turn.
     // Overlapping collision radii close the edge even when the other obstacle is skipped.
     const edgeBankSize =
       section === 2 && this.stage === "descent"
         ? Math.max(0, sectionRow - 2)
         : 0;
-    for (const side of [-1, 1]) {
+    // Reserve the stretch before it scrolls into view. The encounter places its own pine.
+    const frontCrossing =
+      this.yetiMode === "front" &&
+      rowDistance >= this.nextYeti - 10 &&
+      rowDistance <= this.nextYeti + 62;
+    for (const side of frontCrossing ? [] : [-1, 1]) {
+      if (corridor) {
+        this.addPine(gap + side * halfWidth, y);
+        continue;
+      }
       if (side === this.laneDirection && edgeBankSize > 0) {
         for (let i = 0; i < edgeBankSize; i++) {
           const inset = OBSTACLE_EDGE_INSET + i * EDGE_BANK_SPACING;
@@ -365,16 +679,42 @@ export class SkiEngine {
         hit: false,
       });
     }
-    if (initialGap === undefined && (section === 0 || section === 3))
-      this.prepareGlimpse(y, gap, halfWidth);
-    if (this.stage === "tracks") {
-      this.objects.push({
-        id: ++this.sequence,
-        kind: "tracks",
-        x: 100 + this.random() * (this.width - 200),
-        y: y + 32,
-        hit: false,
-      });
+    if (initialGap === undefined && !resting && !this.yeti)
+      this.prepareSceneGlimpse(rowDistance, y, gap, halfWidth);
+    const lead = this.nextYeti - this.distance;
+    if (
+      initialGap === undefined &&
+      !resting &&
+      !this.yeti &&
+      (finalBeat === undefined ||
+        this.distance >= finalBeat + YETI_CORRIDOR_TAIL) &&
+      this.distance >= this.normalUntil &&
+      lead <= this.yetiClueLead &&
+      lead >= YETI_VISUAL_CLUE_MIN_LEAD
+    ) {
+      if (this.yetiClue === "tracks") {
+        // Keep the clue beside the skier's route and inside the clear corridor.
+        const offset = this.random() < 0.5 ? -34 : 34;
+        const trackHalfWidth = halfWidth - 44;
+        this.objects.push({
+          id: ++this.sequence,
+          kind: "tracks",
+          x: clamp(
+            this.player.x + offset,
+            gap - trackHalfWidth,
+            gap + trackHalfWidth,
+          ),
+          y: y + 32,
+          hit: false,
+        });
+        this.yetiClue = null;
+      } else if (
+        this.yetiClue === "glimpse" &&
+        (section === 0 || section === 3)
+      ) {
+        this.showGlimpse(y, gap, halfWidth);
+        this.yetiClue = null;
+      }
     }
     if (initialGap === undefined && !resting && ++this.terrainRow % 24 === 0)
       this.laneDirection *= -1;
@@ -506,8 +846,23 @@ export class SkiEngine {
         this.slalom = null;
         this.nextSlalom = this.distance + SKI_SLALOM_INTERVAL;
         this.normalUntil = this.distance + SKI_NORMAL_INTERVAL;
-        // Footprints also wait until the full normal-terrain interval has passed.
-        this.nextYeti = Math.max(this.nextYeti, this.normalUntil + 380);
+        // Leave room for a clue after the full normal-terrain interval.
+        const earliestYeti = this.normalUntil + YETI_CLUE_MAX_LEAD;
+        if (this.nextYeti < earliestYeti)
+          this.nextYeti = earliestYeti + this.random() * 350;
+        if (!this.yetiScene && this.escapes === 0) {
+          this.yetiScene = {
+            beats: [
+              this.distance + 300 + this.random() * 80,
+              this.distance + 620 + this.random() * 70,
+              this.distance + 990 + this.random() * 40,
+            ],
+            side: this.random() < 0.5 ? -1 : 1,
+            heard: 0,
+            pending: null,
+            revealAt: null,
+          };
+        }
         this.recoveryRows = 3;
         this.events.push({
           type: "slalom-end",
@@ -521,20 +876,7 @@ export class SkiEngine {
       trail.age += dt;
     }
     this.objects = this.objects.filter((object) => object.y > -70);
-    if (this.glimpse) {
-      const tree = this.objects.find(
-        (object) => object.id === this.glimpse!.treeId,
-      );
-      // Start the brief peek only once its tree is fully inside the viewport.
-      if (tree && tree.y <= this.height) this.glimpse.age += dt;
-      if (
-        !tree ||
-        this.slalom ||
-        this.yeti ||
-        this.glimpse.age >= SKI_YETI_GLIMPSE_DURATION
-      )
-        this.glimpse = null;
-    }
+    this.advanceGlimpse(dt);
     this.trails = this.trails.filter(
       (trail) => trail.y > -10 && trail.age < SKI_TRAIL_LIFETIME,
     );
@@ -611,29 +953,32 @@ export class SkiEngine {
       }
     }
     if (
-      !this.yeti &&
+      (!this.yeti || this.yeti.attack.kind === "standing") &&
       !this.slalom &&
-      this.distance >= this.nextYeti &&
       this.distance >= this.normalUntil
     ) {
-      this.glimpse = null;
-      this.yeti = {
-        x: this.player.x < this.width / 2 ? this.width - 70 : 70,
-        y: 16,
-        age: 0,
-      };
-      this.events.push({ type: "yeti-appear", x: this.yeti.x, y: this.yeti.y });
+      const lead = this.nextYeti - this.distance;
+      if (
+        !this.yeti &&
+        this.yetiMode === "front" &&
+        this.frontYetiY <= this.height + YETI_FRONT_SPAWN_MARGIN
+      )
+        this.placeFrontYeti();
+      if (!this.yeti && lead <= 0) {
+        this.startYeti();
+      } else if (
+        lead > 0 &&
+        this.yetiClue &&
+        lead <= (this.yetiClue === "step" ? this.yetiClueLead : 45)
+      ) {
+        // A planned visual clue can miss its window if there is no suitable row.
+        this.yetiClue = null;
+        this.events.push({ type: "yeti-distant-step" });
+      }
     }
     if (this.yeti) {
       const enemy = this.yeti;
-      enemy.age += dt;
-      enemy.x += clamp(this.player.x - enemy.x, -100 * dt, 100 * dt);
-      // Relative motion makes downhill skiing visibly open a gap; turns and hits
-      // let the yeti close it. It waits alongside rather than overshooting laterally.
-      enemy.y = Math.min(
-        this.player.y,
-        enemy.y + clamp((base * 0.9 - this.velocity.y) * 0.5, -22, 36) * dt,
-      );
+      this.moveYeti(enemy, base);
       if (
         Math.abs(enemy.x - this.player.x) < 27 &&
         Math.abs(enemy.y - this.player.y) < 23
@@ -650,7 +995,7 @@ export class SkiEngine {
       ) {
         this.events.push({ type: "escape", x: enemy.x, y: enemy.y });
         this.escapes++;
-        this.nextYeti = this.distance + SKI_YETI_INTERVAL;
+        this.scheduleYeti(this.distance + 2200, 1000);
         this.normalUntil = this.distance + SKI_NORMAL_INTERVAL;
         this.yeti = null;
       }

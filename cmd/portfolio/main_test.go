@@ -8,7 +8,46 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"portfolio/internal/portfolio"
 )
+
+func TestArticleRoutesAcceptTrailingSlash(t *testing.T) {
+	documents := portfolio.Documents
+	portfolio.Documents = append(documents, portfolio.Document{
+		Slug: "article-route-test", Title: "Article route test", Kind: portfolio.DocumentArticle,
+		Content: portfolio.MarkdownDocument{Source: "Example article body."},
+	})
+	t.Cleanup(func() { portfolio.Documents = documents })
+
+	handler := newHandler("https://example.com")
+	path := "/article/article-route-test"
+	for _, test := range []struct {
+		path     string
+		status   int
+		location string
+	}{
+		{path, http.StatusOK, ""},
+		{path + "/", http.StatusPermanentRedirect, path},
+		{path + "/?ref=preview", http.StatusPermanentRedirect, path + "?ref=preview"},
+		{"/article/boas-vindas/", http.StatusNotFound, ""},
+		{path + "/nested", http.StatusNotFound, ""},
+	} {
+		t.Run(test.path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, test.path, nil))
+			if response.Code != test.status {
+				t.Fatalf("status = %d, want %d", response.Code, test.status)
+			}
+			if got := response.Header().Get("Location"); got != test.location {
+				t.Errorf("Location = %q, want %q", got, test.location)
+			}
+			if test.status == http.StatusOK && !strings.Contains(response.Body.String(), "Example article body.") {
+				t.Error("response does not contain the article body")
+			}
+		})
+	}
+}
 
 func TestSkiSpritesAreServedFromEmbeddedAssets(t *testing.T) {
 	handler := newHandler("https://example.com")

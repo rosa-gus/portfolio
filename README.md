@@ -73,19 +73,34 @@ Content is embedded, so rebuild the server or static site after editing it.
 ## Notes and articles
 
 `internal/portfolio/data/documents.json` defines Markdown documents. Their position
-and visibility on the home grid are controlled by `archive.json`. The initial note
-is `boas vindas`. Each entry has a
-unique `slug`, `title`, `kind` (`note` or `article`), and `content` pointing to
-`documents/<slug>.md`. Optional fields are `summary` and a publication `date`
-(`YYYY-MM-DD`). Notes can also set `updatedAt` in the same format for
-**Última edição** in the window's ficha.
+and visibility on the home grid are controlled by `archive.json`. Each catalog
+entry has a unique `slug`, `kind` (`note` or `article`), and `content` pointing
+to `documents/<slug>.md`.
 
-Notes open in a popup with the existing Markdown styles. Articles open at
-`/article/<slug>` with a reading layout and are included in the static export.
-No article is published in the initial catalog. Add an article by creating its
-Markdown file and catalog entry, then reference its slug with a `document` item
-in `archive.json` to display it on the home. The title is rendered by the page, so the
-Markdown should start with the body rather than a duplicate top-level heading.
+Notes open in a popup. Their `title` and optional `summary`, `date`, and
+`updatedAt` belong in the catalog. Dates use `YYYY-MM-DD`, and `updatedAt`
+appears as **Última edição** in the window's ficha. The initial note is `boas vindas`.
+
+Articles open at `/article/<slug>` and are included in the static export. Start
+the Markdown file with YAML front matter, then write the body.
+
+```markdown
+---
+title: "Um artigo do portfólio"
+author: "Rosa Gus"
+date: 2026-11-18
+summary: "Uma breve descrição do artigo."
+---
+
+Primeiro parágrafo do artigo.
+```
+
+`title` is required. `author`, `date`, and `summary` are optional. When `author`
+is omitted, the page uses the portfolio profile's display name. Reading time
+is calculated from the body. The page renders the title from the front matter.
+Add the article's `slug`, `kind`, and `content` to the catalog and reference its
+slug with a `document` item in `archive.json` to display it on the home. Older
+articles without front matter can still use their existing catalog metadata.
 
 The archive preserves item positions and reading context in session storage
 when navigating to an article. `[REORGANIZAR]` restores the original grid.
@@ -102,6 +117,11 @@ or to select a project's consultation card on load. For example,
 welcome note. Opening an app or note sets `open` in the current URL and
 closing it removes the parameter. Opening a collection or selecting a project
 leaves the URL as it is. Articles and full case studies have their own URLs.
+
+On an article or case study, use the app slug in `?open=<app>`, for example
+`/portfolio/article/por-que-revisitei-o-ski?open=ski`. A Markdown link such as
+`[Jogar Ski](?open=ski)` opens the app over the current page. The available apps
+are those enabled in the home archive.
 
 - **Add:** append an entry referencing existing content, or create a link.
 - **Reorder:** move entries within `items`.

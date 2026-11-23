@@ -21,6 +21,7 @@ const withAudioMock = async run => {
     resume() { return Promise.resolve(); }
     decodeAudioData(bytes) { return Promise.resolve(new TextDecoder().decode(bytes)); }
     createGain() { return { ...node(), gain: parameter() }; }
+    createStereoPanner() { return { ...node(), pan: parameter() }; }
     createBiquadFilter() {
       const filter = { ...node(), frequency: parameter(), Q: parameter() };
       filters.push(filter);
@@ -41,6 +42,28 @@ const withAudioMock = async run => {
     globalThis.fetch = originalFetch;
   }
 };
+
+test("the three cracks share the branch and distant step, with snow on the third", () =>
+  withAudioMock(async ({ audio, sources, filters, flush }) => {
+    audio.unlock();
+    await flush();
+    for (const [count, side] of [[1, -1], [2, 1], [3, -1]]) {
+      const from = sources.length;
+      audio.events([{ type: "yeti-crack", count, side }]);
+      await flush();
+      const [crack, step, snow] = sources.slice(from);
+      assert.ok(crack.buffer.endsWith("/yeti-crack.wav"));
+      assert.deepEqual(crack.startArgs, [0, 1.74, 0.36]);
+      assert.ok(step.buffer.endsWith("/yeti-step.ogg"));
+      assert.deepEqual(step.startArgs, [0.12, 0, 0.17]);
+      assert.equal(Math.sign(step.output.output.pan.value), side);
+      if (count === 3) {
+        assert.ok(snow.buffer.endsWith("/ski-slide-loop.wav"));
+        assert.equal(snow.startArgs[0], 0.2);
+      } else assert.equal(snow, undefined);
+    }
+    assert.deepEqual(filters.map(filter => [filter.type, filter.frequency.value]), [["lowpass", 1600]]);
+  }));
 
 test("sliding stays quiet, follows speed, ducks for cues, and cancels pending starts", () =>
   withAudioMock(async ({ audio, sources, filters, flush }) => {
@@ -66,6 +89,14 @@ test("sliding stays quiet, follows speed, ducks for cues, and cancels pending st
     assert.equal(filters[0].type, "highpass");
     assert.equal(filters[1].type, "lowpass");
     const fast = gain.gain.target;
+    const beforeDistantStep = sources.length;
+    audio.events([{ type: "yeti-distant-step" }]);
+    await flush();
+    assert.equal(sources.length, beforeDistantStep + 1);
+    assert.ok(sources.at(-1).buffer.endsWith("/yeti-step.ogg"));
+    assert.ok(sources.at(-1).playbackRate.value < 1);
+    audio.update(game, 1);
+    assert.equal(gain.gain.target, fast);
     audio.events([{ type: "collision", kind: "pine" }]);
     audio.update(game, 1);
     assert.ok(gain.gain.target < fast / 2);
@@ -129,7 +160,12 @@ test("visible tracks and the glimpse soften the snow, then escape restores the n
 
     game.glimpse = null;
     game.stage = "pursuit";
-    game.yeti = { x: 320, y: 60, age: 0.1 };
+    game.yeti = { x: 320, y: 260, age: 0, strideAge: 0, attack: { kind: "standing" } };
+    game.stage = "descent";
+    audio.update(game, 0);
+    assert.equal(gain.target, normal);
+    game.stage = "pursuit";
+    game.yeti = { x: 320, y: 60, age: 0.1, strideAge: 0.1, attack: { kind: "pursuit" } };
     audio.update(game, 0);
     const pursuitEasing = gain.easing;
     assert.ok(gain.target < normal);
@@ -145,13 +181,39 @@ test("visible tracks and the glimpse soften the snow, then escape restores the n
     assert.equal(gain.easing, normalEasing);
   }));
 
+test("the appearance lands a heavy step and fatigue plays the breathing recording", () =>
+  withAudioMock(async ({ audio, sources, flush }) => {
+    audio.unlock();
+    await flush();
+    audio.events([{ type: "yeti-appear", x: 70, y: 66, front: false, rush: true }]);
+    await flush();
+    const [appearance, step] = sources;
+    assert.ok(appearance.buffer.endsWith("/yeti-appear.ogg"));
+    assert.ok(step.buffer.endsWith("/yeti-step.ogg"));
+    assert.ok(step.playbackRate.value < 1);
+    audio.events([{ type: "yeti-appear", x: 70, y: 66, front: false, rush: false }]);
+    await flush();
+    assert.equal(sources.length, 3);
+    assert.ok(sources.at(-1).buffer.endsWith("/yeti-appear.ogg"));
+    audio.events([{ type: "yeti-windup" }]);
+    await flush();
+    assert.ok(sources.at(-1).buffer.endsWith("/yeti-step.ogg"));
+    audio.events([{ type: "yeti-tired" }]);
+    await flush();
+    const breath = sources.at(-1);
+    assert.ok(breath.buffer.endsWith("/yeti-breath.wav"));
+    assert.deepEqual(breath.startArgs, []);
+    audio.stop();
+    assert.equal(breath.stopped, true);
+  }));
+
 test("pursuit footsteps share the irregular gait and get louder as the gap closes", () =>
   withAudioMock(async ({ audio, sources, flush }) => {
-    const yeti = { x: 0, y: 142, age: 0.20 };
+    const yeti = { x: 0, y: 142, age: 0.1, strideAge: 0.20, attack: { kind: "pursuit" } };
     const game = { phase: "running", stage: "pursuit", speed: 360, elapsed: 10,
       yeti, player: { x: 320, y: 142 } };
     const footsteps = () => sources.filter(source => source.buffer?.endsWith("/yeti-step.ogg"));
-    const advanceTo = async age => { yeti.age = age; audio.update(game, 0); await flush(); };
+    const advanceTo = async age => { yeti.strideAge = age; audio.update(game, 0); await flush(); };
     audio.unlock();
     await flush();
     await advanceTo(0.20);

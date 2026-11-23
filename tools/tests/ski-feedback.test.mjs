@@ -31,6 +31,29 @@ test("slalom entry and exit use the existing floating feedback", () => {
   assert.equal(feedback.captions[0].text, "pista aberta.");
 });
 
+test("the third crack starts the first line and leaves space for the second", () => {
+  const game = new SkiEngine(() => 0.5);
+  game.start();
+  const feedback = new SkiFeedback();
+  for (const count of [1, 2, 3]) {
+    feedback.step(game, 0, 2, [{ type: "yeti-crack", count, side: 1 }]);
+    assert.equal(feedback.captions.length, 1);
+    const [caption] = feedback.captions;
+    assert.equal(caption.text, count === 3 ? "“terceira vez que ouço isso.”" : "[estalo ao longe]");
+    assert.equal(caption.fixed, true);
+    if (count === 3) assert.equal(caption.y, game.player.y - 78);
+  }
+  const [firstLine] = feedback.captions;
+  assert.equal(firstLine.life, 0.9);
+  feedback.step(game, 0, 0.9, []);
+  assert.deepEqual(feedback.captions, []);
+  feedback.step(game, 0, 0.4, [{ type: "yeti-explanation" }]);
+  const [secondLine] = feedback.captions;
+  assert.equal(secondLine.text, "“Deve ser um criossismo.”");
+  assert.equal(secondLine.life, 1.8);
+  assert.equal(secondLine.y, firstLine.y);
+});
+
 test("a fall sends a low spray to the side and leaves a short snow trail", () => {
   for (const side of ["left", "right"]) {
     const game = new SkiEngine(() => 0.5);

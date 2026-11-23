@@ -9,6 +9,9 @@ const SHOULDER_ROW = 10;
 const JAW_ROW = 16;
 const HIP_ROW = 26;
 
+export const yetiBlinkOpacity = (age: number) =>
+  0.36 * Math.max(0, Math.min(age / 0.04, (0.17 - age) / 0.13));
+
 export const yetiStride = (age: number) => {
   const stride = Math.floor(age / STRIDE_DURATION);
   const beat = age - stride * STRIDE_DURATION;

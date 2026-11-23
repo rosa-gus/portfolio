@@ -85,67 +85,57 @@
   font-size: inherit;
 }
 
-.article-page {
-  width: min(100%, 60rem);
+.article-page__back:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.article-page__content {
+  padding: clamp(2.5rem, 6vw, 6rem) var(--page-gutter) 4rem;
+}
+
+.article-page__column {
+  width: min(100%, 36rem);
   margin-inline: auto;
-  padding: 1.25rem var(--page-gutter) 3rem;
-}
-
-.article-page__navigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-
-.article-page__sheet {
-  padding: clamp(1.25rem, 4vw, 3rem);
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-surface-raised);
-}
-
-.article-page__heading,
-.article-page__sheet > .document-prose {
-  width: min(100%, 65ch);
-  margin-inline: auto;
+  font-size: clamp(1rem, 1.2vw, 1.0625rem);
+  line-height: 1.65;
 }
 
 .article-page__heading {
   display: grid;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
+  gap: 0.75rem;
+  margin-bottom: clamp(1.25rem, 2.5vw, 1.5rem);
 }
 
 .article-page__heading h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 440;
-  letter-spacing: -0.035em;
-  line-height: 1.08;
+  font: 400 clamp(1.625rem, 2.4vw, 1.75rem) / 1.25 var(--font-serif);
+  overflow-wrap: anywhere;
 }
 
 .article-page__metadata {
-  display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6em;
   color: var(--color-text-muted);
 }
 
-.article-page__metadata .inline-divider {
+.article-page__metadata,
+.article-page__metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.article-page__metadata-item .inline-divider {
   flex: 0 0 4px;
   margin-inline: 0;
 }
 
 .article-page__summary {
-  font-family: var(--font-serif);
-  font-size: clamp(1.25rem, 2vw, 1.65rem);
-  line-height: 1.4;
+  font-size: 1.125rem;
 }
 
-@media (max-width: 620px) {
-  .article-page__navigation {
-    align-items: start;
-    font-size: 0.6rem;
-  }
+.article-page__column .document-prose {
+  max-width: 100%;
+  gap: 1.2em;
+  font-size: inherit;
+  line-height: inherit;
 }

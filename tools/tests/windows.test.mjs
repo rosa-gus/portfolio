@@ -7,7 +7,7 @@ import test from "node:test";
 const source = stripTypeScriptTypes(readFileSync(new URL("../../web/scripts/windows.ts", import.meta.url), "utf8")
   .replace(/^import .*;\n/gm, "").replace("export const initializeWindows", "globalThis.initializeWindows"));
 
-const scene = ({ hasRecord = false } = {}) => {
+const scene = ({ hasRecord = false, href = "https://example.com/" } = {}) => {
   let focused = null, id = 0, beforeOpen = 0, opens = 0, closings = 0, help = false;
   const frames = new Map(), timers = new Map();
   class Element extends EventTarget {
@@ -21,8 +21,13 @@ const scene = ({ hasRecord = false } = {}) => {
       super();
       this.style.removeProperty = key => { delete this.style[key]; };
     }
-    closest(selector) { return selector === "[data-window-trigger]" && this.dataset.windowTrigger ? this : null; }
+    closest(selector) {
+      if (selector === "[data-window-trigger]" && this.dataset.windowTrigger) return this;
+      if (selector === 'a[href^="?open="]' && this.search?.startsWith("?open=")) return this;
+      return null;
+    }
     focus() { focused = this; }
+    hasAttribute(name) { return this.attributes.has(name); }
     setAttribute(name, value) { this.attributes.set(name, value); }
     removeAttribute(name) { this.attributes.delete(name); }
     hasPointerCapture(n) { return this.captures.has(n); }
@@ -44,7 +49,7 @@ const scene = ({ hasRecord = false } = {}) => {
   class Dialog extends Element {
     id = "ski-game"; open = false; inert = false;
     offsetWidth = 300; offsetHeight = 240;
-    dataset = { windowDecoration: "tab" };
+    dataset = { windowDecoration: "tab", popup: "ski" };
     showModal() { this.open = true; }
     close() { this.open = false; this.dispatchEvent(new Event("close")); }
     querySelector(selector) {
@@ -55,8 +60,9 @@ const scene = ({ hasRecord = false } = {}) => {
     }
     getBoundingClientRect() { return { left: 100, top: 60, right: 400, bottom: 300 }; }
   }
-  const dialog = new Dialog(), trigger = new Element();
+  const dialog = new Dialog(), trigger = new Element(), link = new Element();
   trigger.dataset.windowTrigger = dialog.id;
+  link.search = "?open=ski";
   dialog.addEventListener("popup:open", () => { opens++; });
   dialog.addEventListener("popup:closing", () => { closings++; });
   const document = Object.assign(new EventTarget(), {
@@ -71,8 +77,10 @@ const scene = ({ hasRecord = false } = {}) => {
     cancelAnimationFrame: n => frames.delete(n),
     setTimeout: callback => { const n = ++id; timers.set(n, callback); return n; },
     clearTimeout: n => timers.delete(n),
+    location: { href },
+    history: { state: {}, replaceState(_state, _title, url) { window.location.href = url.href; } },
   });
-  const scope = { document, window, Event, Element,
+  const scope = { document, window, Event, Element, URL, URLSearchParams,
     initializeWindowLayout() {}, fitWindowMedia() {},
     dismissWindowHelp() { if (!help) return false; help = false; return true; },
   };
@@ -85,7 +93,7 @@ const scene = ({ hasRecord = false } = {}) => {
     return event;
   };
   const flush = map => { for (const [n, callback] of [...map]) { map.delete(n); callback(); } };
-  return { dialog, trigger, handle, closeButton, window, preference, controller, emit,
+  return { dialog, trigger, handle, closeButton, window, preference, controller, emit, document, link,
     toggle, record, recordClose, recordHandle, desktop,
     open() { emit(document, "click", { target: trigger }); flush(frames); },
     finishClose() { flush(timers); flush(timers); },
@@ -93,6 +101,38 @@ const scene = ({ hasRecord = false } = {}) => {
     setHelp: value => { help = value; },
   };
 };
+
+test("an app deep link opens without an archive trigger and closing only removes open", () => {
+  const s = scene({ href: "https://example.com/article/ski?open=ski&ref=archive#body" });
+  assert.equal(s.controller.openApp("unknown"), false);
+  assert.equal(s.dialog.open, false);
+  assert.equal(s.controller.openApp("ski"), true);
+  assert.equal(s.dialog.open, true);
+  s.controller.close(false, true);
+  assert.equal(s.dialog.open, false);
+  assert.equal(s.window.location.href, "https://example.com/article/ski?ref=archive#body");
+});
+
+test("a query-only app link opens in place and returns focus to the link", () => {
+  const s = scene({ href: "https://example.com/case/project?ref=archive#body" });
+  assert.equal(s.emit(s.document, "click", { target: s.link, button: 0, ctrlKey: true }).defaultPrevented, false);
+  assert.equal(s.dialog.open, false);
+  assert.equal(s.emit(s.document, "click", { target: s.link, button: 0 }).defaultPrevented, true);
+  assert.equal(s.dialog.open, true);
+  assert.equal(s.window.location.href, "https://example.com/case/project?ref=archive&open=ski#body");
+  s.controller.close(true, true);
+  assert.equal(s.focused(), s.link);
+});
+
+test("the home trigger keeps its archive ID in the URL", () => {
+  const s = scene();
+  s.trigger.dataset.archiveId = "ski-custom-id";
+  s.trigger.dataset.popupTrigger = "ski";
+  s.open();
+  assert.equal(s.window.location.href, "https://example.com/?open=ski-custom-id");
+  s.controller.close(false, true);
+  assert.equal(s.window.location.href, "https://example.com/");
+});
 
 test("shared modal lifecycle opens from its ID and restores trigger focus on close", () => {
   const s = scene(); s.open();

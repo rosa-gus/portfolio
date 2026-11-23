@@ -13,7 +13,7 @@ import {
 } from "./ski-feedback";
 import { drawSkierPose, prepareSkierPose, type SkiPose } from "./ski-skier";
 import { drawSkiTerrain } from "./ski-terrain";
-import { drawYetiRun } from "./ski-yeti";
+import { drawYetiRun, yetiBlinkOpacity } from "./ski-yeti";
 
 const glidingNames = [
   "skier-front",
@@ -255,29 +255,43 @@ export const drawSki = (
   const scene: { y: number; render: () => void }[] = game.objects.map(
     (object) => ({
       y: object.y,
-      render: () => draw(object.kind, object.x, object.y),
+      render: () => {
+        if (object.kind === "tracks") context.globalAlpha = 0.85;
+        draw(object.kind, object.x, object.y);
+        if (object.kind === "tracks") context.globalAlpha = 1;
+      },
     }),
   );
   if (game.glimpse) {
     const peek = game.glimpse;
     const tree = game.objects.find((object) => object.id === peek.treeId);
-    if (tree)
+    if (tree) {
+      const exit =
+        reducedMotion || peek.exitTreeId === undefined
+          ? undefined
+          : game.objects.find((object) => object.id === peek.exitTreeId);
+      const duration = peek.duration ?? SKI_YETI_GLIMPSE_DURATION;
+      const progress = exit ? Math.min(1, peek.age / duration) : 0;
+      const startX = tree.x + peek.side * 19;
+      const x = exit ? startX + (exit.x - startX) * progress : startX;
+      const y = exit ? tree.y + (exit.y - tree.y) * progress : tree.y;
       scene.push({
-        y: tree.y - 0.1,
+        y: y - 0.1,
         render: () => {
-          // Draw before the anchor tree so its branches conceal part of the face.
+          // Each anchor tree can conceal the glimpse as it starts or ends.
           context.globalAlpha = Math.max(
             0,
             Math.min(
               1,
-              peek.age / 0.12,
-              (SKI_YETI_GLIMPSE_DURATION - peek.age) / 0.18,
+              peek.age / Math.min(0.12, duration / 4),
+              (duration - peek.age) / Math.min(0.18, duration / 3),
             ),
           );
-          draw("yeti-glimpse", tree.x + peek.side * 19, tree.y - 3);
+          draw("yeti-glimpse", x, y - 3);
           context.globalAlpha = 1;
         },
       });
+    }
   }
   scene.push({
     y: game.player.y,
@@ -348,14 +362,15 @@ export const drawSki = (
           ? game.player.y + 1
           : y,
       render: () => {
-        if (captured || reducedMotion) draw("yeti-idle", x, y);
+        if (captured || reducedMotion || enemy.attack.kind === "standing")
+          draw("yeti-idle", x, y);
         else
           drawYetiRun(
             context,
             images,
             x,
             y,
-            enemy.age + (ending ? feedback.endAge : 0),
+            enemy.strideAge + (ending ? feedback.endAge : 0),
             direction,
           );
       },
@@ -386,16 +401,30 @@ export const drawSki = (
     }
     context.globalAlpha = 1;
   }
+  if (!reducedMotion && !ending && game.yeti && game.yeti.blinkAt !== null) {
+    const blink = yetiBlinkOpacity(game.yeti.age - game.yeti.blinkAt);
+    if (blink > 0) {
+      context.fillStyle = "#000";
+      context.globalAlpha = blink;
+      context.fillRect(0, 0, game.width, game.height);
+      context.globalAlpha = 1;
+    }
+  }
   context.font = `500 13px ${style.getPropertyValue("--font-mono").trim() || "monospace"}`;
   context.textAlign = "center";
   context.textBaseline = "middle";
   const drawCaption = (text: string, x: number, y: number, opacity: number) => {
     context.globalAlpha = opacity;
+    const width = Math.ceil(context.measureText(text).width) + 16;
+    context.fillStyle = style.backgroundColor;
+    context.fillRect(Math.round(x - width / 2), y - 10, width, 20);
     context.fillStyle = style.getPropertyValue("--color-text-primary").trim();
     context.fillText(text, Math.round(x), y);
   };
   for (const caption of feedback.captions) {
-    const y = Math.round(caption.y - (reducedMotion ? 0 : caption.age * 16));
+    const y = Math.round(
+      caption.y - (reducedMotion || caption.fixed ? 0 : caption.age * 16),
+    );
     drawCaption(
       caption.text,
       caption.x,

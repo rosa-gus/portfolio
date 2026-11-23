@@ -311,4 +311,6 @@ if (initialArchiveItem) {
       initialArchiveItem.click();
     }
   });
+} else if (archiveOpenID && !document.querySelector(".site-shell")) {
+  windows.openApp(archiveOpenID);
 }
