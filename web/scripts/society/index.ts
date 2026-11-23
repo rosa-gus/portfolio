@@ -323,4 +323,5 @@ export const initializeSociety = () => {
     { signal },
   );
   if (!document.hidden) frame = requestAnimationFrame(tick);
+  return cleanup;
 };

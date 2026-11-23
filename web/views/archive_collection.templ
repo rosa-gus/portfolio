@@ -1,26 +1,17 @@
 package views
 
-import "portfolio/internal/portfolio"
+import (
+ "portfolio/internal/portfolio"
+)
 
 templ ProjectArchiveFloating(folders []portfolio.ArchiveFolder, basePath string) {
-	<section
-		class="project-archive__floating"
-		id="project-archive-floating"
-		data-archive-floating
-		role="region"
-		aria-label="Coleção aberta"
-		hidden
-	>
-		<div class="project-archive__floating-head">
-			<span class="project-archive__floating-divider" aria-hidden="true">
-				<span
-					data-archive-divider-title
-				></span>
-			</span>
-			<span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
-			<button type="button" data-archive-close aria-label="Fechar pasta">[FECHAR]</button>
-		</div>
-		<div class="project-archive__floating-sheet" data-archive-sheet>
+    @Window(WindowOptions{
+        ID: "project-archive-floating", Title: "Coleção", Class: "project-archive__floating",
+        Inline: true, Width: "100%", Height: "24rem", Decoration: "tab",
+        Attributes: templ.Attributes{"data-archive-floating": true, "role": "region", "aria-label": "Coleção aberta", "hidden": true},
+        TitleAttributes: templ.Attributes{"data-archive-divider-title": true},
+        CloseAttributes: templ.Attributes{"data-archive-close": true, "aria-label": "Fechar pasta"},
+    }, WindowSlots{Information: archiveWindowInformation(), Commands: archiveWindowCommands()}) {
 			for _, folder := range folders {
 				<div
 					class="scroll-area project-archive__floating-files"
@@ -87,13 +78,19 @@ templ ProjectArchiveFloating(folders []portfolio.ArchiveFolder, basePath string)
 					</div>
 				</div>
 			}
-			<div class="project-archive__floating-navigation" aria-label="Navegação das fichas">
-				<span data-archive-files-position></span>
-				<div>
-					<button type="button" data-archive-files-prev aria-label="Ficha anterior">[ANTERIOR]</button>
-					<button type="button" data-archive-files-next aria-label="Próxima ficha">[PRÓXIMA]</button>
-				</div>
-			</div>
-		</div>
-	</section>
+    }
+}
+
+templ archiveWindowInformation() {
+    <span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
+}
+
+templ archiveWindowCommands() {
+    <div class="project-archive__floating-navigation" aria-label="Navegação das fichas">
+        <span data-archive-files-position></span>
+        <div>
+            <button type="button" data-archive-files-prev aria-label="Ficha anterior">[ANTERIOR]</button>
+            <button type="button" data-archive-files-next aria-label="Próxima ficha">[PRÓXIMA]</button>
+        </div>
+    </div>
 }

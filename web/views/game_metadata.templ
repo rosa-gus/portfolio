@@ -1,0 +1,37 @@
+package views
+
+import (
+	"strings"
+	"portfolio/internal/portfolio"
+)
+
+templ GameMetadata(title string, description string) {
+	<div class="game-metadata">
+		<h2 class="game-metadata__title">{ title }</h2>
+		<p class="game-metadata__description">
+			for index, line := range strings.Split(description, "\n") {
+				if index > 0 {
+					<br/>
+				}
+				{ line }
+			}
+		</p>
+		{ children... }
+	</div>
+}
+
+templ GameCredits(credits []portfolio.MetadataEntry) {
+	if len(credits) > 0 {
+		<dl class="game-credits">
+			for _, credit := range credits {
+				<div>
+					<dt>{ credit.Label }</dt>
+					<dd>
+						<span class="game-credits__leader" data-credit-leader aria-hidden="true">.</span>
+						<span>{ credit.Value }</span>
+					</dd>
+				</div>
+			}
+		</dl>
+	}
+}

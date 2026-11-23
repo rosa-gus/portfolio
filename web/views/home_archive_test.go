@@ -149,3 +149,33 @@ func TestArchiveRelatedProjectUsesExistingTextArrowAndDestinationTitle(t *testin
 		t.Fatal("only the first relation should occupy the footer")
 	}
 }
+
+func TestHomeArchiveRendersSkiWithBasePathAndIndependentAppTriggers(t *testing.T) {
+	for _, visible := range []bool{true, false} {
+		archive, err := portfolio.ResolveArchive(portfolio.ArchiveCatalog{
+			Items: []portfolio.ArchiveItemConfig{
+				{ID: "snake", Type: portfolio.ArchiveApp, Ref: "snake"},
+				{ID: "ski-custom-id", Type: portfolio.ArchiveApp, Ref: "ski", Visible: &visible},
+			},
+		}, nil, nil, portfolio.ContactDetails{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var output bytes.Buffer
+		if err := Home(portfolio.ProfileContent{}, nil, archive, "/portfolio", "https://example.com/portfolio").Render(context.Background(), &output); err != nil {
+			t.Fatal(err)
+		}
+		html := output.String()
+		assertContains(t, html, `data-popup-trigger="snake"`)
+		assertContains(t, html, `id="snake-game"`)
+		if visible {
+			assertContains(t, html, `data-archive-id="ski-custom-id" data-popup-trigger="ski"`)
+			assertContains(t, html, `aria-controls="ski-game"`)
+			assertContains(t, html, `data-ski-assets="/portfolio/ski/sprites"`)
+			assertContains(t, html, `width="640" height="360"`)
+		} else {
+			assertNotContains(t, html, `id="ski-game"`)
+			assertNotContains(t, html, `data-popup-trigger="ski"`)
+		}
+	}
+}

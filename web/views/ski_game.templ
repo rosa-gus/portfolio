@@ -1,0 +1,80 @@
+package views
+
+import (
+	"fmt"
+	"portfolio/internal/portfolio"
+)
+
+const skiCaptureMessage = "Alguém alcançou você."
+
+templ SkiGame(basePath string, repository string) {
+	{{ app := portfolio.AppBySlug("ski") }}
+	@Window(WindowOptions{
+		ID: "ski-game", Title: "ski.ts", Class: "ski-game", Width: "48rem", Decoration: "tab",
+		Attributes: templ.Attributes{"data-popup": "ski", "data-ski-assets": string(siteURL(basePath, "/ski/sprites"))},
+	}, WindowSlots{Information: skiInformation(), Commands: skiCommands(), Help: skiHelp(), Tips: skiTips(), Record: appRecord(app, repository)}) {
+		<div class="window__media ski-game__board" data-window-media data-ski-board style="--window-aspect:16 / 9;">
+			<canvas width="640" height="360" tabindex="0" data-ski-canvas aria-label="Pista de esqui. Arraste para virar e toque para descer. No teclado, esquerda e direita orientam os esquis, baixo aponta para a descida e espaço pausa." role="img"></canvas>
+			<div class="window__message game-message ski-game__message" data-ski-message role="status">
+				<div class="ski-game__message-content">
+					<section data-ski-intro aria-label="Sobre o jogo" hidden>
+						@GameMetadata("SKI", "esquie entre obstáculos.\ncuidado com a companhia.") {
+							@GameCredits(app.Credits)
+						}
+						<p class="ski-game__touch-instructions" data-ski-touch-instructions hidden>Arraste para virar. Toque para descer.</p>
+					</section>
+					<p data-ski-message-text data-window-feature-status>Uma pista pela frente.</p>
+					<p data-ski-game-over hidden>
+						<span class="visually-hidden">{ skiCaptureMessage }</span>
+						<span aria-hidden="true">
+							for index, letter := range []rune(skiCaptureMessage) {
+								<span class="ski-game__wave-letter" style={ fmt.Sprintf("--wave-delay: %dms;", index*45) }>{ string(letter) }</span>
+							}
+						</span>
+					</p>
+					<div class="ski-game__results" data-ski-results hidden>
+						<p class="ski-game__result-score"><strong data-ski-result-score>0</strong> pontos</p>
+						<dl class="ski-game__result-metrics">
+							<div><dt>Distância</dt><dd data-ski-result-distance>0 m</dd></div>
+							<div><dt>Por pouco</dt><dd data-ski-result-near-misses>0</dd></div>
+							<div class="ski-game__result-record" data-ski-result-record><dt data-ski-result-record-label>Melhor pontuação</dt><dd data-ski-result-best>0</dd></div>
+						</dl>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ skiInformation() {
+	<span>PONTOS <strong data-ski-score>0000</strong></span>
+	<div class="ski-game__distance-group">
+		<span>DISTÂNCIA <strong data-ski-distance>0000 m</strong></span>
+		<span class="ski-game__best">MELHOR <strong data-ski-best>0000 m</strong></span>
+	</div>
+}
+
+templ skiCommands() {
+	<button type="button" data-ski-toggle disabled>[INICIAR]</button><button type="button" data-ski-restart hidden>[REINICIAR]</button><button type="button" data-ski-sound aria-label="Silenciar o jogo" aria-pressed="false">[SOM LIGADO]</button>
+}
+
+templ skiHelp() {
+	<p><kbd>@ArrowGlyph("left") @ArrowGlyph("right")<span>/ A D</span></kbd><span>Orientar os esquis</span></p>
+	<p><kbd>@ArrowGlyph("down")<span>/ S</span></kbd><span>Apontar para baixo</span></p>
+	<p><kbd>ESPAÇO</kbd><span>Pausar a descida</span></p>
+	<p>Por toque, arraste para os lados na pista. Ao soltar, a direção é mantida. Um toque curto aponta os esquis para baixo.</p>
+	<p>Com o mouse, arraste na pista para escolher a direção.</p>
+}
+
+templ skiTips() {
+	<p>Ganhe 10 pontos a cada 10 metros. Passe rente a árvores e pedras, sem bater e mantendo a velocidade de descida, para ganhar +50 por pouco.</p>
+	<p>
+		<span>
+			{ "Se bater, dê um toque curto na pista ou use " }
+			@ArrowGlyph("down")
+			<span class="visually-hidden">seta para baixo</span>
+			{ " ou S para recuperar o equilíbrio." }
+		</span>
+	</p>
+	<p>No slalom, antecipe as curvas e alterne entre as aberturas da pista. Os trechos ficam mais exigentes conforme a descida avança.</p>
+}

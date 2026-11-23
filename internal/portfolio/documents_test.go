@@ -72,6 +72,45 @@ func TestDocumentsRejectInvalidCatalogEntries(t *testing.T) {
 	}
 }
 
+func TestArticleFrontMatter(t *testing.T) {
+	document := Document{Slug: "artigo", Kind: DocumentArticle, Content: MarkdownDocument{Path: "documents/artigo.md"}}
+	files := documentFiles(t, []Document{document})
+	body := strings.Repeat("palavra ", 200) + "\r\n"
+	files["data/documents/artigo.md"].Data = []byte("\uFEFF---\r\ntitle: 'Artigo: uma releitura'\r\nauthor: Rosa Gus\r\ndate: 2026-11-18\r\nsummary: Uma breve descrição.\r\n---\r\n" + body)
+
+	documents, err := loadDocuments(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := documents[0]
+	if got.Title != "Artigo: uma releitura" || got.Author != "Rosa Gus" || got.Date != "2026-11-18" || got.Summary != "Uma breve descrição." {
+		t.Fatalf("unexpected front matter: %+v", got)
+	}
+	if got.Content.Source != body || got.ReadingMinutes() != 1 {
+		t.Fatalf("front matter affected the body or reading time: %q", got.Content.Source)
+	}
+}
+
+func TestArticleRejectsInvalidFrontMatter(t *testing.T) {
+	document := Document{Slug: "artigo", Kind: DocumentArticle, Content: MarkdownDocument{Path: "documents/artigo.md"}}
+	for _, test := range []struct{ name, source string }{
+		{"missing", "Texto."},
+		{"unclosed", "---\ntitle: Artigo\nTexto."},
+		{"unknown field", "---\ntitle: Artigo\nauthorr: Rosa Gus\n---\nTexto."},
+		{"missing title", "---\nauthor: Rosa Gus\n---\nTexto."},
+		{"invalid date", "---\ntitle: Artigo\ndate: 2026-02-31\n---\nTexto."},
+		{"empty body", "---\ntitle: Artigo\n---\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			files := documentFiles(t, []Document{document})
+			files["data/documents/artigo.md"].Data = []byte(test.source)
+			if _, err := loadDocuments(files); err == nil || !strings.Contains(err.Error(), document.Slug) {
+				t.Fatalf("expected a validation error for %s, got %v", document.Slug, err)
+			}
+		})
+	}
+}
+
 func TestDocumentsRequireReadableNonemptyMarkdown(t *testing.T) {
 	document := Document{Slug: "nota", Title: "Nota", Kind: DocumentNote, Content: MarkdownDocument{Path: "documents/nota.md"}}
 	for _, source := range [][]byte{nil, []byte("   "), {0xff}} {

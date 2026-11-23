@@ -97,6 +97,8 @@
   transform: rotate(-90deg);
 }
 
+.ui-arrow--down { transform: rotate(180deg); }
+
 .ui-arrow--right,
 .ui-arrow--command {
   transform: rotate(90deg);

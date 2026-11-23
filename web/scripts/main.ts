@@ -18,7 +18,8 @@ import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
-import { initializeSnakeGame } from "./snake/snake-game";
+import { initializeGameCredits } from "./game-credits";
+import { initializeWindows } from "./windows";
 import { migrateStorageValue, storageKey } from "./storage";
 import { initializeSociety } from "./society";
 
@@ -30,8 +31,15 @@ initializeProjectGalleries();
 initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
-initializeSnakeGame();
-const documents = initializeDocuments({ beforeOpen: () => projectArchive.close(false, true) });
+initializeDocuments();
+initializeGameCredits();
+const windows = initializeWindows({
+  beforeOpen: () => projectArchive.close(false, true),
+  loadFeatures: {
+    "ski-game": () => import("./games/ski/ski-session").then(({ createSkiSession }) => createSkiSession),
+    "snake-game": () => import("./games/snake/snake-game").then(({ createSnakeGame }) => createSnakeGame),
+  },
+});
 
 type Theme = "light" | "dark";
 type ThemePreference = Theme | "system";
@@ -269,15 +277,40 @@ reducedMotion.addEventListener("change", () => {
   showAboutImage();
 });
 
+const archiveOpenID = new URLSearchParams(window.location.search).get("open");
+const initialArchiveItem = archiveOpenID
+  ? Array.from(document.querySelectorAll<HTMLButtonElement>(
+    "#case [data-archive-surface] button[data-archive-id]:is([data-window-trigger], [data-archive-folder], [data-archive-project])",
+  )).find((item) =>
+    item.dataset.archiveId === archiveOpenID && !item.disabled && !item.closest("[hidden]"),
+  )
+  : undefined;
+
+let stopSociety: ReturnType<typeof initializeSociety>;
+
 initializePanelNavigation({
+  initialPanel: initialArchiveItem
+    ? { id: "case", updateHistory: initialArchiveItem.hasAttribute("data-window-trigger") }
+    : undefined,
   onChange: (panelID) => {
     if (panelID !== "case") {
+      stopSociety?.();
+      stopSociety = undefined;
       projectArchive.close(false, true);
-      documents.close(false, true);
+      windows.close(false, true);
     }
     if (panelID === "about") activateAboutMedia();
     else deactivateAboutMedia();
+    if (panelID === "case") stopSociety = initializeSociety();
   },
 });
 
-initializeSociety();
+if (initialArchiveItem) {
+  window.requestAnimationFrame(() => {
+    if (initialArchiveItem.isConnected && !initialArchiveItem.closest("[hidden], [inert]")) {
+      initialArchiveItem.click();
+    }
+  });
+} else if (archiveOpenID && !document.querySelector(".site-shell")) {
+  windows.openApp(archiveOpenID);
+}

@@ -16,10 +16,11 @@ const motion = {
 };
 
 type NavigationOptions = {
+  initialPanel?: { id: string; updateHistory: boolean };
   onChange: (panelID: string) => void;
 };
 
-export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
+export const initializePanelNavigation = ({ initialPanel, onChange }: NavigationOptions) => {
   const shell = document.querySelector<HTMLElement>(".site-shell");
   const stage = shell?.querySelector<HTMLElement>(".stage");
   const panels = Array.from(
@@ -115,7 +116,7 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
     );
     if (pageTitle)
       pageTitle.textContent = selected.dataset.panelTitle ?? "Portfólio";
-    if (updateHistory) history.replaceState(null, "", `#${selected.id}`);
+    if (updateHistory) history.replaceState(history.state, "", `#${selected.id}`);
     onChange(selected.id);
   };
 
@@ -275,8 +276,8 @@ export const initializePanelNavigation = ({ onChange }: NavigationOptions) => {
     }
   });
 
-  const initial =
-    panels.find((panel) => panel.id === window.location.hash.slice(1)) ??
-    active;
-  commit(initial, false);
+  const hash = window.location.hash;
+  const requestedPanel = panels.find((panel) => panel.id === initialPanel?.id);
+  const initial = requestedPanel ?? panels.find((panel) => panel.id === hash.slice(1)) ?? active;
+  commit(initial, Boolean(requestedPanel && initialPanel?.updateHistory && hash && hash !== `#${initial.id}`));
 };

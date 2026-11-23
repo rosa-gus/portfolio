@@ -1,25 +1,46 @@
 package views
 
-templ SnakeGame() {
-	<dialog class="document-note snake-game" id="snake-game" data-popup="snake" aria-labelledby="snake-title" aria-describedby="snake-help">
-		<section class="snake-game__sheet">
-			<header class="document-note__heading" data-popup-handle>
-				<div class="document-note__controls control-text"><h2 id="snake-title">snake.ts</h2><button type="button" data-popup-close>[FECHAR]</button></div>
-			</header>
-			<div class="snake-game__scores meta-text"><span>PONTOS <strong data-snake-score>000</strong></span><span>RECORDE <strong data-snake-best>000</strong></span></div>
-			<div class="snake-game__board">
-				<canvas width="400" height="400" tabindex="0" data-snake-canvas aria-label="Tabuleiro do snake. Controle com as setas ou WASD." role="img"></canvas>
-				<p class="snake-game__message" data-snake-message role="status">Pronto para jogar?</p>
+import "portfolio/internal/portfolio"
+
+templ SnakeGame(repository string) {
+	{{ app := portfolio.AppBySlug("snake") }}
+	@Window(WindowOptions{
+		ID: "snake-game", Title: "snake.ts", Class: "snake-game", Width: "26rem", Decoration: "tab",
+		Attributes: templ.Attributes{"data-popup": "snake"},
+	}, WindowSlots{Information: snakeInformation(), Commands: snakeCommands(), Touch: snakeTouch(), Help: snakeHelp(), Record: appRecord(app, repository)}) {
+		<div class="window__media snake-game__board" data-window-media>
+			<canvas width="400" height="400" tabindex="0" data-snake-canvas aria-label="Tabuleiro do snake. Controle com as setas ou WASD." role="img"></canvas>
+			<div class="window__message game-message" data-snake-message role="status">
+				<section data-snake-intro aria-label="Sobre o jogo" hidden>
+					@GameMetadata("SNAKE", "o clássico jogo da cobrinha.\nmas desconfie da magia.") {
+						@GameCredits(app.Credits)
+					}
+				</section>
+				<p data-snake-message-text data-window-feature-status>Pronto para jogar?</p>
 			</div>
-			<div class="snake-game__actions control-text"><button type="button" data-snake-toggle>[INICIAR]</button><button type="button" data-snake-restart hidden>[REINICIAR]</button></div>
-			<div class="snake-game__directions" aria-label="Direção da cobra">
-				<button type="button" data-snake-direction="left" aria-label="Esquerda"><span class="ui-arrow ui-arrow--left" aria-hidden="true">↑</span></button>
-				<button type="button" data-snake-direction="up" aria-label="Cima"><span class="ui-arrow" aria-hidden="true">↑</span></button>
-				<button type="button" data-snake-direction="down" aria-label="Baixo"><span class="ui-arrow snake-game__down" aria-hidden="true">↑</span></button>
-				<button type="button" data-snake-direction="right" aria-label="Direita"><span class="ui-arrow ui-arrow--right" aria-hidden="true">↑</span></button>
-			</div>
-			<p class="snake-game__help meta-text" id="snake-help"><span>SETAS OU WASD</span><span class="inline-divider inline-divider--small" aria-hidden="true"></span><span>ESPAÇO PAUSA</span></p>
-			<p class="snake-game__legend meta-text"><span>QUADRADO: COMIDA</span><span class="inline-divider inline-divider--small" aria-hidden="true"></span><span>CONTORNO: BÔNUS</span><span class="inline-divider inline-divider--small" aria-hidden="true"></span><span>CHAPÉU: BRUXA</span></p>
-		</section>
-	</dialog>
+		</div>
+	}
+}
+
+templ snakeInformation() {
+	<span>PONTOS <strong data-snake-score>000</strong></span><span>RECORDE <strong data-snake-best>000</strong></span>
+}
+
+templ snakeCommands() {
+	<button type="button" data-snake-toggle disabled>[INICIAR]</button><button type="button" data-snake-restart hidden>[REINICIAR]</button><button type="button" data-snake-sound aria-label="Silenciar o jogo" aria-pressed="false" disabled>[SOM LIGADO]</button>
+}
+
+templ snakeTouch() {
+	<div class="snake-game__directions" aria-label="Direção da cobra">
+		<button type="button" data-snake-direction="left" aria-label="Esquerda">@ArrowGlyph("left")</button>
+		<button type="button" data-snake-direction="up" aria-label="Cima">@ArrowGlyph("up")</button>
+		<button type="button" data-snake-direction="down" aria-label="Baixo">@ArrowGlyph("down")</button>
+		<button type="button" data-snake-direction="right" aria-label="Direita">@ArrowGlyph("right")</button>
+	</div>
+}
+
+templ snakeHelp() {
+	<p><kbd>@ArrowGlyph("left") @ArrowGlyph("up") @ArrowGlyph("down") @ArrowGlyph("right")<span>/ WASD</span></kbd><span>Mover a cobra</span></p>
+	<p><kbd>ESPAÇO</kbd><span>Pausar o jogo</span></p>
+	<p>Quadrado: comida. Contorno: bônus. Chapéu: bruxa.</p>
 }

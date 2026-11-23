@@ -73,17 +73,34 @@ Content is embedded, so rebuild the server or static site after editing it.
 ## Notes and articles
 
 `internal/portfolio/data/documents.json` defines Markdown documents. Their position
-and visibility on the home grid are controlled by `archive.json`. The initial note
-is `boas vindas`. Each entry has a
-unique `slug`, `title`, `kind` (`note` or `article`), and `content` pointing to
-`documents/<slug>.md`. Optional fields are `summary` and an ISO `date` (`YYYY-MM-DD`).
+and visibility on the home grid are controlled by `archive.json`. Each catalog
+entry has a unique `slug`, `kind` (`note` or `article`), and `content` pointing
+to `documents/<slug>.md`.
 
-Notes open in a popup with the existing Markdown styles. Articles open at
-`/article/<slug>` with a reading layout and are included in the static export.
-No article is published in the initial catalog. Add an article by creating its
-Markdown file and catalog entry, then reference its slug with a `document` item
-in `archive.json` to display it on the home. The title is rendered by the page, so the
-Markdown should start with the body rather than a duplicate top-level heading.
+Notes open in a popup. Their `title` and optional `summary`, `date`, and
+`updatedAt` belong in the catalog. Dates use `YYYY-MM-DD`, and `updatedAt`
+appears as **Última edição** in the window's ficha. The initial note is `boas vindas`.
+
+Articles open at `/article/<slug>` and are included in the static export. Start
+the Markdown file with YAML front matter, then write the body.
+
+```markdown
+---
+title: "Um artigo do portfólio"
+author: "Rosa Gus"
+date: 2026-11-18
+summary: "Uma breve descrição do artigo."
+---
+
+Primeiro parágrafo do artigo.
+```
+
+`title` is required. `author`, `date`, and `summary` are optional. When `author`
+is omitted, the page uses the portfolio profile's display name. Reading time
+is calculated from the body. The page renders the title from the front matter.
+Add the article's `slug`, `kind`, and `content` to the catalog and reference its
+slug with a `document` item in `archive.json` to display it on the home. Older
+articles without front matter can still use their existing catalog metadata.
 
 The archive preserves item positions and reading context in session storage
 when navigating to an article. `[REORGANIZAR]` restores the original grid.
@@ -93,6 +110,18 @@ when navigating to an article. `[REORGANIZAR]` restores the original grid.
 Edit `internal/portfolio/data/archive.json`. The `items` array is the original grid
 order, also used by `[REORGANIZAR]`. Keep each `id` unique and stable: dragged
 positions are stored by ID, independently of labels, destinations, or array order.
+
+Add `?open=<id>` to the home URL to open a visible app, note, or collection,
+or to select a project's consultation card on load. For example,
+`/portfolio/?open=ski` opens Ski and `/portfolio/?open=welcome` opens the
+welcome note. Opening an app or note sets `open` in the current URL and
+closing it removes the parameter. Opening a collection or selecting a project
+leaves the URL as it is. Articles and full case studies have their own URLs.
+
+On an article or case study, use the app slug in `?open=<app>`, for example
+`/portfolio/article/por-que-revisitei-o-ski?open=ski`. A Markdown link such as
+`[Jogar Ski](?open=ski)` opens the app over the current page. The available apps
+are those enabled in the home archive.
 
 - **Add:** append an entry referencing existing content, or create a link.
 - **Reorder:** move entries within `items`.
@@ -114,11 +143,19 @@ Supported entries (examples are independent, not a replacement catalog):
 ```
 
 `document` automatically uses the note popup or article page according to
-`documents.json`. The built-in app is `snake`; introducing a new app requires
+`documents.json`. The built-in apps are `snake` and `ski`; introducing a new app requires
 its component and behavior. Link `icon` is a short text mark. Links require
 an absolute HTTP(S) `url` or one profile `source`: `contact.githubURL`,
 `contact.linkedInURL`, or `contact.sourceURL`. A channel with an empty profile URL
 is omitted automatically.
+
+On wide screens, the underlined title of a note or app opens its metadata in a
+separate window. App records live in `internal/portfolio/data/apps.json`, where
+`slug` matches the archive item's `ref`. The optional fields are
+`publishedAt` (`YYYY-MM-DD`), `version`, `sourcePath` (path relative to the
+repository root), and `license` (source code license). Apps and notes can
+also define an ordered `metadata` array with `label` and `value` in each entry.
+Apps can define `credits` in the same format for their intro and metadata window.
 
 `collections` defines each folder's `id`, `label`, `symbol`, and `capabilities`.
 A project belongs to a folder when it matches any listed capability; it can
@@ -230,12 +267,25 @@ covers remain independent. Image dimensions are collected during the normal asse
 - About video: [brixiv / Pexels](https://www.pexels.com/@brixiv/).
 - Favicon source photograph: [Diane Helentjaris / Unsplash](https://unsplash.com/@dhelentjaris).
 - Project photograph credits: `media.coverCredit` in [projects.json](internal/portfolio/data/projects.json).
+- Ski sliding audio: [Cross-country skiing (SoundAction 018)](https://freesound.org/s/721700/)
+  by **alexarje**, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  The original is preserved as `ski-slide-source.wav`; `ski-slide-loop.wav` uses
+  only the first 1.25 seconds, with an equal-power crossfade and volume normalization
+  to create a continuous loop. Rebuild it with `python3 tools/prepare_ski_audio.py`.
+- Ski impact effects (including `impact-fall.ogg`), near-miss bell, and yeti footstep effects: **[Kenney](https://kenney.nl/)**,
+  [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+  Original files: `impactWood_light_004.ogg`, `footstep_concrete_000.ogg`,
+  `impactBell_heavy_001.ogg`, and `footstep_snow_000.ogg`.
+  The separate yeti appearance sound (`yeti-appear.ogg`, originally
+  `monster_surprise.ogg`) is not part of the Kenney credit.
 
 ## License
 
 Copyright © 2026 Luis Gustavo R.C.
 
 Source code: [GNU AGPL v3](LICENSE.txt).
+Ski TypeScript: [GNU GPL v3](web/scripts/games/ski/LICENSE.md).
+Ski sprites: [CC0 1.0](web/assets/ski/LICENSE.md).
 Portfolio copy, case studies, media, and identities have separate terms;
 see [CONTENT_NOTICE.md](CONTENT_NOTICE.md).
 

@@ -99,7 +99,7 @@ type ProjectLinks struct {
 	Live       string `json:"live"`
 }
 
-//go:embed data/profile.json data/projects.json data/cases data/documents.json data/documents data/archive.json
+//go:embed data/profile.json data/projects.json data/cases data/documents.json data/documents data/archive.json data/apps.json
 var contentFiles embed.FS
 
 //go:embed data/image-dimensions.json

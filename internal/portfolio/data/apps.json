@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "snake",
+    "publishedAt": "2026-11-18",
+    "sourcePath": "web/scripts/games/snake",
+    "license": "AGPL-3.0-only",
+    "credits": [
+      {
+        "label": "Por",
+        "value": "Rosa Gus"
+      }
+    ]
+  },
+  {
+    "slug": "ski",
+    "version": "0.1.0",
+    "sourcePath": "web/scripts/games/ski",
+    "license": "GPL-3.0-only",
+    "credits": [
+      {
+        "label": "Por",
+        "value": "Rosa Gus"
+      },
+      {
+        "label": "Inspiração",
+        "value": "SkiFree, de Chris Pirih"
+      }
+    ]
+  }
+]

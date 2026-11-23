@@ -294,9 +294,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 					</section>
 				</main>
 				@DocumentNotes(archive.Documents, basePath)
-				if archive.HasApp("snake") {
-					@SnakeGame()
-				}
+				@AppWindows(archive, basePath, profile.Contact.SourceURL)
 				<nav class="command-bar" aria-label="Seções principais">
 					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
 					<a data-panel-target="career" href="#career">Carreira</a>
