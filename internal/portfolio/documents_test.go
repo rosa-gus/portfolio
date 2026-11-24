@@ -136,8 +136,12 @@ func TestDocumentReadingMinutes(t *testing.T) {
 	}
 }
 
-func TestArticleLookupDoesNotExposeWelcomeNote(t *testing.T) {
-	if _, ok := FindArticle("boas-vindas"); ok {
+func TestArticleLookupDoesNotExposeNotes(t *testing.T) {
+	documents := Documents
+	t.Cleanup(func() { Documents = documents })
+	note := Document{Slug: "note-lookup-test", Kind: DocumentNote}
+	Documents = []Document{note}
+	if _, ok := FindArticle(note.Slug); ok {
 		t.Fatal("notes must not be exposed as article pages")
 	}
 }

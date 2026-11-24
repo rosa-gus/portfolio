@@ -1,6 +1,7 @@
 package portfolio
 
 import (
+	"path"
 	"strings"
 	"testing"
 )
@@ -8,15 +9,25 @@ import (
 func TestEmbeddedCaseStudiesAreLoaded(t *testing.T) {
 	t.Parallel()
 
-	project, ok := FindProject("coleoptera-identifier")
-	if !ok {
-		t.Fatal("Coleoptera Identifier was not loaded")
+	checked := 0
+	for _, project := range Projects {
+		study := project.CaseStudy
+		for _, document := range []MarkdownDocument{study.Context, study.Challenge, study.Decision, study.Result} {
+			if document.Path == "" {
+				continue
+			}
+			contents, err := contentFiles.ReadFile(path.Join("data", document.Path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if document.Source != string(contents) {
+				t.Errorf("%q: loaded Markdown differs from %q", project.Slug, document.Path)
+			}
+			checked++
+		}
 	}
-	if project.CaseStudy.Context.Path != "cases/coleoptera-identifier/context.md" {
-		t.Fatalf("context path = %q", project.CaseStudy.Context.Path)
-	}
-	if !strings.Contains(project.CaseStudy.Context.Source, "*Alien*") {
-		t.Fatal("context Markdown content was not loaded")
+	if checked == 0 {
+		t.Fatal("no case study documents were loaded")
 	}
 }
 
@@ -27,18 +38,18 @@ func TestLoadMarkdownDocumentRejectsInvalidPaths(t *testing.T) {
 		name string
 		path string
 	}{
-		{name: "different project", path: "cases/jaci-ui/context.md"},
-		{name: "wrong section", path: "cases/coleoptera-identifier/result.md"},
-		{name: "wrong extension", path: "cases/coleoptera-identifier/context.txt"},
-		{name: "path traversal", path: "cases/coleoptera-identifier/../context.md"},
+		{name: "different project", path: "cases/another-project/context.md"},
+		{name: "wrong section", path: "cases/example-project/result.md"},
+		{name: "wrong extension", path: "cases/example-project/context.txt"},
+		{name: "path traversal", path: "cases/example-project/../context.md"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			document := MarkdownDocument{Path: test.path}
-			if err := loadMarkdownDocument("coleoptera-identifier", "context", &document); err == nil {
-				t.Fatalf("loadMarkdownDocument(%q) returned no error", test.path)
+			if err := loadMarkdownDocument("example-project", "context", &document); err == nil || !strings.HasPrefix(err.Error(), "invalid Markdown path:") {
+				t.Fatalf("loadMarkdownDocument(%q) returned %v, want invalid path error", test.path, err)
 			}
 		})
 	}
@@ -48,7 +59,7 @@ func TestEmptyMarkdownReferenceIsAllowed(t *testing.T) {
 	t.Parallel()
 
 	document := MarkdownDocument{}
-	if err := loadMarkdownDocument("mondo-send", "context", &document); err != nil {
+	if err := loadMarkdownDocument("example-project", "context", &document); err != nil {
 		t.Fatalf("empty reference returned an error: %v", err)
 	}
 }

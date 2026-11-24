@@ -28,6 +28,7 @@ type Caption = {
   count?: number;
   points?: number;
   fixed?: boolean;
+  yetiPursuit?: boolean;
 };
 
 export const SKI_CAPTURE_DURATION = 0.4;
@@ -244,20 +245,24 @@ export class SkiFeedback {
           game.yeti.y - game.player.y,
         );
         if (
-          gap < 85 &&
+          (gap < 85 || kind === "sprint") &&
           !this.warned &&
           kind !== "head-on" &&
           kind !== "turning"
         ) {
           this.warned = true;
+          this.captions = this.captions.filter(
+            (caption) => !caption.yetiPursuit,
+          );
           this.captions.push({
             text: "ele está perto.",
             x: game.width / 2,
             y: 42,
             age: 0,
             life: 1.3,
+            yetiPursuit: true,
           });
-        } else if (gap > 125) this.warned = false;
+        } else if (gap > 125 && kind !== "sprint") this.warned = false;
         const step = Math.floor(game.yeti.strideAge * 3);
         if (step !== this.lastYetiStep && game.yeti.y > 0)
           this.puff(game.yeti.x, game.yeti.y - 2, 4);
@@ -327,12 +332,14 @@ export class SkiFeedback {
           break;
         }
         case "yeti-appear":
+          if (event.rush || (!event.front && this.warned)) break;
           this.captions.push({
             text: event.front ? "ele vem pela frente." : "companhia na pista.",
             x: game.width / 2,
             y: 42,
             age: 0,
             life: 1.6,
+            yetiPursuit: !event.front,
           });
           break;
         case "yeti-windup":

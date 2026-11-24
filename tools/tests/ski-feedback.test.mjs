@@ -31,6 +31,30 @@ test("slalom entry and exit use the existing floating feedback", () => {
   assert.equal(feedback.captions[0].text, "pista aberta.");
 });
 
+test("a Yeti sprint shows only the proximity caption for either entrance", () => {
+  for (const rush of [true, false]) {
+    const game = new SkiEngine(() => 0.5);
+    const feedback = new SkiFeedback();
+    game.start();
+    const x = game.player.x;
+    const y = game.player.y - 140;
+    game.yeti = {
+      x, y, age: 0, strideAge: 0, blinkAt: null,
+      attack: { kind: rush ? "sprint" : "waiting", until: 1 },
+    };
+    feedback.step(game, 0, SKI_STEP, [{ type: "yeti-appear", x, y, front: false, rush }]);
+
+    if (!rush) {
+      assert.deepEqual(feedback.captions.map(caption => caption.text), ["companhia na pista."]);
+      game.yeti.attack = { kind: "sprint", until: 2 };
+      feedback.step(game, 0, SKI_STEP, []);
+    }
+    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+    feedback.step(game, 0, SKI_STEP, []);
+    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+  }
+});
+
 test("the third crack starts the first line and leaves space for the second", () => {
   const game = new SkiEngine(() => 0.5);
   game.start();
