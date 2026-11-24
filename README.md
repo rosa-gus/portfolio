@@ -269,9 +269,9 @@ covers remain independent. Image dimensions are collected during the normal asse
 - Project photograph credits: `media.coverCredit` in [projects.json](internal/portfolio/data/projects.json).
 - Ski sliding audio: [Cross-country skiing (SoundAction 018)](https://freesound.org/s/721700/)
   by **alexarje**, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-  The original is preserved as `ski-slide-source.wav`; `ski-slide-loop.wav` uses
+  The original is preserved as `audio/source/ski-slide-source.wav`. `ski-slide-loop.ogg` uses
   only the first 1.25 seconds, with an equal-power crossfade and volume normalization
-  to create a continuous loop. Rebuild it with `python3 tools/prepare_ski_audio.py`.
+  to create a continuous loop. The prepared PCM loop is archived as `audio/source/ski-slide-loop.wav`.
 - Ski impact effects (including `impact-fall.ogg`), near-miss bell, and yeti footstep effects: **[Kenney](https://kenney.nl/)**,
   [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
   Original files: `impactWood_light_004.ogg`, `footstep_concrete_000.ogg`,

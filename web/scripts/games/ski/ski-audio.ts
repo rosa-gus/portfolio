@@ -1,19 +1,39 @@
-// Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
+/**
+ * Copyright (c) 2026 rosa gus. SPDX-License-Identifier: GPL-3.0-only
+ * Audios licensed with specific licenses, see ./audio/README.md for details.
+ */
 import type { SkiEngine, SkiEvent } from "./ski-engine";
 import type { yetiStride } from "./ski-yeti";
 
 const urls = {
-  slide: new URL("./audio/ski-slide-loop.wav", import.meta.url),
+  slide: new URL("./audio/ski-slide-loop.ogg", import.meta.url),
   pine: new URL("./audio/impact-pine.ogg", import.meta.url),
   rock: new URL("./audio/impact-rock.ogg", import.meta.url),
   fall: new URL("./audio/impact-fall.ogg", import.meta.url),
   bell: new URL("./audio/near-miss-bell.ogg", import.meta.url),
   step: new URL("./audio/yeti-step.ogg", import.meta.url),
   appear: new URL("./audio/yeti-appear.ogg", import.meta.url),
-  breath: new URL("./audio/yeti-breath.wav", import.meta.url),
-  crack: new URL("./audio/yeti-crack.wav", import.meta.url),
+  breath: new URL("./audio/yeti-breath.ogg", import.meta.url),
+  crack: new URL("./audio/yeti-crack.ogg", import.meta.url),
 };
-type Sound = keyof typeof urls;
+const thunderUrls = {
+  thunder1: new URL("./audio/thunder-1.ogg", import.meta.url),
+  thunder2: new URL("./audio/thunder-2.ogg", import.meta.url),
+  thunder3: new URL("./audio/thunder-3.ogg", import.meta.url),
+};
+const thunderSounds = [
+  { name: "thunder1", volume: 1.35, offset: 0.22, duration: 1.9 },
+  { name: "thunder2", volume: 0.29, offset: 0.43, duration: 2.25 },
+  { name: "thunder3", volume: 0.85, offset: 0.12, duration: 2.25 },
+] as const;
+const soundUrls = { ...urls, ...thunderUrls };
+type Sound = keyof typeof soundUrls;
+
+const wavFallbacks: Partial<Record<Sound, URL>> = {
+  slide: new URL("./audio/source/ski-slide-loop.wav", import.meta.url),
+  breath: new URL("./audio/source/yeti-breath.wav", import.meta.url),
+  crack: new URL("./audio/source/yeti-crack.wav", import.meta.url),
+};
 
 export const createSkiAudio = (strideAt: typeof yetiStride) => {
   let context: AudioContext | null = null;
@@ -34,6 +54,25 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
   const buffers = new Map<Sound, Promise<AudioBuffer | null>>();
   const playing = new Set<AudioBufferSourceNode>();
 
+  const loadSound = (name: Sound) => {
+    const ctx = context;
+    if (!ctx || buffers.has(name)) return;
+    const decode = async (url: URL) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Audio unavailable");
+      return ctx.decodeAudioData(await response.arrayBuffer());
+    };
+    buffers.set(
+      name,
+      decode(soundUrls[name])
+        .catch(() => {
+          const fallback = wavFallbacks[name];
+          return fallback ? decode(fallback) : null;
+        })
+        .catch(() => null),
+    );
+  };
+
   // Run synchronously inside the start/resume gesture, before awaiting fetches.
   const unlock = () => {
     try {
@@ -44,21 +83,8 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
         master.connect(context.destination);
       }
       void context.resume().catch(() => {});
-      const ctx = context;
-      for (const name of Object.keys(urls) as Sound[]) {
-        if (!buffers.has(name)) {
-          buffers.set(
-            name,
-            fetch(urls[name])
-              .then((response) => {
-                if (!response.ok) throw new Error("Audio unavailable");
-                return response.arrayBuffer();
-              })
-              .then((bytes) => ctx.decodeAudioData(bytes))
-              .catch(() => null),
-          );
-        }
-      }
+      for (const name of Object.keys(urls) as (keyof typeof urls)[])
+        loadSound(name);
     } catch {
       /* Audio is optional; the simulation and visual feedback continue. */
     }
@@ -176,6 +202,7 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
       items.some(
         ({ type }) =>
           type !== "escape" &&
+          type !== "blizzard-start" &&
           type !== "yeti-distant-step" &&
           type !== "yeti-tired" &&
           type !== "yeti-explanation",
@@ -183,6 +210,12 @@ export const createSkiAudio = (strideAt: typeof yetiStride) => {
     )
       duckUntil = context.currentTime + 0.3;
     for (const event of items) {
+      if (event.type === "blizzard-start")
+        loadSound(thunderSounds[event.thunder].name);
+      if (event.type === "blizzard-thunder") {
+        const { name, volume, offset, duration } = thunderSounds[event.thunder];
+        void play(name, volume, { offset, duration, maxLatency: 0.18 });
+      }
       if (event.type === "collision") void play(event.kind, 0.7);
       if (event.type === "fall") {
         void play("fall", 0.7);

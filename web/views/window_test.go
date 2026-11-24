@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -120,20 +121,22 @@ func TestGameAndNoteRecordsRenderInTheirWindows(t *testing.T) {
 		`<span id="ski-game-record-description" hidden>Abre os metadados</span>`,
 		`<dialog id="ski-game-record" class="window window--record" data-window-record data-window-decoration="tab"`,
 		`id="ski-game-record-title">metadados</h2>`,
-		`href="https://example.com/portfolio/tree/main/web/scripts/games/ski"`,
-		`v0.1.0`, `GPL-3.0-only`, `SkiFree, de Chris Pirih`,
 	} {
 		assertContains(t, html, want)
 	}
 	assertNotContains(t, html, `data-tooltip`)
 
 	for _, game := range []struct {
-		component   templ.Component
-		inspiration string
+		slug      string
+		component templ.Component
 	}{
-		{SkiGame("", repository), "SkiFree, de Chris Pirih"},
-		{SnakeGame(repository), ""},
+		{"ski", SkiGame("", repository)},
+		{"snake", SnakeGame(repository)},
 	} {
+		app := portfolio.AppBySlug(game.slug)
+		if app.Slug == "" || len(app.Credits) == 0 {
+			t.Fatalf("%s should have a catalog entry with credits", game.slug)
+		}
 		output.Reset()
 		if err := game.component.Render(context.Background(), &output); err != nil {
 			t.Fatal(err)
@@ -143,15 +146,37 @@ func TestGameAndNoteRecordsRenderInTheirWindows(t *testing.T) {
 		if !found {
 			t.Fatal("game should render a metadata window")
 		}
-		assertContains(t, intro, `class="game-credits"`)
-		assertContains(t, intro, `data-credit-leader aria-hidden="true">.</span>`)
-		assertContains(t, intro, "Rosa Gus")
-		assertContains(t, record, "Rosa Gus")
+		_, credits, found := strings.Cut(intro, `<dl class="game-credits">`)
+		if !found {
+			t.Fatalf("%s should render intro credits", game.slug)
+		}
+		credits, _, _ = strings.Cut(credits, `</dl>`)
+		assertContains(t, credits, `data-credit-leader aria-hidden="true">.</span>`)
+		if got := strings.Count(credits, `<dt>`); got != len(app.Credits) {
+			t.Errorf("%s intro credit count = %d, want %d", game.slug, got, len(app.Credits))
+		}
 		assertNotContains(t, record, "data-credit-leader")
-		if game.inspiration == "" {
-			assertNotContains(t, html, "<dt>Inspiração</dt>")
-		} else if got := strings.Count(html, game.inspiration); got != 2 {
-			t.Errorf("inspiration should appear in the intro and the record, got %d occurrences", got)
+		if app.Version != "" {
+			assertContains(t, record, `<dt>Versão</dt><dd>v`+templ.EscapeString(app.Version)+`</dd>`)
+		} else {
+			assertNotContains(t, record, `<dt>Versão</dt>`)
+		}
+		if app.SourcePath != "" {
+			sourceURL, err := url.JoinPath(repository, "tree/main", app.SourcePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertContains(t, record, `<dt>Código-fonte</dt><dd><a class="text-action" href="`+templ.EscapeString(sourceURL)+`"`)
+		}
+		if app.License != "" {
+			assertContains(t, record, `<dt>Licença do código</dt><dd>`+templ.EscapeString(app.License)+`</dd>`)
+		}
+		for _, credit := range app.Credits {
+			label := `<dt>` + templ.EscapeString(credit.Label) + `</dt>`
+			value := templ.EscapeString(credit.Value)
+			assertContains(t, credits, label)
+			assertContains(t, credits, `<span>`+value+`</span>`)
+			assertContains(t, record, label+`<dd>`+value+`</dd>`)
 		}
 	}
 

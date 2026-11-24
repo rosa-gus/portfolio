@@ -22,12 +22,16 @@ import { createSkiAudio } from "./ski-audio";
 import { yetiStride } from "./ski-yeti";
 import { storageKey } from "../../storage";
 import { fitWindowMedia } from "../../window-layout";
+import { cancelWindowShake, shakeWindow } from "../../window-motion";
 
 const TAP_DISTANCE = 8;
 const TAP_DURATION = 250;
 
 /** Browser lifecycle, input, and persistence. Simulation lives in ski-engine. */
 export const createSkiSession = (dialog: HTMLDialogElement) => {
+  const debugBlizzard =
+    new URLSearchParams(window.location.search).get("skiBlizzardDebug") ===
+    "true";
   const canvas = dialog.querySelector<HTMLCanvasElement>("[data-ski-canvas]")!;
   const board = dialog.querySelector<HTMLElement>("[data-ski-board]")!;
   const spriteBanks = new Map<SkiTheme, SkiSprites>();
@@ -38,7 +42,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
   );
   const viewportLayout = () =>
     portraitViewport.matches ? "portrait" : "landscape";
-  let game = new SkiEngine(Math.random, viewportLayout());
+  let game = new SkiEngine(Math.random, viewportLayout(), debugBlizzard);
   const sizeBoard = () => {
     canvas.width = game.width;
     canvas.height = game.height;
@@ -52,7 +56,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
   const applyViewportLayout = () => {
     const layout = viewportLayout();
     if (game.layout === layout) return false;
-    game = new SkiEngine(Math.random, layout);
+    game = new SkiEngine(Math.random, layout, debugBlizzard);
     sizeBoard();
     return true;
   };
@@ -286,6 +290,7 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
     frame = 0;
     previous = 0;
     accumulator = 0;
+    cancelWindowShake(dialog);
     audio.stop();
   };
   const pause = () => {
@@ -331,6 +336,8 @@ export const createSkiSession = (dialog: HTMLDialogElement) => {
           persist();
         } else {
           audio.events(game.events);
+          if (game.events.some((event) => event.type === "blizzard-thunder"))
+            shakeWindow(dialog, { distance: 2.5, duration: 220 });
         }
       } else {
         feedback.step(game, 0, SKI_STEP, []);

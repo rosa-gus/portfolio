@@ -14,14 +14,16 @@ import (
 
 func TestArticleRoutesAcceptTrailingSlash(t *testing.T) {
 	documents := portfolio.Documents
-	portfolio.Documents = append(documents, portfolio.Document{
+	t.Cleanup(func() { portfolio.Documents = documents })
+	article := portfolio.Document{
 		Slug: "article-route-test", Title: "Article route test", Kind: portfolio.DocumentArticle,
 		Content: portfolio.MarkdownDocument{Source: "Example article body."},
-	})
-	t.Cleanup(func() { portfolio.Documents = documents })
+	}
+	note := portfolio.Document{Slug: "note-route-test", Title: "Note route test", Kind: portfolio.DocumentNote}
+	portfolio.Documents = []portfolio.Document{article, note}
 
 	handler := newHandler("https://example.com")
-	path := "/article/article-route-test"
+	path := "/article/" + article.Slug
 	for _, test := range []struct {
 		path     string
 		status   int
@@ -30,7 +32,7 @@ func TestArticleRoutesAcceptTrailingSlash(t *testing.T) {
 		{path, http.StatusOK, ""},
 		{path + "/", http.StatusPermanentRedirect, path},
 		{path + "/?ref=preview", http.StatusPermanentRedirect, path + "?ref=preview"},
-		{"/article/boas-vindas/", http.StatusNotFound, ""},
+		{"/article/" + note.Slug + "/", http.StatusNotFound, ""},
 		{path + "/nested", http.StatusNotFound, ""},
 	} {
 		t.Run(test.path, func(t *testing.T) {
@@ -42,7 +44,7 @@ func TestArticleRoutesAcceptTrailingSlash(t *testing.T) {
 			if got := response.Header().Get("Location"); got != test.location {
 				t.Errorf("Location = %q, want %q", got, test.location)
 			}
-			if test.status == http.StatusOK && !strings.Contains(response.Body.String(), "Example article body.") {
+			if test.status == http.StatusOK && !strings.Contains(response.Body.String(), article.Content.Source) {
 				t.Error("response does not contain the article body")
 			}
 		})

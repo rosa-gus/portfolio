@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fitMediaSize, dismissWindowHelp, toggleWindowPanel } from "../../web/scripts/window-layout.ts";
+import { cancelWindowShake, shakeWindow } from "../../web/scripts/window-motion.ts";
 
 test("landscape and square content fit available space without distortion", () => {
   assert.deepEqual(fitMediaSize(800, 500, 16 / 9), { width: 800, height: 450 });
@@ -12,6 +13,38 @@ test("landscape and square content fit available space without distortion", () =
 test("unavailable body space never produces negative or non-finite sizes", () => {
   for (const [w, h, ratio] of [[0, 200, 1], [200, -1, 1], [Infinity, 200, 1], [100, 100, NaN], [100, 100, 0]]) {
     assert.deepEqual(fitMediaSize(w, h, ratio), { width: 0, height: 0 });
+  }
+});
+
+test("window shakes replace earlier animations and honor reduced motion", () => {
+  const previousWindow = globalThis.window;
+  let reducedMotion = false;
+  globalThis.window = { matchMedia: () => ({ matches: reducedMotion }) };
+  const animations = [];
+  const root = {
+    localName: "dialog", open: true, classList: { contains: () => false },
+    animate(frames, options) {
+      const animation = new EventTarget();
+      animation.cancel = () => { animation.cancelled = true; };
+      animations.push({ animation, frames, options });
+      return animation;
+    },
+  };
+  try {
+    shakeWindow(root);
+    shakeWindow(root, { distance: 2, duration: 200 });
+    const [first, second] = animations;
+    assert.equal(first.animation.cancelled, true);
+    assert.equal(second.frames[1].translate, "-2px 0.5px");
+    assert.equal(second.options.duration, 200);
+    first.animation.dispatchEvent(new Event("finish"));
+    cancelWindowShake(root);
+    assert.equal(second.animation.cancelled, true);
+    reducedMotion = true;
+    shakeWindow(root);
+    assert.equal(animations.length, 2);
+  } finally {
+    globalThis.window = previousWindow;
   }
 });
 

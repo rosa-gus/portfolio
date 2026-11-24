@@ -31,6 +31,42 @@ test("slalom entry and exit use the existing floating feedback", () => {
   assert.equal(feedback.captions[0].text, "pista aberta.");
 });
 
+test("entering a blizzard displays its caption", () => {
+  const game = new SkiEngine(() => 0.5);
+  const feedback = new SkiFeedback();
+  game.start();
+  feedback.step(game, 0, SKI_STEP, [{ type: "blizzard-start", thunder: 0 }]);
+  assert.deepEqual(feedback.captions.map(caption => caption.text), ["você entrou na nevasca."]);
+});
+
+test("a Yeti sprint shows only the proximity caption for either entrance", () => {
+  for (const rush of [true, false]) {
+    const game = new SkiEngine(() => 0.5);
+    const feedback = new SkiFeedback();
+    game.start();
+    const x = game.player.x;
+    const y = rush ? -16 : game.player.y - 140;
+    if (rush) {
+      feedback.step(game, 0, SKI_STEP, [{ type: "slalom-end", x, y: game.player.y }]);
+      assert.equal(feedback.captions[0].text, "pista aberta.");
+    }
+    game.yeti = {
+      x, y, age: 0, strideAge: 0, blinkAt: null,
+      attack: { kind: rush ? "sprint" : "waiting", until: 1 },
+    };
+    feedback.step(game, 0, SKI_STEP, [{ type: "yeti-appear", x, y, front: false, rush }]);
+
+    if (!rush) {
+      assert.deepEqual(feedback.captions.map(caption => caption.text), ["companhia na pista."]);
+      game.yeti.attack = { kind: "sprint", until: 2 };
+      feedback.step(game, 0, SKI_STEP, []);
+    }
+    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+    feedback.step(game, 0, SKI_STEP, []);
+    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+  }
+});
+
 test("the third crack starts the first line and leaves space for the second", () => {
   const game = new SkiEngine(() => 0.5);
   game.start();
@@ -39,17 +75,24 @@ test("the third crack starts the first line and leaves space for the second", ()
     feedback.step(game, 0, 2, [{ type: "yeti-crack", count, side: 1 }]);
     assert.equal(feedback.captions.length, 1);
     const [caption] = feedback.captions;
-    assert.equal(caption.text, count === 3 ? "“terceira vez que ouço isso.”" : "[estalo ao longe]");
     assert.equal(caption.fixed, true);
-    if (count === 3) assert.equal(caption.y, game.player.y - 78);
+    if (count === 3) {
+      assert.match(caption.text, /^“.+”$/);
+      assert.equal(caption.y, game.player.y - 78);
+    } else {
+      assert.equal(caption.text, "[estalo ao longe]");
+    }
   }
   const [firstLine] = feedback.captions;
   assert.equal(firstLine.life, 0.9);
   feedback.step(game, 0, 0.9, []);
   assert.deepEqual(feedback.captions, []);
   feedback.step(game, 0, 0.4, [{ type: "yeti-explanation" }]);
+  assert.equal(feedback.captions.length, 1);
   const [secondLine] = feedback.captions;
-  assert.equal(secondLine.text, "“Deve ser um criossismo.”");
+  assert.match(secondLine.text, /^“.+”$/);
+  assert.notEqual(secondLine.text, firstLine.text);
+  assert.equal(secondLine.fixed, true);
   assert.equal(secondLine.life, 1.8);
   assert.equal(secondLine.y, firstLine.y);
 });
