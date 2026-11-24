@@ -219,6 +219,81 @@ test("missing the balance window causes one fall, then an automatic recovery", (
   assert.ok(game.speed >= 240);
 });
 
+const startFullFall = game => {
+  game.objects = [obstacleAtPlayer(game)];
+  game.tick();
+  advance(game, 42);
+  assert.equal(game.balance.pose, "fall");
+  assert.equal(game.events.filter(event => event.type === "fall").length, 1);
+};
+
+test("the fifth fall starts an offscreen pursuit only after full recovery", () => {
+  for (const [layout, distance] of [["landscape", 0], ["portrait", 6400]]) {
+    const game = new SkiEngine(() => 0.5, layout);
+    game.start();
+    game.distance = distance;
+    game.nextSlalom = game.nextYeti = Infinity;
+    for (let fall = 0; fall < 4; fall++) {
+      startFullFall(game);
+      advance(game, 78);
+      assert.equal(game.balance, null);
+      assert.equal(game.yeti, null);
+    }
+
+    startFullFall(game);
+    game.nextYeti = game.distance; // The regular encounter must not interrupt recovery.
+    advance(game, 39);
+    assert.equal(game.balance.pose, "recover");
+    assert.equal(game.yeti, null);
+    advance(game, 38);
+    assert.equal(game.balance.pose, "recover");
+    assert.equal(game.yeti, null);
+    game.tick();
+    assert.equal(game.balance, null);
+    const appearance = game.events.find(event => event.type === "yeti-appear");
+    assert.ok(appearance?.rush);
+    assert.ok(appearance.y < 0 && game.yeti.y < 0);
+
+    for (let tick = 0; tick < 720 && game.yeti; tick++) {
+      game.objects = [];
+      game.tick();
+      assert.equal(game.events.some(event => event.type === "yeti-appear"), false);
+    }
+    assert.equal(game.phase, "running");
+    assert.equal(game.escapes, 1);
+  }
+});
+
+test("a corrected stumble does not count and a clean stretch clears the fall streak", () => {
+  const game = new SkiEngine(() => 0.5);
+  game.start();
+  game.nextSlalom = game.nextYeti = Infinity;
+  const fallAndRecover = () => {
+    startFullFall(game);
+    advance(game, 78);
+  };
+  for (let fall = 0; fall < 4; fall++) fallAndRecover();
+
+  game.objects = [obstacleAtPlayer(game)];
+  game.tick();
+  game.tick({ steer: 0, downhill: true });
+  advance(game, 40);
+  assert.equal(game.balance, null);
+  assert.equal(game.yeti, null);
+
+  const cleanStart = game.distance;
+  while (game.distance - cleanStart < 150) {
+    game.objects = [];
+    game.tick();
+  }
+  for (let fall = 0; fall < 4; fall++) {
+    fallAndRecover();
+    assert.equal(game.yeti, null);
+  }
+  fallAndRecover();
+  assert.ok(game.yeti?.y < 0);
+});
+
 test("capture freezes the ended game", () => {
   const game = new SkiEngine(rng());
   game.start();
@@ -644,6 +719,29 @@ test("finishing slalom reserves normal terrain before the next challenge", () =>
     assert.equal(game.stage, "descent");
   }
   assert.ok(normalRows >= 30, "ordinary obstacle rows occupy the interval");
+});
+
+test("a fall-streak pursuit waits until the skier is past the slalom exit", () => {
+  const game = startSlalom(700);
+  for (let fall = 0; fall < 5; fall++) {
+    startFullFall(game);
+    advance(game, 78);
+    assert.equal(game.yeti, null);
+  }
+  assert.equal(game.balance, null);
+  assert.ok(game.slalom);
+
+  game.slalom.spawned = game.slalom.gates;
+  game.slalom.lastGateY = game.player.y - 12;
+  game.objects = [];
+  game.tick();
+  assert.equal(game.slalom, null);
+  assert.equal(game.yeti, null);
+  for (let tick = 0; tick < 150 && !game.yeti; tick++) {
+    game.objects = [];
+    game.tick();
+  }
+  assert.ok(game.yeti?.y < 0);
 });
 
 test("three separate cracks reveal the yeti before the first pursuit and end in a pine corridor", () => {

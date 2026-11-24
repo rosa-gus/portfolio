@@ -115,6 +115,9 @@ export const SKI_SLALOM_INTERVAL = 1800;
 const YETI_CLUE_MAX_LEAD = 340;
 const YETI_VISUAL_CLUE_MIN_LEAD = 90;
 const YETI_ENTRY_Y = 66; // Leave room for the 64-pixel sprite and its stride.
+const YETI_OFFSCREEN_ENTRY_Y = -16;
+const YETI_FALL_THRESHOLD = 5;
+const FALL_STREAK_RESET_DISTANCE = 150;
 const YETI_SPRINT_DURATION = 0.8;
 const YETI_RECOVERY_DURATION = 1.8;
 const YETI_WINDUP_DURATION = 0.22;
@@ -153,6 +156,8 @@ export class SkiEngine {
   private yetiClue: SkiYetiClue | null = null;
   private yetiClueLead = 0;
   private yetiScene: SkiYetiScene | null = null;
+  private fallStreak = 0;
+  private lastUnbalancedDistance = 0;
   private spawnDistance = 0;
   private trailDistance = 0;
   private trailConnected = false;
@@ -201,6 +206,8 @@ export class SkiEngine {
     this.yeti = null;
     this.glimpse = null;
     this.yetiScene = null;
+    this.fallStreak = 0;
+    this.lastUnbalancedDistance = 0;
     this.slalom = null;
     this.nextSlalom = SKI_FIRST_SLALOM;
     this.normalUntil = 0;
@@ -258,13 +265,14 @@ export class SkiEngine {
     else this.yetiMode = "front";
   }
 
-  private startYeti() {
+  private startYeti(entrance: "scheduled" | "offscreen" = "scheduled") {
     this.glimpse = null;
     this.yetiClue = null;
-    const rush = this.yetiMode === "immediate";
+    const offscreen = entrance === "offscreen";
+    const rush = offscreen || this.yetiMode === "immediate";
     const enemy: SkiYeti = {
       x: this.yetiSide < 0 ? 70 : this.width - 70,
-      y: YETI_ENTRY_Y,
+      y: offscreen ? YETI_OFFSCREEN_ENTRY_Y : YETI_ENTRY_Y,
       age: 0,
       strideAge: 0,
       blinkAt: rush ? 0 : null,
@@ -286,6 +294,51 @@ export class SkiEngine {
       front: false,
       rush,
     });
+  }
+
+  private updateYetiEntrance() {
+    if (this.balance) this.lastUnbalancedDistance = this.distance;
+    if (this.fallStreak >= YETI_FALL_THRESHOLD) {
+      // Let a committed encounter wait through recovery and the end of a course.
+      if (this.balance || this.slalom || this.recoveryRows > 0) return;
+      this.fallStreak = 0;
+      if (!this.yeti) {
+        this.yetiScene = null;
+        this.startYeti("offscreen");
+      }
+      return;
+    }
+    if (
+      this.fallStreak > 0 &&
+      this.distance - this.lastUnbalancedDistance >= FALL_STREAK_RESET_DISTANCE
+    )
+      this.fallStreak = 0;
+
+    if (
+      (this.yeti && this.yeti.attack.kind !== "standing") ||
+      this.slalom ||
+      this.distance < this.normalUntil
+    )
+      return;
+
+    const lead = this.nextYeti - this.distance;
+    if (
+      !this.yeti &&
+      this.yetiMode === "front" &&
+      this.frontYetiY <= this.height + YETI_FRONT_SPAWN_MARGIN
+    )
+      this.placeFrontYeti();
+    if (!this.yeti && lead <= 0) {
+      this.startYeti();
+    } else if (
+      lead > 0 &&
+      this.yetiClue &&
+      lead <= (this.yetiClue === "step" ? this.yetiClueLead : 45)
+    ) {
+      // A planned visual clue can miss its window if there is no suitable row.
+      this.yetiClue = null;
+      this.events.push({ type: "yeti-distant-step" });
+    }
   }
 
   private get frontYetiY() {
@@ -404,6 +457,7 @@ export class SkiEngine {
       this.slalom ||
       this.yeti ||
       this.glimpse ||
+      this.fallStreak >= YETI_FALL_THRESHOLD ||
       this.recoveryRows > 0 ||
       this.distance < this.nextSlalom ||
       this.distance < this.normalUntil
@@ -778,6 +832,7 @@ export class SkiEngine {
         };
       } else if (balance.ticks >= BALANCE_TICKS) {
         this.balance = { pose: "fall", side: balance.side, ticks: 0 };
+        this.fallStreak++;
         this.events.push({
           type: "fall",
           side: balance.side,
@@ -952,30 +1007,7 @@ export class SkiEngine {
         }
       }
     }
-    if (
-      (!this.yeti || this.yeti.attack.kind === "standing") &&
-      !this.slalom &&
-      this.distance >= this.normalUntil
-    ) {
-      const lead = this.nextYeti - this.distance;
-      if (
-        !this.yeti &&
-        this.yetiMode === "front" &&
-        this.frontYetiY <= this.height + YETI_FRONT_SPAWN_MARGIN
-      )
-        this.placeFrontYeti();
-      if (!this.yeti && lead <= 0) {
-        this.startYeti();
-      } else if (
-        lead > 0 &&
-        this.yetiClue &&
-        lead <= (this.yetiClue === "step" ? this.yetiClueLead : 45)
-      ) {
-        // A planned visual clue can miss its window if there is no suitable row.
-        this.yetiClue = null;
-        this.events.push({ type: "yeti-distant-step" });
-      }
-    }
+    this.updateYetiEntrance();
     if (this.yeti) {
       const enemy = this.yeti;
       this.moveYeti(enemy, base);

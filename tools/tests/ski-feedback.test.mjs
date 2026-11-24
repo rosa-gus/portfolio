@@ -37,7 +37,11 @@ test("a Yeti sprint shows only the proximity caption for either entrance", () =>
     const feedback = new SkiFeedback();
     game.start();
     const x = game.player.x;
-    const y = game.player.y - 140;
+    const y = rush ? -16 : game.player.y - 140;
+    if (rush) {
+      feedback.step(game, 0, SKI_STEP, [{ type: "slalom-end", x, y: game.player.y }]);
+      assert.equal(feedback.captions[0].text, "pista aberta.");
+    }
     game.yeti = {
       x, y, age: 0, strideAge: 0, blinkAt: null,
       attack: { kind: rush ? "sprint" : "waiting", until: 1 },
