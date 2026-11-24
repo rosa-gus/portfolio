@@ -145,15 +145,6 @@ let aboutAutoplayAttempted = false;
 let aboutHasEnded = false;
 let aboutMediaActive = false;
 let aboutPlayRequest = 0;
-let aboutIntroTimer: number | undefined;
-let aboutRevealTimer: number | undefined;
-
-const clearAboutIntro = () => {
-  window.clearTimeout(aboutIntroTimer);
-  window.clearTimeout(aboutRevealTimer);
-  aboutIntroTimer = undefined;
-  aboutRevealTimer = undefined;
-};
 
 const updateAboutControl = (playing: boolean) => {
   if (!aboutPlayButton) return;
@@ -169,14 +160,12 @@ const updateAboutControl = (playing: boolean) => {
 
 const showAboutImage = () => {
   aboutPlayRequest += 1;
-  clearAboutIntro();
   if (aboutMedia) aboutMedia.dataset.aboutState = "image";
   updateAboutControl(false);
 };
 
 const showPausedAboutVideo = () => {
   aboutPlayRequest += 1;
-  clearAboutIntro();
   if (aboutMedia && aboutMedia.dataset.aboutState !== "image") {
     aboutMedia.dataset.aboutState =
       aboutVideo && aboutVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
@@ -188,7 +177,6 @@ const showPausedAboutVideo = () => {
 
 const playAboutVideo = async (restart = false) => {
   if (!aboutMedia || !aboutVideo) return;
-  clearAboutIntro();
   const request = ++aboutPlayRequest;
   if (restart) {
     aboutHasEnded = false;
@@ -198,23 +186,10 @@ const playAboutVideo = async (restart = false) => {
   aboutVideo.muted = true;
   aboutMedia.dataset.aboutState = "loading";
   try {
-    // Confirm playback permission before committing to the opening effect.
     await aboutVideo.play();
     if (request !== aboutPlayRequest || !aboutMediaActive) return;
+    aboutMedia.dataset.aboutState = "video";
     updateAboutControl(true);
-    if (reducedMotion.matches) {
-      aboutMedia.dataset.aboutState = "video";
-      return;
-    }
-
-    aboutMedia.dataset.aboutState = "intro";
-    aboutIntroTimer = window.setTimeout(() => {
-      aboutMedia.dataset.aboutState = "revealing";
-      aboutRevealTimer = window.setTimeout(() => {
-        aboutMedia.dataset.aboutState = "video";
-        clearAboutIntro();
-      }, 400);
-    }, 250);
   } catch {
     if (request === aboutPlayRequest) showAboutImage();
   }

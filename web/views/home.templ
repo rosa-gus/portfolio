@@ -117,13 +117,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 						hidden
 						aria-labelledby="about-title"
 					>
-						<div
-							class="about-panel__media"
-							data-panel-background
-							data-about-media
-							data-about-state="image"
-							aria-hidden="true"
-						>
+						<div class="about-panel__media" data-panel-background data-about-media data-about-state="image" aria-hidden="true">
 							<picture>
 								<source media="(max-width: 620px)" srcset={ siteURL(basePath, "/about-reticula-mobile-poster.webp") }/>
 								<img
@@ -143,18 +137,10 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 								<source src={ siteURL(basePath, "/about-reticula.webm") } type="video/webm"/>
 							</video>
 						</div>
-						@EditorialHeading("about-title", profile.About.Heading, false)
-						@ScrollArea("Sobre Luis Gustavo", "vertical", ScrollAreaShadowNone) {
-							<div class="about-panel__copy prose prose--intro">
-								for _, paragraph := range profile.About.Paragraphs {
-									<p>{ paragraph }</p>
-								}
-							</div>
-						}
-						<div class="about-panel__controls">
+						<div class="about-panel__controls" role="group" aria-labelledby="about-study-title">
+							<span class="about-panel__study-title meta-text" id="about-study-title">{ profile.About.Media.Label }{ " / " }{ profile.About.Media.Name }</span>
 							<details class="about-study">
 								<summary class="about-study__summary">
-									<span>{ profile.About.Media.Label }{ " / " }{ profile.About.Media.Name }</span>
 									<span class="about-study__toggle">
 										<span
 											class="about-study__plus"
@@ -219,6 +205,25 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 								[ ]
 								REPRODUZIR
 							</button>
+						</div>
+						<div class="about-panel__copy">
+							<header class="about-panel__intro">
+								<p class="about-panel__byline">
+									<span class="about-panel__name">{ profile.Identity.Name }</span>
+									<span class="about-panel__profession">{ profile.Identity.Profession }</span>
+								</p>
+								<h2 class="about-panel__title" id="about-title">{ profile.About.Heading }</h2>
+								if profile.About.Lead != "" {
+									<p class="about-panel__lead">{ profile.About.Lead }</p>
+								}
+							</header>
+							if len(profile.About.Paragraphs) > 0 {
+								<div class="about-panel__body">
+									for _, paragraph := range profile.About.Paragraphs {
+										<p>{ paragraph }</p>
+									}
+								</div>
+							}
 						</div>
 					</section>
 					<section

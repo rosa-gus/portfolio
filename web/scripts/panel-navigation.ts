@@ -144,6 +144,9 @@ export const initializePanelNavigation = ({ initialPanel, onChange }: Navigation
 
       cancelAnimations();
       commit(selected, updateHistory);
+      if (selected.id === "about" || previous.id === "about") {
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
       if (moveFocus) {
         const heading = selected.querySelector<HTMLElement>("h1, h2");
         heading?.setAttribute("tabindex", "-1");
@@ -200,7 +203,12 @@ export const initializePanelNavigation = ({ initialPanel, onChange }: Navigation
     const primary = active.querySelector<HTMLElement>(
       '[data-scroll-area][data-axis="vertical"] > [data-scroll-area-viewport]',
     );
-    return primary && canScrollInDirection(primary, direction) ? primary : null;
+    if (primary && canScrollInDirection(primary, direction)) return primary;
+
+    const page = document.scrollingElement;
+    return active.id === "about" && page && canScrollInDirection(page, direction)
+      ? page
+      : null;
   };
 
   document.addEventListener(

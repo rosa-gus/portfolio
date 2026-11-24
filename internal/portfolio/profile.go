@@ -51,6 +51,7 @@ type ProfileCareerEntry struct {
 
 type ProfileAbout struct {
 	Heading    string            `json:"heading"`
+	Lead       string            `json:"lead"`
 	Paragraphs []string          `json:"paragraphs"`
 	Media      ProfileMediaStudy `json:"media"`
 }
