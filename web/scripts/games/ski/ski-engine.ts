@@ -45,7 +45,9 @@ export type SkiEvent =
   | { type: "yeti-explanation" }
   | { type: "yeti-windup" }
   | { type: "yeti-tired" }
+  | { type: "blizzard-start" | "blizzard-thunder"; thunder: SkiThunder }
   | { type: "slalom-start"; level: number };
+type SkiThunder = 0 | 1 | 2;
 type SkiYetiClue = "tracks" | "glimpse" | "step";
 type SkiGlimpse = {
   treeId: number;
@@ -112,6 +114,16 @@ export const SKI_YETI_GLIMPSE_DURATION = 1.2;
 export const SKI_FIRST_SLALOM = 700;
 export const SKI_NORMAL_INTERVAL = 900;
 export const SKI_SLALOM_INTERVAL = 1800;
+export const SKI_BLIZZARD_MIN_DURATION = 20;
+export const SKI_BLIZZARD_MAX_DURATION = 38;
+export const skiBlizzardFlashAt = (duration: number) => duration / 3;
+const BLIZZARD_THUNDER_DELAY = 0.3;
+const BLIZZARD_CHANCE = 0.35;
+const BLIZZARD_LEAD_DISTANCE = 65;
+const BLIZZARD_WINDOW = 30;
+const BLIZZARD_EXIT_CLEARANCE = 65;
+const BLIZZARD_DEBUG_DELAY = 0.12;
+const MAX_DOWNHILL_SPEED = 360;
 const YETI_CLUE_MAX_LEAD = 340;
 const YETI_VISUAL_CLUE_MIN_LEAD = 90;
 const YETI_ENTRY_Y = 66; // Leave room for the 64-pixel sprite and its stride.
@@ -129,6 +141,8 @@ const YETI_CORRIDOR_TAIL = 106;
 const YETI_EXPLANATION_DELAY = 1.3;
 const clamp = (n: number, low: number, high: number) =>
   Math.max(low, Math.min(high, n));
+const downhillSpeedAt = (distance: number) =>
+  Math.min(MAX_DOWNHILL_SPEED, 240 + distance * 0.05);
 const inYetiCorridor = (distance: number, beat: number) =>
   distance >= beat - YETI_CORRIDOR_LEAD &&
   distance <= beat + YETI_CORRIDOR_TAIL;
@@ -148,6 +162,8 @@ export class SkiEngine {
   escapes = 0;
   nearMisses = 0;
   slalom: SkiSlalom | null = null;
+  blizzard: { age: number; duration: number; thunder: SkiThunder } | null =
+    null;
   /** Events belong to the last simulation step; consumers read them after every tick. */
   events: SkiEvent[] = [];
   private nextYeti = 0;
@@ -156,6 +172,7 @@ export class SkiEngine {
   private yetiClue: SkiYetiClue | null = null;
   private yetiClueLead = 0;
   private yetiScene: SkiYetiScene | null = null;
+  private yetiHasAppeared = false;
   private fallStreak = 0;
   private lastUnbalancedDistance = 0;
   private spawnDistance = 0;
@@ -168,8 +185,11 @@ export class SkiEngine {
   private nextSlalom = SKI_FIRST_SLALOM;
   private normalUntil = 0;
   private recoveryRows = 0;
+  private blizzardRolled = false;
+  private nextBlizzard: { distance: number; thunder: SkiThunder } | null = null;
 
   private readonly random: () => number;
+  private readonly debugBlizzard: boolean;
   readonly layout: SkiLayout;
   readonly width: number;
   readonly height: number;
@@ -177,8 +197,10 @@ export class SkiEngine {
   constructor(
     random: () => number = Math.random,
     layout: SkiLayout = "landscape",
+    debugBlizzard = false,
   ) {
     this.random = random;
+    this.debugBlizzard = debugBlizzard;
     this.layout = layout;
     this.width = layout === "portrait" ? 400 : SKI_WIDTH;
     this.height = layout === "portrait" ? 500 : SKI_HEIGHT;
@@ -206,9 +228,13 @@ export class SkiEngine {
     this.yeti = null;
     this.glimpse = null;
     this.yetiScene = null;
+    this.yetiHasAppeared = false;
     this.fallStreak = 0;
     this.lastUnbalancedDistance = 0;
     this.slalom = null;
+    this.blizzard = null;
+    this.blizzardRolled = this.debugBlizzard;
+    this.nextBlizzard = this.debugBlizzard ? { distance: 0, thunder: 0 } : null;
     this.nextSlalom = SKI_FIRST_SLALOM;
     this.normalUntil = 0;
     this.recoveryRows = 0;
@@ -287,6 +313,7 @@ export class SkiEngine {
       };
     }
     this.yeti = enemy;
+    this.yetiHasAppeared = true;
     this.events.push({
       type: "yeti-appear",
       x: enemy.x,
@@ -300,7 +327,8 @@ export class SkiEngine {
     if (this.balance) this.lastUnbalancedDistance = this.distance;
     if (this.fallStreak >= YETI_FALL_THRESHOLD) {
       // Let a committed encounter wait through recovery and the end of a course.
-      if (this.balance || this.slalom || this.recoveryRows > 0) return;
+      if (this.balance || this.slalom || this.blizzard || this.recoveryRows > 0)
+        return;
       this.fallStreak = 0;
       if (!this.yeti) {
         this.yetiScene = null;
@@ -317,6 +345,7 @@ export class SkiEngine {
     if (
       (this.yeti && this.yeti.attack.kind !== "standing") ||
       this.slalom ||
+      this.blizzard ||
       this.distance < this.normalUntil
     )
       return;
@@ -339,6 +368,81 @@ export class SkiEngine {
       this.yetiClue = null;
       this.events.push({ type: "yeti-distant-step" });
     }
+  }
+
+  private scheduleBlizzard() {
+    if (this.blizzardRolled) return;
+    this.blizzardRolled = true;
+    const roll = this.random() / BLIZZARD_CHANCE;
+    if (roll < 1) {
+      this.nextBlizzard = {
+        distance: this.distance + BLIZZARD_LEAD_DISTANCE,
+        thunder: roll < 1 / 3 ? 0 : roll < 2 / 3 ? 1 : 2,
+      };
+    }
+  }
+
+  private updateBlizzard() {
+    if (this.blizzard) {
+      const { age, duration, thunder } = this.blizzard;
+      const thunderAt = skiBlizzardFlashAt(duration) + BLIZZARD_THUNDER_DELAY;
+      this.blizzard.age += SKI_STEP;
+      if (age < thunderAt && this.blizzard.age >= thunderAt)
+        this.events.push({ type: "blizzard-thunder", thunder });
+      if (this.blizzard.age + 1e-9 >= duration) this.blizzard = null;
+      return;
+    }
+    const pending = this.nextBlizzard;
+    if (!pending || this.distance < pending.distance) return;
+    if (this.debugBlizzard) {
+      if (this.elapsed < BLIZZARD_DEBUG_DELAY) return;
+    } else {
+      if (this.distance > pending.distance + BLIZZARD_WINDOW) {
+        this.nextBlizzard = null;
+        return;
+      }
+      if (
+        this.slalom ||
+        this.yeti ||
+        this.glimpse ||
+        this.balance ||
+        this.fallStreak >= YETI_FALL_THRESHOLD ||
+        this.recoveryRows > 0
+      )
+        return;
+    }
+    this.nextBlizzard = null;
+    const scene = this.yetiScene;
+    const firstCue = Math.min(
+      scene?.beats[0] ?? Infinity,
+      this.nextYeti - YETI_CLUE_MAX_LEAD,
+    );
+    if (scene?.pending || scene?.heard || firstCue <= this.distance) return;
+
+    // Averaging two draws makes shorter and longer storms uncommon.
+    const duration =
+      SKI_BLIZZARD_MIN_DURATION +
+      Math.round(
+        ((SKI_BLIZZARD_MAX_DURATION - SKI_BLIZZARD_MIN_DURATION) *
+          (this.random() + this.random())) /
+          2,
+      );
+    const maxTravel = duration * MAX_DOWNHILL_SPEED * SKI_METERS_PER_PIXEL;
+    const maxSpeed = downhillSpeedAt(this.distance + maxTravel);
+    const clearUntil =
+      this.distance +
+      duration * maxSpeed * SKI_METERS_PER_PIXEL +
+      BLIZZARD_EXIT_CLEARANCE;
+    // Move the Yeti cues and next course together to preserve their spacing.
+    const delay = Math.max(0, clearUntil - firstCue);
+    this.nextYeti += delay;
+    this.nextSlalom = Math.max(this.nextSlalom + delay, clearUntil);
+    if (scene && delay > 0) {
+      const [first, second, third] = scene.beats;
+      scene.beats = [first + delay, second + delay, third + delay];
+    }
+    this.blizzard = { age: 0, duration, thunder: pending.thunder };
+    this.events.push({ type: "blizzard-start", thunder: pending.thunder });
   }
 
   private get frontYetiY() {
@@ -372,6 +476,7 @@ export class SkiEngine {
       this.glimpse = null;
       this.yetiClue = null;
       enemy.attack = { kind: "head-on" };
+      this.yetiHasAppeared = true;
       this.events.push({
         type: "yeti-appear",
         x: enemy.x,
@@ -455,6 +560,7 @@ export class SkiEngine {
   private prepareSlalom() {
     if (
       this.slalom ||
+      this.blizzard ||
       this.yeti ||
       this.glimpse ||
       this.fallStreak >= YETI_FALL_THRESHOLD ||
@@ -832,7 +938,7 @@ export class SkiEngine {
         };
       } else if (balance.ticks >= BALANCE_TICKS) {
         this.balance = { pose: "fall", side: balance.side, ticks: 0 };
-        this.fallStreak++;
+        if (this.yetiHasAppeared) this.fallStreak++;
         this.events.push({
           type: "fall",
           side: balance.side,
@@ -875,7 +981,7 @@ export class SkiEngine {
     const speedFactor = this.advanceBalance(this.steer(input));
     // Heading persists when controls are released. Gravity favors the fall line.
     const downhill = Math.max(0, Math.cos(this.player.heading));
-    const base = Math.min(360, 240 + this.distance * 0.05);
+    const base = downhillSpeedAt(this.distance);
     this.speed = base * (0.35 + 0.65 * downhill) * speedFactor;
     this.velocity = {
       x: Math.sin(this.player.heading) * this.speed,
@@ -919,6 +1025,7 @@ export class SkiEngine {
           };
         }
         this.recoveryRows = 3;
+        this.scheduleBlizzard();
         this.events.push({
           type: "slalom-end",
           x: this.player.x,
@@ -1007,6 +1114,7 @@ export class SkiEngine {
         }
       }
     }
+    this.updateBlizzard();
     this.updateYetiEntrance();
     if (this.yeti) {
       const enemy = this.yeti;

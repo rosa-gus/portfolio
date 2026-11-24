@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
+import { cancelWindowShake } from "../../web/scripts/window-motion.ts";
 
 const source = stripTypeScriptTypes(readFileSync(new URL("../../web/scripts/windows.ts", import.meta.url), "utf8")
   .replace(/^import .*;\n/gm, "").replace("export const initializeWindows", "globalThis.initializeWindows"));
@@ -81,7 +82,7 @@ const scene = ({ hasRecord = false, href = "https://example.com/" } = {}) => {
     history: { state: {}, replaceState(_state, _title, url) { window.location.href = url.href; } },
   });
   const scope = { document, window, Event, Element, URL, URLSearchParams,
-    initializeWindowLayout() {}, fitWindowMedia() {},
+    initializeWindowLayout() {}, fitWindowMedia() {}, cancelWindowShake,
     dismissWindowHelp() { if (!help) return false; help = false; return true; },
   };
   runInNewContext(source, scope);

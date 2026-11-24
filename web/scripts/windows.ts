@@ -1,4 +1,5 @@
 import { dismissWindowHelp, fitWindowMedia, initializeWindowLayout } from "./window-layout";
+import { cancelWindowShake } from "./window-motion";
 
 type WindowFeature = (dialog: HTMLDialogElement) => { open: () => void };
 type WindowOptions = {
@@ -63,6 +64,7 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
       if (event.target instanceof Element && event.target.closest("a, button, input, select, textarea")) return;
       event.preventDefault();
       stopDrag();
+      cancelWindowShake(dialog);
       dialog.classList.add("is-dragging");
       const rect = dialog.getBoundingClientRect();
       positionWindow(dialog, rect.left, rect.top);
@@ -105,6 +107,7 @@ export const initializeWindows = ({ beforeOpen, loadFeatures }: WindowOptions = 
   const close = (restoreFocus = true, immediate = false) => {
     if (!active) return;
     stopDrag();
+    cancelWindowShake(active);
     if (!closing) active.dispatchEvent(new Event("popup:closing"));
     returnFocus = restoreFocus;
     if (immediate || reducedMotion.matches) {

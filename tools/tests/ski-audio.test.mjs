@@ -3,11 +3,12 @@ import test from "node:test";
 import { createSkiAudio } from "../../web/scripts/games/ski/ski-audio.ts";
 import { yetiStride } from "../../web/scripts/games/ski/ski-yeti.ts";
 
-const withAudioMock = async run => {
+const withAudioMock = async (run, rejectedAsset) => {
   const originalAudio = globalThis.AudioContext;
   const originalFetch = globalThis.fetch;
   const sources = [];
   const filters = [];
+  const requests = [];
   const parameter = () => ({ value: 0, targets: [], setTargetAtTime(value, _time, easing) {
     this.target = value;
     this.easing = easing;
@@ -19,7 +20,11 @@ const withAudioMock = async run => {
     state = "running";
     destination = node();
     resume() { return Promise.resolve(); }
-    decodeAudioData(bytes) { return Promise.resolve(new TextDecoder().decode(bytes)); }
+    async decodeAudioData(bytes) {
+      const asset = new TextDecoder().decode(bytes);
+      if (rejectedAsset && asset.endsWith(rejectedAsset)) throw new Error("Unsupported audio");
+      return asset;
+    }
     createGain() { return { ...node(), gain: parameter() }; }
     createStereoPanner() { return { ...node(), pan: parameter() }; }
     createBiquadFilter() {
@@ -33,15 +38,32 @@ const withAudioMock = async run => {
       return source;
     }
   };
-  globalThis.fetch = async url => ({ ok: true, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer });
+  globalThis.fetch = async url => {
+    requests.push(String(url));
+    return { ok: true, arrayBuffer: async () => new TextEncoder().encode(String(url)).buffer };
+  };
   const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
   try {
-    await run({ audio: createSkiAudio(yetiStride), sources, filters, flush });
+    await run({ audio: createSkiAudio(yetiStride), sources, filters, requests, flush });
   } finally {
     globalThis.AudioContext = originalAudio;
     globalThis.fetch = originalFetch;
   }
 };
+
+test("a blizzard loads only its thunder and plays it on the thunder cue", () =>
+  withAudioMock(async ({ audio, sources, requests, flush }) => {
+    audio.unlock();
+    assert.equal(requests.some(url => url.includes("thunder-")), false);
+    audio.events([{ type: "blizzard-start", thunder: 2 }]);
+    await flush();
+    assert.deepEqual(requests.filter(url => url.includes("thunder-")).map(url => url.split("/").at(-1)), ["thunder-3.ogg"]);
+    assert.equal(sources.length, 0);
+    audio.events([{ type: "blizzard-thunder", thunder: 2 }]);
+    await flush();
+    assert.ok(sources[0].buffer.endsWith("/thunder-3.ogg"));
+    assert.deepEqual(sources[0].startArgs, [0, 0.12, 2.25]);
+  }));
 
 test("the three cracks share the branch and distant step, with snow on the third", () =>
   withAudioMock(async ({ audio, sources, filters, flush }) => {
@@ -52,18 +74,27 @@ test("the three cracks share the branch and distant step, with snow on the third
       audio.events([{ type: "yeti-crack", count, side }]);
       await flush();
       const [crack, step, snow] = sources.slice(from);
-      assert.ok(crack.buffer.endsWith("/yeti-crack.wav"));
+      assert.ok(crack.buffer.endsWith("/yeti-crack.ogg"));
       assert.deepEqual(crack.startArgs, [0, 1.74, 0.36]);
       assert.ok(step.buffer.endsWith("/yeti-step.ogg"));
       assert.deepEqual(step.startArgs, [0.12, 0, 0.17]);
       assert.equal(Math.sign(step.output.output.pan.value), side);
       if (count === 3) {
-        assert.ok(snow.buffer.endsWith("/ski-slide-loop.wav"));
+        assert.ok(snow.buffer.endsWith("/ski-slide-loop.ogg"));
         assert.equal(snow.startArgs[0], 0.2);
       } else assert.equal(snow, undefined);
     }
     assert.deepEqual(filters.map(filter => [filter.type, filter.frequency.value]), [["lowpass", 1600]]);
   }));
+
+test("a converted cue falls back to WAV when its Opus file cannot be decoded", () =>
+  withAudioMock(async ({ audio, sources, flush }) => {
+    audio.unlock();
+    await flush();
+    audio.events([{ type: "yeti-crack", count: 1, side: -1 }]);
+    await flush();
+    assert.ok(sources[0].buffer.endsWith("/source/yeti-crack.wav"));
+  }, "/yeti-crack.ogg"));
 
 test("sliding stays quiet, follows speed, ducks for cues, and cancels pending starts", () =>
   withAudioMock(async ({ audio, sources, filters, flush }) => {
@@ -107,7 +138,7 @@ test("sliding stays quiet, follows speed, ducks for cues, and cancels pending st
     const [impact, fallScrape] = sources.slice(firstFallCue);
     assert.ok(impact.buffer.endsWith("/impact-fall.ogg"));
     assert.deepEqual(impact.startArgs, []);
-    assert.ok(fallScrape.buffer.endsWith("/ski-slide-loop.wav"));
+    assert.ok(fallScrape.buffer.endsWith("/ski-slide-loop.ogg"));
     assert.deepEqual(fallScrape.startArgs, [0.07, 0, 0.18]);
     audio.events([{ type: "ski-contact" }]);
     await flush();
@@ -201,7 +232,7 @@ test("the appearance lands a heavy step and fatigue plays the breathing recordin
     audio.events([{ type: "yeti-tired" }]);
     await flush();
     const breath = sources.at(-1);
-    assert.ok(breath.buffer.endsWith("/yeti-breath.wav"));
+    assert.ok(breath.buffer.endsWith("/yeti-breath.ogg"));
     assert.deepEqual(breath.startArgs, []);
     audio.stop();
     assert.equal(breath.stopped, true);

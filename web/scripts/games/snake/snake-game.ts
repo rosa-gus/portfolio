@@ -3,6 +3,7 @@ import "../../../styles/components/snake-game.css";
 import { SnakeEngine, type Cell, type Direction } from "./snake-engine";
 import { createSnakeAudio } from "./snake-audio";
 import { migrateStorageValue, storageKey } from "../../storage";
+import { cancelWindowShake, shakeWindow } from "../../window-motion";
 
 export const createSnakeGame = (dialog: HTMLDialogElement) => {
   const canvas = dialog.querySelector<HTMLCanvasElement>("[data-snake-canvas]");
@@ -36,17 +37,8 @@ export const createSnakeGame = (dialog: HTMLDialogElement) => {
   const game = new SnakeEngine();
   let timer = 0;
   let highScore = 0;
-  let shakeTimer = 0;
   let muted = false;
   const audio = createSnakeAudio();
-  const clearShake = () => {
-    window.clearTimeout(shakeTimer);
-    dialog.classList.remove("is-wall-hit");
-  };
-  const shakeOnWallHit = () => {
-    dialog.classList.add("is-wall-hit");
-    shakeTimer = window.setTimeout(clearShake, 280);
-  };
   const highScoreKey = storageKey("snake-highscore");
   try {
     const saved = Number(sessionStorage.getItem(highScoreKey));
@@ -171,7 +163,7 @@ export const createSnakeGame = (dialog: HTMLDialogElement) => {
   const pause = () => {
     stop();
     audio.stop();
-    clearShake();
+    cancelWindowShake(dialog);
     game.pause();
     render();
   };
@@ -186,7 +178,7 @@ export const createSnakeGame = (dialog: HTMLDialogElement) => {
           }
         } else {
           if (event.type === "death" && event.cause === "wall")
-            shakeOnWallHit();
+            shakeWindow(dialog);
           void audio.play(event.type);
         }
       }
@@ -201,7 +193,7 @@ export const createSnakeGame = (dialog: HTMLDialogElement) => {
       audio.unlock();
       if (game.phase !== "paused") {
         audio.stop();
-        clearShake();
+        cancelWindowShake(dialog);
       }
       game.start();
       render();
@@ -223,7 +215,7 @@ export const createSnakeGame = (dialog: HTMLDialogElement) => {
   restart.addEventListener("click", () => {
     stop();
     audio.stop();
-    clearShake();
+    cancelWindowShake(dialog);
     game.reset();
     play();
   });

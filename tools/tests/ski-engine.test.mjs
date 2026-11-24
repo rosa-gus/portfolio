@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SkiEngine, SKI_WIDTH, SKI_MAX_HEADING, SKI_NEAR_MISS_POINTS, SKI_NEAR_MISS_MIN_DESCENT_RATIO, SKI_YETI_ESCAPE_GAP, SKI_NORMAL_INTERVAL, SKI_SLALOM_INTERVAL } from "../../web/scripts/games/ski/ski-engine.ts";
+import { SkiEngine, SKI_WIDTH, SKI_MAX_HEADING, SKI_NEAR_MISS_POINTS, SKI_NEAR_MISS_MIN_DESCENT_RATIO, SKI_YETI_ESCAPE_GAP, SKI_NORMAL_INTERVAL, SKI_SLALOM_INTERVAL, SKI_STEP, skiBlizzardFlashAt } from "../../web/scripts/games/ski/ski-engine.ts";
 
 const neutral = { steer: 0, downhill: false };
 const advance = (game, count, input = neutral) => {
@@ -227,12 +227,55 @@ const startFullFall = game => {
   assert.equal(game.events.filter(event => event.type === "fall").length, 1);
 };
 
+const escapeFirstYeti = game => {
+  game.objects = [];
+  game.nextYeti = game.distance;
+  game.tick();
+  assert.ok(game.events.some(event => event.type === "yeti-appear" && event.y >= 0));
+  game.yeti.y = game.player.y - SKI_YETI_ESCAPE_GAP - 10;
+  game.yeti.age = 6;
+  game.tick();
+  assert.equal(game.escapes, 1);
+  game.nextYeti = Infinity;
+};
+
+test("falls before the first Yeti appearance never contribute to a pursuit", () => {
+  const game = new SkiEngine(() => 0.5);
+  game.start();
+  game.nextSlalom = game.nextYeti = Infinity;
+  for (let fall = 0; fall < 6; fall++) {
+    startFullFall(game);
+    advance(game, 78);
+    assert.equal(game.yeti, null);
+  }
+  escapeFirstYeti(game);
+  for (let fall = 0; fall < 4; fall++) {
+    startFullFall(game);
+    advance(game, 78);
+    assert.equal(game.yeti, null);
+  }
+  startFullFall(game);
+  advance(game, 78);
+  assert.ok(game.yeti?.y < 0);
+
+  game.reset();
+  game.start();
+  game.nextSlalom = game.nextYeti = Infinity;
+  for (let fall = 0; fall < 5; fall++) {
+    startFullFall(game);
+    advance(game, 78);
+    assert.equal(game.yeti, null);
+  }
+});
+
 test("the fifth fall starts an offscreen pursuit only after full recovery", () => {
   for (const [layout, distance] of [["landscape", 0], ["portrait", 6400]]) {
     const game = new SkiEngine(() => 0.5, layout);
     game.start();
     game.distance = distance;
-    game.nextSlalom = game.nextYeti = Infinity;
+    escapeFirstYeti(game);
+    game.nextSlalom = Infinity;
+    game.normalUntil = 0;
     for (let fall = 0; fall < 4; fall++) {
       startFullFall(game);
       advance(game, 78);
@@ -260,14 +303,15 @@ test("the fifth fall starts an offscreen pursuit only after full recovery", () =
       assert.equal(game.events.some(event => event.type === "yeti-appear"), false);
     }
     assert.equal(game.phase, "running");
-    assert.equal(game.escapes, 1);
+    assert.equal(game.escapes, 2);
   }
 });
 
 test("a corrected stumble does not count and a clean stretch clears the fall streak", () => {
   const game = new SkiEngine(() => 0.5);
   game.start();
-  game.nextSlalom = game.nextYeti = Infinity;
+  escapeFirstYeti(game);
+  game.nextSlalom = Infinity;
   const fallAndRecover = () => {
     startFullFall(game);
     advance(game, 78);
@@ -633,6 +677,91 @@ const startSlalom = (distance, random = () => 0.5, layout = "landscape") => {
   return game;
 };
 
+test("normal blizzards roll once after the first slalom and leave space before Yeti clues", () => {
+  for (const layout of ["landscape", "portrait"]) {
+    for (const [roll, durationRoll, expectedDuration] of [[0, 0, 20], [0.349, 0.999, 38], [0.35, 0.5, null]]) {
+      let randomValue = roll;
+      const game = startSlalom(700, () => randomValue, layout);
+      const starts = [];
+      for (let tick = 0; tick < 700 && game.slalom; tick++) {
+        game.objects = [];
+        game.tick();
+        assert.equal(game.blizzard, null);
+      }
+      assert.equal(game.slalom, null);
+      const exit = game.distance;
+      const originalFirstCue = game.yetiScene.beats[0];
+      const originalNextSlalom = game.nextSlalom;
+      randomValue = durationRoll;
+      let thunderAt;
+      let endedAt;
+      while (game.distance < exit + 1600 || game.blizzard) {
+        game.objects = [];
+        const wasBlizzard = Boolean(game.blizzard);
+        game.tick();
+        if (game.events.some(event => event.type === "blizzard-start"))
+          starts.push({ distance: game.distance, duration: game.blizzard.duration, time: game.elapsed });
+        if (wasBlizzard && !game.blizzard) endedAt = game.elapsed;
+        if (game.blizzard) {
+          assert.equal(game.yeti, null);
+          assert.equal(game.slalom, null);
+          assert.equal(game.events.some(event => event.type === "yeti-crack"), false);
+          if (game.events.some(event => event.type === "blizzard-thunder"))
+            thunderAt = game.blizzard.age;
+        }
+      }
+      assert.equal(starts.length, roll < 0.35 ? 1 : 0);
+      if (starts.length) {
+        const [{ distance, duration, time }] = starts;
+        assert.ok(distance >= exit + 65 && distance <= exit + 95);
+        assert.equal(duration, expectedDuration);
+        assert.ok(Math.abs(endedAt - time - duration) <= SKI_STEP);
+        assert.ok(game.yetiScene.beats[0] > originalFirstCue);
+        assert.ok(game.nextSlalom > originalNextSlalom);
+        assert.ok(Math.abs(thunderAt - skiBlizzardFlashAt(duration) - 0.3) <= SKI_STEP);
+      } else {
+        assert.equal(game.yetiScene.beats[0], originalFirstCue);
+      }
+      assert.equal(game.blizzard, null);
+    }
+  }
+});
+
+test("debug begins immediately after starting, freezes on pause, and plays one thunder", () => {
+  for (const [roll, expected] of [[0, 20], [0.5, 29], [0.999, 38]]) {
+    const game = new SkiEngine(() => roll, "landscape", true);
+    game.start();
+    advance(game, 8);
+    assert.equal(game.blizzard?.duration, expected);
+  }
+  const game = new SkiEngine(() => 0.5, "landscape", true);
+  game.start();
+  const cues = [];
+  for (let tick = 0; tick < 12 && !game.blizzard; tick++) {
+    game.tick();
+    cues.push(...game.events);
+  }
+  assert.equal(game.blizzard?.age, 0);
+  const { duration } = game.blizzard;
+  assert.ok(game.elapsed <= 0.15);
+  game.pause();
+  advance(game, 60);
+  assert.equal(game.blizzard.age, 0);
+  game.start();
+  for (let tick = 0; tick < Math.ceil((duration + 0.2) / SKI_STEP); tick++) {
+    game.objects = [];
+    game.tick();
+    cues.push(...game.events);
+    if (game.events.some(event => event.type === "blizzard-thunder"))
+      assert.ok(Math.abs(game.blizzard.age - skiBlizzardFlashAt(duration) - 0.3) <= SKI_STEP);
+  }
+  assert.equal(game.blizzard, null);
+  assert.deepEqual(cues.filter(event => event.type.startsWith("blizzard")), [
+    { type: "blizzard-start", thunder: 0 },
+    { type: "blizzard-thunder", thunder: 0 },
+  ]);
+});
+
 test("slalom starts after the tutorial, previews its gates, and increases difficulty by distance", () => {
   const tutorial = startSlalom(200);
   assert.equal(tutorial.slalom, null);
@@ -722,7 +851,12 @@ test("finishing slalom reserves normal terrain before the next challenge", () =>
 });
 
 test("a fall-streak pursuit waits until the skier is past the slalom exit", () => {
-  const game = startSlalom(700);
+  const game = new SkiEngine(() => 0.5);
+  game.start();
+  escapeFirstYeti(game);
+  game.distance = game.normalUntil;
+  game.spawnDistance = 135;
+  game.tick();
   for (let fall = 0; fall < 5; fall++) {
     startFullFall(game);
     advance(game, 78);

@@ -14,6 +14,13 @@ import {
 import { drawSkierPose, prepareSkierPose, type SkiPose } from "./ski-skier";
 import { drawSkiTerrain } from "./ski-terrain";
 import { drawYetiRun, yetiBlinkOpacity } from "./ski-yeti";
+import {
+  blizzardFrame,
+  blizzardSceneryOpacity,
+  drawBlizzardHaze,
+  drawBlizzardSnow,
+  drawLightning,
+} from "./ski-blizzard";
 
 const glidingNames = [
   "skier-front",
@@ -201,6 +208,11 @@ export const drawSki = (
   const style = getComputedStyle(canvas);
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, game.width, game.height);
+  const stormAge = game.blizzard?.age ?? 0;
+  const storm = game.blizzard
+    ? blizzardFrame(game.blizzard, reducedMotion)
+    : null;
+  const dark = style.colorScheme === "dark";
   if (!reducedMotion) {
     drawSkiTerrain(
       context,
@@ -217,6 +229,18 @@ export const drawSki = (
       feedback.windSnow,
       style.getPropertyValue("--ski-wind-tone").trim(),
       Math.max(0, 1 - feedback.endAge / SKI_CAPTURE_DURATION),
+    );
+  }
+  if (storm) {
+    drawLightning(context, storm.flash);
+    drawBlizzardSnow(
+      context,
+      stormAge,
+      storm.strength,
+      storm.flash,
+      dark,
+      false,
+      reducedMotion,
     );
   }
   drawSkiTrails(
@@ -247,18 +271,34 @@ export const drawSki = (
       ? Math.sin(game.elapsed * 48) * feedback.impact * 12
       : 0;
   const playerX = game.player.x + wobble;
+  const sceneryOpacity = (x: number, y: number) =>
+    storm
+      ? blizzardSceneryOpacity(
+          x - game.player.x,
+          y - game.player.y,
+          game.velocity.y,
+          storm,
+        )
+      : 1;
   // The contact line sits three source pixels below the top of each shadow.
   for (const { kind, x, y } of game.objects) {
-    if (kind !== "tracks") draw(`shadow-${kind}`, x, y, 3);
+    if (kind !== "tracks") {
+      if (storm) context.globalAlpha = sceneryOpacity(x, y);
+      draw(`shadow-${kind}`, x, y, 3);
+    }
   }
+  if (storm) context.globalAlpha = 1;
   draw("shadow-skis", playerX, game.player.y, 3);
   const scene: { y: number; render: () => void }[] = game.objects.map(
     (object) => ({
       y: object.y,
       render: () => {
-        if (object.kind === "tracks") context.globalAlpha = 0.85;
+        const tracks = object.kind === "tracks";
+        if (storm || tracks)
+          context.globalAlpha =
+            sceneryOpacity(object.x, object.y) * (tracks ? 0.85 : 1);
         draw(object.kind, object.x, object.y);
-        if (object.kind === "tracks") context.globalAlpha = 1;
+        if (storm || tracks) context.globalAlpha = 1;
       },
     }),
   );
@@ -409,6 +449,18 @@ export const drawSki = (
       context.fillRect(0, 0, game.width, game.height);
       context.globalAlpha = 1;
     }
+  }
+  if (storm) {
+    drawBlizzardHaze(context, game.player, game.velocity.y, storm, dark);
+    drawBlizzardSnow(
+      context,
+      stormAge,
+      storm.strength,
+      storm.flash,
+      dark,
+      true,
+      reducedMotion,
+    );
   }
   context.font = `500 13px ${style.getPropertyValue("--font-mono").trim() || "monospace"}`;
   context.textAlign = "center";

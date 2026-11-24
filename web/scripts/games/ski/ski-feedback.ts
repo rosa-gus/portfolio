@@ -274,6 +274,19 @@ export class SkiFeedback {
     }
     for (const event of events) {
       switch (event.type) {
+        case "blizzard-start":
+          this.captions = this.captions.filter(
+            (caption) => !caption.announcement,
+          );
+          this.captions.push({
+            text: "você entrou na nevasca.",
+            x: game.width / 2,
+            y: 42,
+            age: 0,
+            life: 2.2,
+            announcement: true,
+          });
+          break;
         case "slalom-start":
           this.captions.push({
             text: "slalom à frente.",
@@ -353,7 +366,7 @@ export class SkiFeedback {
           const speaks = explains || event.count === 3;
           this.captions.push({
             text: explains
-              ? "“Deve ser um criossismo.”"
+              ? "“Deve ser o gelo.”"
               : speaks
                 ? "“terceira vez que ouço isso.”"
                 : "[estalo ao longe]",
