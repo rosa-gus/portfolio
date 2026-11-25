@@ -8,7 +8,7 @@ export const initializePanelSwipe = ({ stage, panels, navigate }: SwipeOptions) 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const mobileLayout = window.matchMedia("(max-width: 620px)");
   const commandLinks = Array.from(
-    stage.closest(".site-shell")?.querySelectorAll<HTMLAnchorElement>("[data-panel-target]") ?? [],
+    stage.closest(".site-shell")?.querySelectorAll<HTMLAnchorElement>(".command-bar [data-panel-target]") ?? [],
   );
   let previewLink: HTMLAnchorElement | undefined;
   let start: { x: number; y: number; id: number } | null = null;

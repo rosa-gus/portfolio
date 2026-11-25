@@ -29,16 +29,6 @@
     grid-template-columns: 1fr;
   }
 
-  .career-panel {
-    grid-template-rows: auto minmax(0, 1fr);
-    overflow: hidden;
-  }
-
-  .career-record {
-    align-self: start;
-    justify-self: stretch;
-  }
-
   .about-panel {
     --home-panel-padding-start: clamp(11rem, 41dvh, 24rem);
     align-content: start;
@@ -89,13 +79,9 @@
   }
 
   .career-panel {
-    grid-template-rows: max-content max-content;
-    overflow: visible;
-  }
-
-  .career-panel,
-  .career-panel > .editorial-heading {
+    grid-template-rows: auto;
     align-content: start;
+    overflow: visible;
   }
 
   .career-panel > .scroll-area {
@@ -139,10 +125,6 @@
     line-height: 1.25rem;
   }
 
-  .contact-panel {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
   .projects-panel,
   .information-panel {
     gap: 1.5rem;
@@ -173,11 +155,6 @@
     align-self: baseline;
   }
 
-  .contact-panel__body {
-    align-self: end;
-    width: min(100%, 29rem);
-  }
-
   .section-heading--primary {
     padding-top: 0;
   }
@@ -194,12 +171,7 @@
 
   .career-entry,
   .career-record__practice {
-    grid-template-columns: 1fr;
-  }
-
-  .career-entry,
-  .career-record__practice {
-    gap: 0.55rem;
+    row-gap: 0.55rem;
   }
 
   .career-entry__period {
@@ -207,6 +179,9 @@
   }
 
   .career-record {
+    --career-columns: minmax(0, 1fr);
+    --career-column-gap: 0px;
+    align-self: start;
     padding-bottom: 1rem;
   }
 

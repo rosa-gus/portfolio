@@ -37,8 +37,11 @@
   padding-top: 0;
 }
 
-.contact-panel > .editorial-heading {
-  gap: 0.75rem;
+.career-record__title,
+.contact-panel__title {
+  font: 400 clamp(2rem, 3.1vw, 3rem) / 1.05 var(--font-serif);
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
 }
 
 .contact-panel__signature {
@@ -48,6 +51,11 @@
 
 .contact-panel__name-accent {
   color: light-dark(#8c4d4d, #edd4d4);
+}
+
+.career-panel {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .career-panel > .scroll-area {
@@ -62,17 +70,40 @@
 }
 
 .career-record {
-  align-self: center;
+  --career-columns: minmax(7rem, 0.42fr) minmax(0, 1.58fr);
+  --career-column-gap: clamp(1rem, 2vw, 2rem);
+  align-self: safe center;
   justify-self: center;
-  width: min(100%, 60rem);
+  width: min(100%, 52rem);
 }
 
-.career-record__header {
+.career-entry,
+.career-record__practice {
+  display: grid;
+  grid-template-columns: var(--career-columns);
+  column-gap: var(--career-column-gap);
+}
+
+.career-record__title {
+  max-width: 24ch;
+  margin-bottom: clamp(1.25rem, 3vh, 2rem);
+}
+
+.career-record__rule {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.career-record__index {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding-block: 0.75rem;
-  border-top: 1px solid var(--color-border-strong);
+  padding-block: 0.35rem 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .career-record__list {
@@ -82,9 +113,6 @@
 }
 
 .career-entry {
-  display: grid;
-  grid-template-columns: minmax(7rem, 0.42fr) minmax(0, 1.58fr);
-  gap: clamp(1rem, 2vw, 2rem);
   padding: clamp(1rem, 2.2vh, 1.5rem) 0;
   border-bottom: 1px solid var(--color-border-subtle);
 }
@@ -134,9 +162,6 @@
 }
 
 .career-record__practice {
-  display: grid;
-  grid-template-columns: minmax(7rem, 0.42fr) minmax(0, 1.58fr);
-  gap: clamp(1rem, 2vw, 2rem);
   padding-top: 0.85rem;
 }
 
@@ -292,6 +317,22 @@
 .about-panel__profession {
   color: var(--color-text-on-media-muted);
   font-size: 0.9375rem;
+}
+
+.about-panel__contact {
+  width: fit-content;
+  margin-block: 0.4rem 0.35rem;
+  color: var(--color-text-on-media-muted);
+}
+
+.about-panel__contact:hover {
+  color: var(--color-text-on-media);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.about-panel__contact:focus-visible {
+  outline-color: var(--color-text-on-media);
 }
 
 .about-panel__title {
@@ -469,6 +510,10 @@
 .contact-panel {
   position: relative;
   isolation: isolate;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  padding-block: clamp(1rem, 3vh, 2rem);
+  overflow-y: auto;
   color: var(--color-text-primary);
 }
 
@@ -481,31 +526,22 @@
   pointer-events: none;
 }
 
-.contact-panel .editorial-heading,
 .contact-panel__body {
   position: relative;
   z-index: 1;
-}
-
-.contact-panel .text-action {
-  color: var(--color-text-primary);
-}
-
-.contact-panel__body {
-  align-self: end;
-  justify-self: end;
+  align-self: safe center;
+  justify-self: center;
   display: grid;
-  gap: clamp(var(--space-5), 2.5vh, var(--space-8));
-  width: min(100%, 48rem);
+  gap: clamp(1rem, 2.5vh, 1.5rem);
+  width: min(100%, 34.375rem);
+}
+
+.contact-panel__heading {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .contact-panel__correspondence {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border-strong);
   color: var(--color-text-muted);
 }
 
@@ -555,10 +591,6 @@
 .contact-panel__channels a:hover {
   text-decoration: underline;
   text-underline-offset: 0.25em;
-}
-
-.contact-panel__send {
-  justify-self: start;
 }
 
 .contact-panel__status {

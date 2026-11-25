@@ -1,5 +1,11 @@
 export const storageKey = (key: string) => `portfolio:v1:${key}`;
 
+const obsoleteStorageKeys = ["intro-seen", storageKey("intro-seen")];
+
+export const cleanStorage = (storage: Storage) => {
+  for (const key of obsoleteStorageKeys) storage.removeItem(key);
+};
+
 export const migrateStorageValue = (
   target: Storage,
   key: string,

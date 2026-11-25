@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { migrateStorageValue, storageKey } from "../../web/scripts/storage.ts";
+import { cleanStorage, migrateStorageValue, storageKey } from "../../web/scripts/storage.ts";
 
 const memoryStorage = () => {
   const values = new Map();
@@ -10,6 +10,21 @@ const memoryStorage = () => {
     removeItem: (key) => values.delete(key),
   };
 };
+
+test("the clean list removes obsolete intro keys while preserving other values", () => {
+  const storage = memoryStorage();
+  storage.setItem("intro-seen", "1");
+  storage.setItem(storageKey("intro-seen"), "1");
+  storage.setItem(storageKey("ui-theme"), "dark");
+  storage.setItem(storageKey("asterisks"), "1");
+
+  cleanStorage(storage);
+
+  assert.equal(storage.getItem("intro-seen"), null);
+  assert.equal(storage.getItem(storageKey("intro-seen")), null);
+  assert.equal(storage.getItem(storageKey("ui-theme")), "dark");
+  assert.equal(storage.getItem(storageKey("asterisks")), "1");
+});
 
 test("legacy preferences move to the versioned key", () => {
   const storage = memoryStorage();

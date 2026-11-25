@@ -18,10 +18,14 @@ import { initializeScrollAreas } from "./scroll-area";
 import { initializeProjectArchive } from "./project-archive";
 import { initializePanelNavigation } from "./panel-navigation";
 import { initializeDocuments } from "./documents";
-import { initializeGameCredits } from "./game-credits";
+import { initializeTextLeaders } from "./text-leaders";
 import { initializeWindows } from "./windows";
-import { migrateStorageValue, storageKey } from "./storage";
+import { cleanStorage, migrateStorageValue, storageKey } from "./storage";
 import { initializeSociety } from "./society";
+
+try {
+  cleanStorage(localStorage);
+} catch {}
 
 initializeTooltips();
 initializeContactCopy();
@@ -32,7 +36,7 @@ initializeProjectStories();
 initializeScrollAreas();
 const projectArchive = initializeProjectArchive();
 initializeDocuments();
-initializeGameCredits();
+initializeTextLeaders();
 const windows = initializeWindows({
   beforeOpen: () => projectArchive.close(false, true),
   loadFeatures: {
@@ -276,7 +280,7 @@ initializePanelNavigation({
     }
     if (panelID === "about") activateAboutMedia();
     else deactivateAboutMedia();
-    if (panelID === "case") stopSociety = initializeSociety();
+    if (panelID === "case" && !initialArchiveItem) stopSociety = initializeSociety();
   },
 });
 

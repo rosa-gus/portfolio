@@ -44,6 +44,7 @@ test("society continues beyond three seconds, hides and reappears without crowdi
     for (let time = 0; time < 120_000; time += 50) {
       society.step(50);
       assert.equal(society.finished, false);
+      assert.ok(society.entities.filter((entity) => entity.state !== "hidden" && !entity.peeking).length <= 4);
       for (const entity of society.entities) {
         seen.add(entity.state);
         assert.ok(Number.isFinite(entity.x) && Number.isFinite(entity.y));
@@ -57,7 +58,6 @@ test("society continues beyond three seconds, hides and reappears without crowdi
       for (const surface of environment.surfaces.filter((rect) => rect.shelter)) {
         assert.ok(society.entities.filter((entity) => entity.home === surface.id).length <= 2);
       }
-      if (time < 30_000) assert.equal(society.speech, null);
     }
   }
   for (const state of ["walk", "rest", "enter", "hidden", "leave", "peek", "observe"]) assert.ok(seen.has(state), state);
@@ -84,6 +84,179 @@ const holdOthers = (society, keep) => {
   }
 };
 
+test("gliding accelerates across waypoints and slows down only near the destination", () => {
+  const society = createSociety({ width: 900, height: 600, surfaces: [] }, seededRandom(9));
+  holdOthers(society, []);
+  const [traveller, ...others] = society.entities;
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 100 + index * 60 }));
+  Object.assign(traveller, {
+    x: 20, y: 300, state: "walk", speed: 40,
+    path: [{ x: 60, y: 300 }, { x: 140, y: 300 }],
+  });
+  const moves = [];
+  for (let time = 0; traveller.path.length && time < 6000; time += 50) {
+    const from = traveller.x;
+    society.step(50);
+    moves.push({ from, distance: traveller.x - from });
+  }
+
+  assert.equal(traveller.x, 140);
+  const afterWaypoint = moves.find(({ from }) => from === 60).distance;
+  assert.ok(afterWaypoint > 2 * moves[0].distance);
+  const nearArrival = moves.find(({ from }) => from > 135).distance;
+  assert.ok(nearArrival < afterWaypoint / 2);
+});
+
+test("one resident can leave when another hides, even with multiple residents waiting", () => {
+  const extraShelters = [
+    { id: "folder-c", x: 110, y: 380, width: 60, height: 55, shelter: true },
+    { id: "folder-d", x: 340, y: 460, width: 60, height: 55, shelter: true },
+    { id: "folder-e", x: 520, y: 475, width: 60, height: 55, shelter: true },
+  ];
+  const scene = { ...environment, surfaces: [...environment.surfaces, ...extraShelters] };
+  const society = createSociety(scene, seededRandom(4));
+  assert.ok(society.entities.every((entity) => entity.state === "hidden"));
+  holdOthers(society, []);
+  const [entering, , , , firstWaiting, secondWaiting] = society.entities;
+  Object.assign(firstWaiting, { state: "hidden", until: 0, home: "folder-a", x: 178, y: 229, timidity: 0 });
+  Object.assign(secondWaiting, { state: "hidden", until: 0, home: "folder-b", x: 640, y: 342, timidity: 0 });
+  const outside = () => society.entities.filter((entity) => entity.state !== "hidden");
+
+  society.step(50);
+  assert.equal(firstWaiting.state, "hidden");
+  assert.equal(secondWaiting.state, "hidden");
+  Object.assign(entering, { state: "enter", until: 100, home: "folder-c", x: 140, y: 407 });
+  society.step(50);
+  assert.equal(entering.state, "hidden");
+  assert.equal(entering.opacity, 0);
+  assert.equal(firstWaiting.state, "leave");
+  assert.equal(secondWaiting.state, "hidden");
+  assert.equal(outside().length, 4);
+
+  society.remap({ ...scene, surfaces: [] });
+  society.step(50);
+  assert.equal(outside().length, 4);
+  assert.equal(secondWaiting.state, "hidden");
+});
+
+test("a resident takes a clear first route toward a neighbour after fully leaving", () => {
+  const society = createSociety(environment, seededRandom(9));
+  holdOthers(society, []);
+  const [resident, neighbour, ...others] = society.entities;
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 350 + index * 60 }));
+  const exit = { x: 245, y: 225 };
+  Object.assign(resident, {
+    x: 175, y: 225, state: "leave", since: 0, until: 50,
+    home: "folder-a", path: [exit],
+  });
+  Object.assign(neighbour, { x: 330, y: 258 });
+
+  society.step(50);
+  assert.equal(resident.needsFirstWalk, true);
+  assert.equal(resident.state, "rest");
+  for (let time = 50; time < 400; time += 50) society.step(50);
+  assert.equal(resident.state, "walk");
+  assert.equal(resident.partner, null);
+
+  for (let time = 400; resident.needsFirstWalk && time < 6000; time += 50) {
+    society.step(50);
+    assert.ok(!environment.surfaces.some((surface) => inside(resident, surface)));
+  }
+  assert.equal(resident.needsFirstWalk, false);
+  assert.ok(Math.hypot(resident.x - exit.x, resident.y - exit.y) >= 40);
+  assert.ok(Math.hypot(resident.x - neighbour.x, resident.y - neighbour.y) <
+    Math.hypot(exit.x - neighbour.x, exit.y - neighbour.y));
+});
+
+test("a resident waits ten seconds after fully leaving before seeking shelter", () => {
+  const seeded = seededRandom(9);
+  let deliberate = false;
+  const society = createSociety(environment, () => deliberate ? 0.02 : seeded());
+  holdOthers(society, []);
+  const [resident, ...others] = society.entities;
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 350 + index * 60 }));
+  Object.assign(resident, {
+    x: 175, y: 225, state: "leave", since: 0, until: 50,
+    home: "folder-a", path: [{ x: 245, y: 225 }], timidity: 1,
+  });
+  deliberate = true;
+  society.step(50);
+  assert.equal(resident.exposedAt, 50);
+
+  let time = 50;
+  for (; resident.needsFirstWalk && time < 10_000; time += 50) society.step(50);
+  assert.equal(resident.needsFirstWalk, false);
+  Object.assign(resident, { state: "rest", path: [], until: 1e9 });
+  for (; time < 10_000; time += 50) society.step(50);
+  Object.assign(resident, { until: 0, nextDecision: 0 });
+  society.step(0);
+  assert.equal(resident.home, null);
+
+  Object.assign(resident, { state: "rest", path: [], until: 0, nextDecision: 0 });
+  society.step(50);
+  assert.ok(resident.home);
+});
+
+test("a resident peeks and withdraws while all four corridor slots are occupied", () => {
+  let deliberate = false;
+  const seeded = seededRandom(9);
+  const scene = { ...environment, surfaces: [...environment.surfaces,
+    { id: "folder-c", x: 110, y: 380, width: 60, height: 55, shelter: true },
+    { id: "folder-d", x: 340, y: 460, width: 60, height: 55, shelter: true },
+  ] };
+  const society = createSociety(scene, () => deliberate ? 0.02 : seeded());
+  holdOthers(society, []);
+  const [resident, ...outside] = society.entities;
+  assert.equal(outside.length, 4);
+  outside.forEach((entity, index) => Object.assign(entity, { x: 800, y: 350 + index * 60 }));
+  Object.assign(resident, {
+    x: 178, y: 229, state: "hidden", until: 0, home: "folder-a", timidity: 1,
+  });
+  deliberate = true;
+  society.step(50);
+  assert.equal(resident.state, "leave");
+  assert.equal(resident.peeking, true);
+  const seen = new Set();
+  const shelter = environment.surfaces[0];
+  for (let time = 50; time <= 2500; time += 50) {
+    society.step(50);
+    seen.add(resident.state);
+    if (resident.state === "peek") {
+      assert.ok([shelter.x, shelter.x + shelter.width].includes(resident.x) ||
+        [shelter.y, shelter.y + shelter.height].includes(resident.y));
+    }
+    assert.equal(society.entities.filter((entity) => entity.state !== "hidden" && !entity.peeking).length, 4);
+  }
+  assert.ok(seen.has("peek") && seen.has("enter"));
+  assert.equal(resident.state, "hidden");
+  assert.equal(resident.needsFirstWalk, false);
+});
+
+test("folder tabs block exits and peeks even if the top edge is closest", () => {
+  const tab = { id: "folder-tab", x: 140, y: 191, width: 38, height: 10, shelter: false, folderTab: true };
+  const exit = (peeking, surfaces) => {
+    let deliberate = false;
+    const seeded = seededRandom(9);
+    const society = createSociety({ ...environment, surfaces }, () => deliberate ? 0.02 : seeded());
+    holdOthers(society, []);
+    const [resident] = society.entities;
+    Object.assign(resident, {
+      x: 161, y: 215, state: "hidden", until: 0, home: "folder-a", timidity: peeking ? 1 : 0,
+    });
+    deliberate = true;
+    society.step(50);
+    assert.equal(resident.state, "leave");
+    assert.equal(resident.peeking, peeking);
+    return resident.path[0];
+  };
+
+  for (const peeking of [false, true]) {
+    assert.ok(exit(peeking, environment.surfaces).y <= 200);
+    const clearExit = exit(peeking, [...environment.surfaces, tab]);
+    assert.ok(clearExit.y > 200);
+  }
+});
+
 test("encounters build reciprocal memory and lead to a shared walk, independently of colour", () => {
   let deliberate = false;
   const seeded = seededRandom(9);
@@ -107,11 +280,50 @@ test("encounters build reciprocal memory and lead to a shared walk, independentl
   assert.ok(a.affinities.has(b.id) && b.affinities.has(a.id));
 });
 
+test("an active interest keeps a resident exploring after ten seconds, then expires", () => {
+  const society = createSociety(environment, seededRandom(5));
+  const [resident, ...others] = society.entities;
+  holdOthers(society, [resident]);
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 350 + index * 60 }));
+  Object.assign(resident, { x: 380, y: 390, exposedAt: -11_000, interestsLeft: 2 });
+  society.step(50);
+  assert.equal(resident.state, "walk");
+  assert.equal(resident.home, null);
+  assert.equal(resident.interestsLeft, 1);
+
+  holdOthers(society, [resident]);
+  resident.exposedAt = -26_000;
+  society.step(50);
+  assert.ok(resident.home);
+});
+
+test("a resident waits for an accepted approach after ten seconds outside", () => {
+  let deliberate = false;
+  const seeded = seededRandom(9);
+  const society = createSociety(environment, () => deliberate ? 0.2 : seeded());
+  const [walker, neighbour, ...others] = society.entities;
+  holdOthers(society, [walker]);
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 350 + index * 60 }));
+  Object.assign(walker, { x: 265, y: 405, exposedAt: -13_000, interestsLeft: 1 });
+  Object.assign(neighbour, { x: 380, y: 405, exposedAt: -14_000, timidity: 0, interestsLeft: 0 });
+  deliberate = true;
+  society.step(50);
+  assert.equal(walker.partner, neighbour.id);
+  assert.equal(neighbour.state, "observe");
+  for (let time = 50; !walker.togetherUntil && time < 8000; time += 50) {
+    assert.equal(neighbour.x, 380);
+    assert.equal(neighbour.home, null);
+    society.step(50);
+  }
+  assert.ok(walker.togetherUntil > 0);
+  assert.equal(neighbour.togetherUntil, walker.togetherUntil);
+});
+
 test("faithful residents return to preferred shelters and wait when those shelters are occupied", () => {
   const society = createSociety(environment, seededRandom(5));
   const [visitor, residentA, residentB] = society.entities;
   holdOthers(society, [visitor]);
-  Object.assign(visitor, { x: 380, y: 330, preferredHome: "folder-a", fidelity: 1, exposedAt: -20000 });
+  Object.assign(visitor, { x: 380, y: 330, preferredHome: "folder-a", fidelity: 1, exposedAt: -20000, interestsLeft: 0 });
   society.step(50);
   assert.equal(visitor.home, "folder-a");
   holdOthers(society, [visitor]);
@@ -125,7 +337,14 @@ test("faithful residents return to preferred shelters and wait when those shelte
 });
 
 test("long-running society preserves identities, bounded affinities and occasional quiet periods", () => {
-  const society = createSociety(environment, seededRandom(2));
+  const grid = {
+    width: 550, height: 460,
+    surfaces: Array.from({ length: 6 }, (_, index) => ({
+      id: `document-${index}`, x: 40 + (index % 3) * 132, y: 40 + Math.floor(index / 3) * 148,
+      width: 72, height: 66, shelter: true,
+    })),
+  };
+  const society = createSociety(grid, seededRandom(2));
   const colors = society.entities.map((entity) => entity.color);
   let quiet = false, yielding = false, memories = false;
   for (let time = 0; time < 180000; time += 50) {
@@ -147,29 +366,44 @@ test("long-running society preserves identities, bounded affinities and occasion
   assert.deepEqual(society.entities.map((entity) => entity.color), colors);
 });
 
-test("encounter speech uses invented murmurs and retains a global rare-event cooldown", () => {
+test("only a displayed murmur starts the global speech cooldown", () => {
   let deliberate = false;
+  let draws = [];
   const seeded = seededRandom(9);
-  const society = createSociety(environment, () => deliberate ? 0 : seeded());
+  const society = createSociety(environment, () => deliberate ? draws.shift() ?? 0.1 : seeded());
   const [a, b] = society.entities;
   holdOthers(society, []);
-  Object.assign(a, { x: 280, y: 400, state: "observe", partner: b.id });
-  Object.assign(b, { x: 320, y: 400, state: "observe", partner: a.id });
   deliberate = true;
-  const events = [];
-  let previousSpeech = null;
-  for (let time = 50; time <= 180000; time += 50) {
+  const encounter = (roll = 0.1) => {
+    Object.assign(a, { x: 280, y: 400, state: "observe", until: 0, nextDecision: 0,
+      partner: b.id, interest: "folder-a", lastStroll: 0 });
+    Object.assign(b, { x: 320, y: 400, state: "observe", partner: a.id, lastStroll: 0 });
+    draws = [0.1, roll, 0.9, 0];
     society.step(50);
-    if (time < 30000) assert.equal(society.speech, null);
-    if (society.speech && society.speech !== previousSpeech) {
-      assert.match(society.speech.text, /^[mnpruü.\s…?-]+$/u);
-      assert.ok(society.speech.text.length <= 10);
-      events.push(time);
-      previousSpeech = society.speech;
-    }
-  }
-  assert.ok(events.length >= 2);
-  for (let index = 1; index < events.length; index++) assert.ok(events[index] - events[index - 1] >= 40000);
+  };
+  const wait = (duration) => {
+    holdOthers(society, []);
+    for (let time = 0; time < duration; time += 50) society.step(50);
+  };
+  encounter(0.35);
+  assert.equal(society.speech, null);
+  encounter();
+  const hiddenLine = society.speech;
+  assert.equal(hiddenLine?.text, "oru?");
+  wait(5000);
+  encounter();
+  assert.equal(society.speech?.text, "oru?");
+  society.markSpeechShown(hiddenLine);
+  assert.equal(society.speech.shown, false);
+  draws = [0];
+  society.markSpeechShown(society.speech);
+  assert.equal(society.speech.shown, true);
+  wait(10_000);
+  encounter();
+  assert.equal(society.speech, null);
+  wait(24_000);
+  encounter();
+  assert.equal(society.speech?.text, "oru?");
 });
 
 test("a blocked resident waits three times before passing through a stationary group", () => {
@@ -199,19 +433,22 @@ test("a blocked resident waits three times before passing through a stationary g
 
 test("opposing residents grant passage to one stable priority and keep their routes", () => {
   const society = createSociety({ width: 900, height: 600, surfaces: [] }, seededRandom(3));
-  const [a, b] = society.entities;
+  const [a, b, ...others] = society.entities;
   holdOthers(society, []);
+  others.forEach((entity, index) => Object.assign(entity, { x: 800, y: 100 + index * 60 }));
   Object.assign(a, { x: 120, y: 300, state: "yield", path: [{ x: 220, y: 300 }], until: 0, blockedAttempts: 3, blockedBy: b.id, waitingFor: b.id, speed: 40 });
   Object.assign(b, { x: 140, y: 300, state: "yield", path: [{ x: 70, y: 300 }], until: 0, blockedAttempts: 3, blockedBy: a.id, waitingFor: a.id, speed: 40 });
   society.step(50);
   assert.equal(a.passing, true);
   assert.equal(b.passing, false);
-  for (let time = 0; time < 5000; time += 50) {
+  let aArrived = false, bArrived = false;
+  for (let time = 0; time < 7000 && !(aArrived && bArrived); time += 50) {
     society.step(50);
     assert.ok(society.entities.filter((entity) => entity.passing).length <= 1);
+    aArrived ||= !a.path.length && a.x === 220;
+    bArrived ||= !b.path.length && Math.hypot(b.x - 70, b.y - 300) < 20;
   }
-  assert.ok(a.x > 180);
-  assert.ok(b.x < 120);
+  assert.ok(aArrived && bArrived);
   society.remap({ width: 900, height: 600, surfaces: [] });
   assert.ok(society.entities.every((entity) => !entity.passing && entity.phase === 0));
 });

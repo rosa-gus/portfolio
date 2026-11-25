@@ -62,12 +62,15 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 						hidden
 						aria-labelledby="career-title"
 					>
-						@EditorialHeading("career-title", profile.Career.Heading, false)
 						@ScrollArea("Percurso profissional", "vertical") {
 							<div class="career-record">
-								<header class="career-record__header meta-text">
-									<p>Percurso selecionado</p>
-									<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
+								<header class="career-record__header">
+									<h2 class="career-record__title" id="career-title">{ profile.Career.Heading }</h2>
+									<span class="career-record__rule meta-text" data-text-leader="-" aria-hidden="true">-</span>
+									<div class="career-record__index meta-text">
+										<p>/ Percurso selecionado</p>
+										<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
+									</div>
 								</header>
 								<ol class="career-record__list">
 									for _, entry := range profile.Career.Entries {
@@ -211,6 +214,7 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 								<p class="about-panel__byline">
 									<span class="about-panel__name">{ profile.Identity.Name }</span>
 									<span class="about-panel__profession">{ profile.Identity.Profession }</span>
+									<a class="about-panel__contact control-text" data-panel-target="contact" href="#contact">[ENTRAR EM CONTATO]</a>
 								</p>
 								<h2 class="about-panel__title" id="about-title">{ profile.About.Heading }</h2>
 								if profile.About.Lead != "" {
@@ -235,19 +239,12 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 						aria-labelledby="contact-title"
 					>
 						<div class="contact-panel__media" data-panel-background aria-hidden="true"></div>
-						<header class="editorial-heading">
-							<h2 class="editorial-heading__eyebrow" id="contact-title">{ profile.Contact.Heading }</h2>
-							<p class="contact-panel__signature meta-text">
-								assino como <span
-	class="contact-panel__name-accent"
->rosa</span>{ " gus ou luis gustavo r.c." }
-							</p>
-						</header>
 						<div class="contact-panel__body">
-							<header class="contact-panel__correspondence meta-text">
-								<span>/ CORRESPONDÊNCIA</span>
+							<header class="contact-panel__heading">
+								<p class="contact-panel__correspondence meta-text">/ Correspondência</p>
+								<h2 class="contact-panel__title" id="contact-title">{ profile.Contact.Heading }</h2>
+								<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
 							</header>
-							<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
 							<div class="contact-panel__primary">
 								<div class="contact-panel__address">
 									<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>
@@ -256,10 +253,6 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 									</a>
 									<button class="contact-panel__copy" type="button" data-contact-copy data-copy-value={ profile.Contact.Email } aria-describedby="contact-copy-status" hidden>[COPIAR]</button>
 								</div>
-								<a class="contact-panel__send text-action" href={ emailURL(profile.Contact.Email) }>
-									[ENVIAR
-									E-MAIL <span class="ui-arrow ui-arrow--command" aria-hidden="true">↑</span>]
-								</a>
 								<p
 									class="contact-panel__status meta-text"
 									id="contact-copy-status"
@@ -295,6 +288,9 @@ templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archi
 									}
 								</nav>
 							}
+							<p class="contact-panel__signature meta-text">
+								assino como <span class="contact-panel__name-accent">rosa</span>{ " gus ou luis gustavo r.c." }
+							</p>
 						</div>
 					</section>
 				</main>

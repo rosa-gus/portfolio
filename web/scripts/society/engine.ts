@@ -1,9 +1,12 @@
+import { createSocietyEvents } from "./events.ts";
+
 export type Point = { x: number; y: number };
 export type Surface = Point & {
   id: string;
   width: number;
   height: number;
   shelter: boolean;
+  folderTab?: boolean;
 };
 export type Environment = {
   width: number;
@@ -33,6 +36,8 @@ export type Entity = Point & {
   timidity: number;
   speed: number;
   exposedAt: number;
+  needsFirstWalk: boolean;
+  interestsLeft: number;
   nextDecision: number;
   size: number;
   opacity: number;
@@ -44,6 +49,7 @@ export type Entity = Point & {
   affinities: Map<number, { strength: number; lastMet: number }>;
   lastEncounter: number;
   lastStroll: number;
+  meetingUntil: number;
   togetherUntil: number;
   waitingFor: number | null;
   lastOccupiedVisit: number;
@@ -53,6 +59,10 @@ export type Entity = Point & {
   phase: number;
 };
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
+const pathDistance = (from: Point, path: Point[]) => path.reduce(
+  (length, point, index) => length + distance(path[index - 1] ?? from, point),
+  0,
+);
 const inside = (p: Point, r: Surface, margin = 0) =>
   p.x > r.x - margin &&
   p.x < r.x + r.width + margin &&
@@ -60,6 +70,12 @@ const inside = (p: Point, r: Surface, margin = 0) =>
   p.y < r.y + r.height + margin;
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
+const ease = (progress: number) => {
+  const t = clamp(progress, 0, 1);
+  return t * t * (3 - 2 * t);
+};
+const visibleLimit = 4;
+const minimumExposure = 10_000;
 
 // A small navigation grid is shared by every entity and rebuilt only when the
 // environment changes. Text, links and surfaces are obstacles, not walking space.
@@ -189,14 +205,16 @@ export const createSociety = (
   let navigation = createNavigation(environment);
   let now = 0;
   let retreatAt: number | null = null;
-  let nextSpeech = 30_000 + random() * 20_000;
-  let speech: { id: number; text: string; until: number } | null = null;
+  let nextSpeech = 0;
+  let speech: { id: number; text: string; until: number; shown: boolean } | null = null;
   let nextQuiet = 45_000 + random() * 45_000;
   let quietUntil = 0;
   let quietSince = 0;
   let quietExplorer: number | null = null;
   let passage: { id: number; until: number; since: number } | null = null;
   const entities: Entity[] = [];
+  const occupiesCorridor = (entity: Entity) => entity.state !== "hidden" && !entity.peeking;
+  const hasCorridorSpace = () => entities.filter(occupiesCorridor).length < visibleLimit;
   const pick = <T>(values: T[]) =>
     values[Math.min(values.length - 1, Math.floor(random() * values.length))];
   const shelters = () =>
@@ -207,16 +225,35 @@ export const createSociety = (
     entity.state = state;
     entity.since = now;
     entity.until = now + duration;
+    if (state === "hidden") entity.opacity = 0;
+  };
+  const glide = (entity: Entity) => {
+    const remaining = pathDistance(entity, entity.path);
+    const departure = ease((now - entity.since) / 450);
+    const arrival = ease(remaining / 16);
+    return 0.4 + 0.98 * Math.min(departure, arrival);
+  };
+  const crossShelterEdge = (entity: Entity, target: Point, dt: number) => {
+    const duration = entity.until - entity.since;
+    const elapsed = now - entity.since;
+    const previous = ease((elapsed - dt) / duration);
+    const current = ease(elapsed / duration);
+    const amount = previous < 1 ? (current - previous) / (1 - previous) : 1;
+    entity.x += (target.x - entity.x) * amount;
+    entity.y += (target.y - entity.y) * amount;
   };
   const release = (entity: Entity) => {
     const other = entities.find((candidate) => candidate.id === entity.partner);
-    if (other?.partner === entity.id) other.partner = null;
+    if (other?.partner === entity.id) {
+      other.partner = null;
+      other.meetingUntil = 0;
+      other.togetherUntil = 0;
+    }
     entity.partner = null;
+    entity.meetingUntil = 0;
     entity.togetherUntil = 0;
   };
-  const walk = (entity: Entity, target: Point, home: string | null = null) => {
-    const route = navigation.route(entity, target);
-    if (!route.length) return false;
+  const followPath = (entity: Entity, route: Point[], home: string | null = null) => {
     release(entity);
     entity.path = route;
     entity.home = home;
@@ -225,9 +262,61 @@ export const createSociety = (
     entity.blockedAttempts = 0;
     entity.blockedBy = null;
     setState(entity, "walk");
+  };
+  const walk = (entity: Entity, target: Point, home: string | null = null) => {
+    const route = navigation.route(entity, target);
+    if (!route.length) return false;
+    followPath(entity, route, home);
     return true;
   };
-  const edge = (surface: Surface, entity: Point) => {
+  const shortRoute = (entity: Entity, target: Point, maximum: number) => {
+    const clear = (point: Point) =>
+      !environment.surfaces.some((surface) => segmentHits(entity, point, surface));
+    const route = clear(target) ? [target] : navigation.route(entity, target);
+    return route.length && clear(route[0]) && pathDistance(entity, route) <= maximum
+      ? route
+      : null;
+  };
+  const firstWalk = (entity: Entity) => {
+    const outside = entities.filter((other) => other !== entity && other.state !== "hidden");
+    const neighbour = outside
+      .filter((other) => other.home === null && distance(entity, other) <= 135)
+      .sort((a, b) => distance(entity, a) - distance(entity, b))[0];
+    const destinations = navigation.free
+      .filter((point) => {
+        const length = distance(entity, point);
+        return length >= 24 && length <= 80 &&
+          outside.every((other) => distance(point, other) >= 26);
+      })
+      .map((point) => {
+        const remaining = neighbour ? distance(point, neighbour) : random() * 8;
+        return {
+          point,
+          towardNeighbour: neighbour ? remaining < distance(entity, neighbour) : false,
+          score: Math.abs(distance(entity, point) - 50) + remaining,
+        };
+      })
+      .sort((a, b) => Number(b.towardNeighbour) - Number(a.towardNeighbour) || a.score - b.score);
+    for (const { point } of destinations) {
+      const route = shortRoute(entity, point, 95);
+      if (route) {
+        followPath(entity, route);
+        return true;
+      }
+    }
+    return false;
+  };
+  const finishDeparture = (entity: Entity) => {
+    entity.home = null;
+    entity.path = [];
+    entity.exposedAt = now;
+    entity.peeking = false;
+    entity.needsFirstWalk = true;
+    entity.interestsLeft = 1 + Math.floor(entity.curiosity * 3);
+    setState(entity, "rest", 320);
+    entity.nextDecision = entity.until;
+  };
+  const edges = (surface: Surface, entity: Point) => {
     const candidates = [
       {
         x: surface.x - 22,
@@ -250,11 +339,53 @@ export const createSociety = (
         p.x > 12 &&
         p.x < environment.width - 12 &&
         p.y > 12 &&
-        p.y < environment.height - 12,
+        p.y < environment.height - 12 &&
+        !environment.surfaces.some((other) => inside(p, other, 6)),
     );
     return candidates.sort(
       (a, b) => distance(a, entity) - distance(b, entity),
-    )[0];
+    );
+  };
+  const edge = (surface: Surface, entity: Point) => edges(surface, entity)[0];
+  const startExit = (entity: Entity, peeking: boolean, toward: Point = entity) => {
+    if (entity.state !== "hidden" || (!peeking && !hasCorridorSpace())) return false;
+    const home = homeOf(entity);
+    if (!home) return false;
+    const exit = edges(home, toward)
+      .map((point) => peeking ? {
+        x: clamp(point.x, home.x, home.x + home.width),
+        y: clamp(point.y, home.y, home.y + home.height),
+      } : navigation.nearest(point))
+      .find((point) => point && !environment.surfaces.some(
+        (surface) => surface.folderTab && segmentHits(entity, point, surface),
+      ));
+    if (!exit) return false;
+    entity.peeking = peeking;
+    entity.path = [exit];
+    setState(entity, "leave", 650);
+    return true;
+  };
+  const events = createSocietyEvents({
+    entities,
+    freePoints: () => navigation.free,
+    homeOf,
+    hasCorridorSpace,
+    startExit,
+    pauseWalk(entity, duration) {
+      entity.waitingFor = null;
+      entity.blockedAttempts = 0;
+      entity.blockedBy = null;
+      setState(entity, "yield", duration);
+    },
+    route: shortRoute,
+    followPath,
+  }, random);
+  const hasRoom = (surface: Surface) =>
+    entities.filter((other) => other.home === surface.id).length < 2;
+  const settleIn = (entity: Entity, home: Surface) => {
+    entity.home = home.id;
+    entity.x = home.x + home.width / 2;
+    entity.y = home.y + home.height / 2;
   };
   const seekShelter = (entity: Entity) => {
     const preferredBusy = shelters().find(
@@ -276,10 +407,7 @@ export const createSociety = (
       (surface.id === entity.preferredHome ? 180 * entity.fidelity : 0) +
       (surface.id === entity.lastHome ? 35 * (1 - entity.fidelity) : 0);
     const options = shelters()
-      .filter(
-        (surface) =>
-          entities.filter((other) => other.home === surface.id).length < 2,
-      )
+      .filter(hasRoom)
       .sort((a, b) => shelterCost(a) - shelterCost(b));
     for (const surface of options.slice(0, 5)) {
       const target = edge(surface, entity);
@@ -308,8 +436,16 @@ export const createSociety = (
       y: environment.height * (0.12 + random() * 0.76),
     };
     const point = navigation.nearest(region)!;
-    if (entities.some((entity) => distance(entity, point) < 26)) continue;
-    entities.push({
+    const homeOptions = shelters().filter(
+      (surface) => !entities.some((entity) => entity.home === surface.id),
+    );
+    const home = homeOptions.length ? pick(homeOptions) : null;
+    if (
+      !home && (entities.length >= visibleLimit || entities.some(
+        (entity) => entity.state !== "hidden" && distance(entity, point) < 26,
+      ))
+    ) continue;
+    const entity: Entity = {
       ...point,
       id,
       state: "rest",
@@ -324,17 +460,20 @@ export const createSociety = (
       timidity: random(),
       speed: 22 + random() * 24,
       exposedAt: 0,
+      needsFirstWalk: false,
+      interestsLeft: 1,
       nextDecision: 0,
       size: 16 + random() * 3,
       opacity: 0,
       peeking: false,
       color: (firstColor + id) % 4,
       fidelity: random(),
-      preferredHome: shelters().length ? pick(shelters()).id : null,
+      preferredHome: home?.id ?? null,
       interest: null,
       affinities: new Map(),
       lastEncounter: -Infinity,
       lastStroll: -Infinity,
+      meetingUntil: 0,
       togetherUntil: 0,
       waitingFor: null,
       lastOccupiedVisit: -Infinity,
@@ -342,7 +481,12 @@ export const createSociety = (
       blockedBy: null,
       passing: false,
       phase: 0,
-    });
+    };
+    if (home) {
+      settleIn(entity, home);
+      setState(entity, "hidden", 150 + id * 480 + random() * 300);
+    }
+    entities.push(entity);
   }
 
   const bond = (a: Entity, b: Entity) => {
@@ -378,74 +522,109 @@ export const createSociety = (
     const choices = navigation.free.filter(
       (point) => distance(a, point) > 65 && distance(a, point) < 145,
     );
-    if (!choices.length) return false;
-    const target = pick(choices);
-    const companionTarget = navigation.nearest({
-      x: target.x + (a.x < b.x ? 32 : -32),
-      y: target.y + 18,
-    });
-    if (!companionTarget || distance(target, companionTarget) < 24)
-      return false;
-    const routeA = navigation.route(a, target),
-      routeB = navigation.route(b, companionTarget);
-    if (!routeA.length || !routeB.length) return false;
+    const spacing = 36 / Math.max(1, distance(a, b));
+    for (let attempt = 0; attempt < 6 && choices.length; attempt++) {
+      const target = pick(choices);
+      choices.splice(choices.indexOf(target), 1);
+      const companionTarget = navigation.nearest({
+        x: target.x + (b.x - a.x) * spacing,
+        y: target.y + (b.y - a.y) * spacing,
+      });
+      if (!companionTarget || distance(target, companionTarget) < 24) continue;
+      const routeA = shortRoute(a, target, 180);
+      const routeB = shortRoute(b, companionTarget, 180);
+      if (!routeA || !routeB) continue;
+      followPath(a, routeA);
+      followPath(b, routeB);
+      a.partner = b.id;
+      b.partner = a.id;
+      a.togetherUntil = b.togetherUntil = now + 8000;
+      a.lastStroll = b.lastStroll = now;
+      return true;
+    }
+    return false;
+  };
+
+  const confirmEncounter = (a: Entity, b: Entity) => {
+    if (retreatAt !== null || b.partner !== a.id || distance(a, b) > 75) return false;
+    bond(a, b);
+    if (!speech && now >= nextSpeech && now >= quietUntil && random() < 0.34) {
+      const phrases = a.interest
+        ? ["mru?", "nüm…?", "oru?"]
+        : affinity(a, b) > 0.35
+          ? ["mm. oru.", "oru… oru.", "mru-mru."]
+          : ["mru…", "nüm?", "mm."];
+      speech = { id: a.id, text: pick(phrases), until: now + 3000, shown: false };
+    }
+    if (
+      now - Math.max(a.lastStroll, b.lastStroll) > 16_000 &&
+      random() < 0.48 + (a.sociability + b.sociability) * 0.2 &&
+      stroll(a, b)
+    ) return true;
+
     release(a);
-    release(b);
-    a.path = routeA;
-    b.path = routeB;
-    a.home = null;
-    b.home = null;
-    a.partner = b.id;
-    b.partner = a.id;
-    a.togetherUntil = b.togetherUntil = now + 8000;
-    a.lastStroll = b.lastStroll = now;
-    setState(a, "walk");
-    setState(b, "walk");
+    setState(a, "observe", 1100);
+    setState(b, "observe", 1100);
     return true;
+  };
+  const reserveMeeting = (entity: Entity, neighbour: Entity) => {
+    const destinations = navigation.free
+      .filter((point) => distance(point, neighbour) >= 30 && distance(point, neighbour) <= 62)
+      .sort((a, b) => distance(entity, a) - distance(entity, b));
+    for (const destination of destinations) {
+      const route = shortRoute(entity, destination, 180);
+      if (!route) continue;
+      followPath(entity, route);
+      const duration = clamp(pathDistance(entity, route) * 1000 / entity.speed + 2000, 3000, 9000);
+      entity.meetingUntil = neighbour.meetingUntil = now + duration;
+      entity.partner = neighbour.id;
+      neighbour.partner = entity.id;
+      setState(neighbour, "observe", duration);
+      return true;
+    }
+    return false;
   };
 
   const decide = (entity: Entity) => {
     entity.nextDecision = now + 300 + random() * 600;
     if (now < entity.until) return;
+    const exposedFor = now - entity.exposedAt;
+    if (entity.needsFirstWalk) {
+      if (firstWalk(entity) || exposedFor < minimumExposure) return;
+      entity.needsFirstWalk = false;
+    }
+    const expected = entities.find((other) => other.id === entity.partner);
+    if (expected?.partner === entity.id) {
+      if (entity.togetherUntil > now) {
+        if (expected.path.length) return;
+        release(entity);
+        return;
+      }
+      if (entity.meetingUntil > now) return;
+      if (confirmEncounter(entity, expected)) return;
+      release(entity);
+    }
     if (now < quietUntil && entity.id !== quietExplorer) {
       setState(entity, "rest", quietUntil - now + random() * 500);
       return;
     }
-    const expected = entities.find((other) => other.id === entity.partner);
+    const interestExpired = exposedFor >= 20_000 + entity.curiosity * 5000;
     if (
-      entity.state === "observe" &&
-      expected?.state === "walk" &&
-      expected.partner === entity.id &&
-      now - entity.since < 6500
+      exposedFor >= minimumExposure &&
+      (interestExpired || entity.interestsLeft === 0)
     ) {
-      entity.until = now + 500;
+      if (!seekShelter(entity)) setState(entity, "rest", 1000);
       return;
     }
-    if (
-      expected &&
-      expected.partner === entity.id &&
-      distance(entity, expected) < 80
-    ) {
-      bond(entity, expected);
-      if (
-        now - entity.lastStroll > 16_000 &&
-        random() < entity.sociability * 0.65 &&
-        stroll(entity, expected)
-      )
-        return;
-    }
-    if (
-      now - entity.exposedAt > 12_000 - entity.timidity * 5000 ||
-      random() < entity.timidity * 0.4
-    ) {
-      if (seekShelter(entity)) return;
-    }
-    const neighbour = entities
+    const neighbours = entities
       .filter(
         (other) =>
           other !== entity &&
           ["rest", "observe"].includes(other.state) &&
+          !other.needsFirstWalk &&
           other.partner === null &&
+          now - Math.max(entity.lastEncounter, other.lastEncounter) >= 8000 &&
+          now - other.exposedAt < 20_000 + other.curiosity * 5000 &&
           distance(entity, other) > 30 &&
           distance(entity, other) < 170 + affinity(entity, other) * 60,
       )
@@ -455,26 +634,15 @@ export const createSociety = (
           affinity(entity, a) * 100 -
           distance(b, entity) +
           affinity(entity, b) * 100,
-      )[0];
-    if (
-      neighbour &&
-      random() < entity.sociability * 0.75 + affinity(entity, neighbour) * 0.2
-    ) {
-      // The neighbour may decline; agreements are reciprocal and temporary.
-      if (random() > neighbour.timidity * 0.65) {
-        const target = {
-          x: neighbour.x + (entity.x < neighbour.x ? -30 : 30),
-          y: neighbour.y + 12,
-        };
-        if (walk(entity, target)) {
-          entity.interest = neighbour.interest;
-          entity.partner = neighbour.id;
-          neighbour.partner = entity.id;
-          setState(neighbour, "observe", 2500 + random() * 1500);
-          return;
-        }
-      } else {
-        setState(entity, "observe", 900 + random() * 1200);
+      );
+    for (const neighbour of neighbours) {
+      if (
+        random() < 0.42 + entity.sociability * 0.44 + affinity(entity, neighbour) * 0.12 &&
+        random() > neighbour.timidity * 0.55 &&
+        reserveMeeting(entity, neighbour)
+      ) {
+        entity.interestsLeft = Math.max(0, entity.interestsLeft - 1);
+        neighbour.interestsLeft = Math.max(0, neighbour.interestsLeft - 1);
         return;
       }
     }
@@ -483,23 +651,37 @@ export const createSociety = (
       const target = edge(surface, entity);
       if (target && walk(entity, target)) {
         entity.interest = surface.id;
+        entity.interestsLeft = Math.max(0, entity.interestsLeft - 1);
         return;
       }
     }
-    if (random() < 0.35 + entity.curiosity * 0.45) {
-      const choices = navigation.free.filter(
-        (p) => distance(p, entity) > 40 && distance(p, entity) < 180,
-      );
-      if (choices.length && walk(entity, pick(choices))) return;
+    const choices = navigation.free.filter((point) => {
+      const length = distance(point, entity);
+      return length > 45 && length < 120;
+    });
+    for (let attempt = 0; attempt < 4 && choices.length; attempt++) {
+      const point = pick(choices);
+      choices.splice(choices.indexOf(point), 1);
+      const route = shortRoute(entity, point, 150);
+      if (!route) continue;
+      followPath(entity, route);
+      entity.interestsLeft = Math.max(0, entity.interestsLeft - 1);
+      return;
     }
-    release(entity);
-    setState(entity, "rest", 1500 + random() * 4500);
+    entity.interestsLeft = 0;
+    setState(entity, "rest", 650 + random() * 650);
   };
 
   return {
     entities,
     get speech() {
       return speech;
+    },
+    markSpeechShown(line: typeof speech) {
+      if (!line || speech !== line || line.shown) return;
+      line.shown = true;
+      line.until = now + 3000;
+      nextSpeech = now + 34_000 + random() * 20_000;
     },
     get retiring() {
       return retreatAt !== null;
@@ -518,13 +700,17 @@ export const createSociety = (
     retreat() {
       if (retreatAt !== null) return;
       retreatAt = now;
+      events.reset(now);
       speech = null;
       for (const entity of entities) {
-        if (!["hidden", "enter"].includes(entity.state)) seekShelter(entity);
+        if (entity.state === "hidden" || entity.state === "enter") continue;
+        if (entity.peeking && homeOf(entity)) setState(entity, "enter", 500);
+        else seekShelter(entity);
       }
     },
     remap(next: Environment) {
       passage = null;
+      events.reset(now);
       environment = next;
       navigation = createNavigation(next);
       for (const entity of entities) {
@@ -538,9 +724,15 @@ export const createSociety = (
           !shelters().some((surface) => surface.id === entity.preferredHome)
         )
           entity.preferredHome = null;
-        if (entity.state === "hidden" && home) {
-          entity.x = home.x + home.width / 2;
-          entity.y = home.y + home.height / 2;
+        if (entity.state === "hidden" || entity.peeking) {
+          if (entity.peeking) {
+            entity.peeking = false;
+            entity.path = [];
+            setState(entity, "hidden", 700);
+          }
+          const shelter = home ?? shelters().find(hasRoom);
+          if (shelter) settleIn(entity, shelter);
+          else entity.home = null;
           continue;
         }
         const point = navigation.nearest(entity);
@@ -551,6 +743,7 @@ export const createSociety = (
         entity.path = [];
         entity.home = null;
         entity.partner = null;
+        entity.meetingUntil = 0;
         entity.togetherUntil = 0;
         entity.waitingFor = null;
         setState(entity, "rest", 400 + random() * 900);
@@ -614,10 +807,11 @@ export const createSociety = (
         nextQuiet = quietUntil + 40_000 + random() * 40_000;
         quietExplorer =
           entities
-            .filter((entity) => entity.state !== "hidden")
+            .filter(occupiesCorridor)
             .sort((a, b) => b.curiosity - a.curiosity)[0]?.id ?? null;
         speech = null;
       }
+      if (retreatAt === null && now >= quietUntil) events.step(now);
       for (const entity of entities) {
         entity.opacity = clamp((now - entity.id * 100) / 900, 0, 1);
         entity.phase +=
@@ -627,13 +821,16 @@ export const createSociety = (
           entity.id !== quietExplorer &&
           now - quietSince > entity.id * 90 &&
           entity.state === "walk" &&
-          entity.home === null
+          entity.home === null &&
+          entity.partner === null &&
+          !entity.needsFirstWalk
         ) {
           release(entity);
           entity.path = [];
           setState(entity, "rest", quietUntil - now);
         }
-        if (entity.togetherUntil > 0 && now > entity.togetherUntil)
+        if ((entity.meetingUntil > 0 && now >= entity.meetingUntil) ||
+            (entity.togetherUntil > 0 && now >= entity.togetherUntil))
           release(entity);
         if (entity.state === "walk") {
           const target = entity.path[0];
@@ -645,8 +842,9 @@ export const createSociety = (
             const speed = companion
               ? Math.min(entity.speed, companion.speed)
               : entity.speed;
+            const pace = retreatAt !== null ? 4 : entity.passing ? 1 : glide(entity);
             const d = distance(entity, target),
-              amount = ((speed * dt) / 1000) * (retreatAt === null ? 1 : 4);
+              amount = (speed * dt * pace) / 1000;
             const next =
               d <= amount
                 ? target
@@ -686,11 +884,21 @@ export const createSociety = (
           } else if (homeOf(entity)) {
             setState(entity, "enter", 550);
           } else {
+            const finishedFirstWalk = entity.needsFirstWalk;
+            entity.needsFirstWalk = false;
+            if (finishedFirstWalk && retreatAt === null) {
+              setState(entity, "observe", 500 + random() * 450);
+              continue;
+            }
             const companion = entities.find(
               (other) => other.id === entity.partner,
             );
-            if (companion && distance(entity, companion) < 80)
-              bond(entity, companion);
+            if (entity.togetherUntil > now) {
+              setState(entity, "observe", 500);
+              continue;
+            }
+            if (companion && confirmEncounter(entity, companion)) continue;
+            if (companion) release(entity);
             setState(
               entity,
               entity.partner === null && entity.interest === null
@@ -735,9 +943,7 @@ export const createSociety = (
             x: clamp(entity.x, home.x + 13, home.x + home.width - 13),
             y: clamp(entity.y, home.y + 13, home.y + home.height - 13),
           };
-          const amount = Math.min(1, dt / Math.max(dt, entity.until - now));
-          entity.x += (target.x - entity.x) * amount;
-          entity.y += (target.y - entity.y) * amount;
+          crossShelterEdge(entity, target, dt);
           if (now >= entity.until) {
             entity.lastHome = home.id;
             if (
@@ -745,95 +951,49 @@ export const createSociety = (
               random() < (1 - entity.fidelity) * 0.12
             )
               entity.preferredHome = home.id;
+            const wasPeeking = entity.peeking;
+            entity.peeking = false;
             setState(entity, "hidden", 3500 + random() * 9000);
+            if (!wasPeeking && retreatAt === null && now >= quietUntil) {
+              events.onSheltered(now, entity, home);
+            }
           }
         } else if (entity.state === "hidden") {
           entity.opacity = 0;
-          if (now >= entity.until && retreatAt === null && now >= quietUntil) {
-            const home = homeOf(entity);
-            const point = home && edge(home, entity);
-            let exit = point && navigation.nearest(point);
-            entity.peeking = random() < entity.timidity;
-            if (exit && home && point && entity.peeking) {
-              exit = {
-                x:
-                  point.x < home.x
-                    ? home.x - 3
-                    : point.x > home.x + home.width
-                      ? home.x + home.width + 3
-                      : point.x,
-                y:
-                  point.y < home.y
-                    ? home.y - 3
-                    : point.y > home.y + home.height
-                      ? home.y + home.height + 3
-                      : point.y,
-              };
+          if (now >= entity.until && retreatAt === null && now >= quietUntil && !events.holdsExit(entity, now)) {
+            const canLeave = hasCorridorSpace();
+            if (!canLeave && now < entity.nextDecision) continue;
+            const peeking = random() < entity.timidity * (canLeave ? 0.5 : 1);
+            if (!canLeave && !peeking) {
+              entity.nextDecision = now + 2000;
+              continue;
             }
-            if (exit) {
-              entity.path = [exit];
-              setState(entity, "leave", 650);
-            } else setState(entity, "hidden", 2000);
+            if (!startExit(entity, peeking)) setState(entity, "hidden", 2000);
           }
         } else if (entity.state === "leave" || entity.state === "peek") {
           const target = entity.path[0];
           if (!target) {
-            entity.home = null;
-            entity.exposedAt = now;
-            setState(entity, "rest", 900);
+            finishDeparture(entity);
             continue;
           }
-          const amount = Math.min(1, dt / Math.max(dt, entity.until - now));
-          entity.x += (target.x - entity.x) * amount;
-          entity.y += (target.y - entity.y) * amount;
+          crossShelterEdge(entity, target, dt);
           if (now >= entity.until) {
             if (entity.state === "leave" && entity.peeking)
               setState(entity, "peek", 1000 + random() * 1500);
-            else if (
-              entity.state === "peek" &&
-              random() < 0.5 &&
-              homeOf(entity)
-            ) {
+            else if (entity.state === "peek" && homeOf(entity)) {
+              entity.peeking = true;
               entity.path = [];
               setState(entity, "enter", 500);
             } else {
-              const outside = navigation.nearest(entity);
-              entity.path = outside ? [outside] : [];
-              entity.home = null;
-              entity.exposedAt = now;
-              setState(entity, "walk");
+              finishDeparture(entity);
             }
           }
         } else if (retreatAt === null && now >= entity.nextDecision)
           decide(entity);
       }
-      if (speech && now >= speech.until) speech = null;
-      if (retreatAt === null && now >= nextSpeech) {
-        nextSpeech = now + 8000 + random() * 5000;
-        const speaker = entities.find(
-          (entity) =>
-            entity.state === "observe" &&
-            entity.partner !== null &&
-            entities.some(
-              (other) =>
-                other.id === entity.partner &&
-                other.state !== "hidden" &&
-                distance(entity, other) < 75,
-            ),
-        );
-        if (!speech && speaker && now >= quietUntil && random() < 0.24) {
-          const companion = entities.find(
-            (other) => other.id === speaker.partner,
-          );
-          const phrases = speaker.interest
-            ? ["mru?", "nüm…?", "pru?"]
-            : companion && affinity(speaker, companion) > 0.35
-              ? ["mm. pru.", "pru… pru.", "mru-mru."]
-              : ["mru…", "nüm?", "mm."];
-          speech = { id: speaker.id, text: pick(phrases), until: now + 3000 };
-          nextSpeech = now + 40_000 + random() * 25_000;
-        }
-      }
+      if (speech && (now >= speech.until || entities.some(
+        (entity) => entity.id === speech?.id && entity.state === "hidden",
+      ))) speech = null;
     },
   };
 };

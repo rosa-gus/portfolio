@@ -1,5 +1,5 @@
-export const initializeGameCredits = () => {
-  const leaders = document.querySelectorAll<HTMLElement>("[data-credit-leader]");
+export const initializeTextLeaders = () => {
+  const leaders = document.querySelectorAll("[data-credit-leader], [data-text-leader]");
   if (!leaders.length) return;
 
   const glyph = document.createRange();
@@ -7,15 +7,16 @@ export const initializeGameCredits = () => {
     const width = leader.getBoundingClientRect().width;
     const text = leader.firstChild;
     if (width <= 0 || !(text instanceof Text)) return;
+    const mark = leader.getAttribute("data-text-leader") || ".";
 
-    if (!text.length) text.data = ".";
+    if (!text.length) text.data = mark;
     glyph.setStart(text, 0);
     glyph.setEnd(text, 1);
-    const dotWidth = glyph.getBoundingClientRect().width;
-    if (dotWidth <= 0) return;
+    const glyphWidth = glyph.getBoundingClientRect().width;
+    if (glyphWidth <= 0) return;
 
-    const dots = ".".repeat(Math.floor(width / dotWidth));
-    if (text.data !== dots) text.data = dots;
+    const line = mark.repeat(Math.floor(width / glyphWidth));
+    if (text.data !== line) text.data = line;
   };
 
   const refresh = () => leaders.forEach(fill);
