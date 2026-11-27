@@ -191,6 +191,39 @@ func projectFolioMeta(project portfolio.Project) string {
 	return strings.ToUpper(strings.Join(parts, " / "))
 }
 
+type projectPageSection struct {
+	id    string
+	title string
+	body  templ.Component
+}
+
+func projectPageSections(project portfolio.Project, basePath string) []projectPageSection {
+	sections := make([]projectPageSection, 0, len(project.CaseStudy.Sections)+2)
+	for _, section := range project.CaseStudy.Sections {
+		sections = append(sections, projectPageSection{
+			id:    section.ID,
+			title: section.Title,
+			body:  ProjectNoteProse(section.Content, basePath),
+		})
+	}
+	if len(project.Media.Items) > 0 {
+		sections = append(sections, projectPageSection{
+			id:    "gallery",
+			title: "Galeria",
+			body:  ProjectNoteGallery(project, basePath),
+		})
+	}
+	return append(sections, projectPageSection{
+		id:    "practice",
+		title: "Ficha técnica",
+		body:  ProjectNoteFacts(project, basePath),
+	})
+}
+
+func projectSectionNumber(position int) string {
+	return fmt.Sprintf("%02d", position+1)
+}
+
 func archiveImageLoading(initial bool) string {
 	if initial {
 		return "eager"

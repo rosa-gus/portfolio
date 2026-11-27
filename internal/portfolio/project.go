@@ -12,6 +12,7 @@ import (
 )
 
 var hexColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+var projectSectionIDPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
 type Project struct {
 	Slug             string            `json:"slug"`
@@ -75,10 +76,13 @@ type ProjectImage struct {
 }
 
 type ProjectCaseStudy struct {
-	Context   MarkdownDocument `json:"context"`
-	Challenge MarkdownDocument `json:"challenge"`
-	Decision  MarkdownDocument `json:"decision"`
-	Result    MarkdownDocument `json:"result"`
+	Sections []ProjectCaseSection `json:"sections"`
+}
+
+type ProjectCaseSection struct {
+	ID      string           `json:"id"`
+	Title   string           `json:"title"`
+	Content MarkdownDocument `json:"content"`
 }
 
 // MarkdownDocument keeps authored Markdown independent from its HTML rendering.
@@ -258,34 +262,41 @@ func validateProjectTone(tone string) error {
 }
 
 func loadCaseStudy(project *Project) error {
-	documents := []struct {
-		name     string
-		document *MarkdownDocument
-	}{
-		{name: "context", document: &project.CaseStudy.Context},
-		{name: "challenge", document: &project.CaseStudy.Challenge},
-		{name: "decision", document: &project.CaseStudy.Decision},
-		{name: "result", document: &project.CaseStudy.Result},
-	}
-
-	for _, item := range documents {
-		if err := loadMarkdownDocument(project.Slug, item.name, item.document); err != nil {
-			return fmt.Errorf("load %s for %q: %w", item.name, project.Slug, err)
+	seenIDs := make(map[string]bool, len(project.CaseStudy.Sections))
+	for index := range project.CaseStudy.Sections {
+		section := &project.CaseStudy.Sections[index]
+		if err := validateProjectCaseSection(*section, seenIDs); err != nil {
+			return fmt.Errorf("load section %d for %q: %w", index+1, project.Slug, err)
 		}
+		if err := loadMarkdownDocument(project.Slug, section.ID, &section.Content); err != nil {
+			return fmt.Errorf("load section %q for %q: %w", section.ID, project.Slug, err)
+		}
+		seenIDs[section.ID] = true
+	}
+	return nil
+}
+
+func validateProjectCaseSection(section ProjectCaseSection, seenIDs map[string]bool) error {
+	if !projectSectionIDPattern.MatchString(section.ID) {
+		return fmt.Errorf("section ID %q must use lowercase kebab-case", section.ID)
+	}
+	if section.ID == "gallery" || section.ID == "practice" || strings.HasSuffix(section.ID, "-heading") {
+		return fmt.Errorf("section ID %q is reserved", section.ID)
+	}
+	if seenIDs[section.ID] {
+		return fmt.Errorf("duplicate section ID %q", section.ID)
+	}
+	if strings.TrimSpace(section.Title) == "" {
+		return fmt.Errorf("section %q requires a title", section.ID)
 	}
 	return nil
 }
 
 func loadMarkdownDocument(slug, section string, document *MarkdownDocument) error {
-	if document.Path == "" {
-		return nil
-	}
-
 	expectedDirectory := path.Join("cases", slug) + "/"
 	if !fs.ValidPath(document.Path) ||
 		!strings.HasPrefix(document.Path, expectedDirectory) ||
-		path.Base(document.Path) != section+".md" ||
-		path.Ext(document.Path) != ".md" {
+		path.Base(document.Path) != section+".md" {
 		return fmt.Errorf("invalid Markdown path: %q", document.Path)
 	}
 
@@ -296,8 +307,12 @@ func loadMarkdownDocument(slug, section string, document *MarkdownDocument) erro
 	if !utf8.Valid(contents) {
 		return fmt.Errorf("%q does not contain valid UTF-8", document.Path)
 	}
+	source := string(contents)
+	if strings.TrimSpace(source) == "" {
+		return fmt.Errorf("%q is empty", document.Path)
+	}
 
-	document.Source = string(contents)
+	document.Source = source
 	return nil
 }
 

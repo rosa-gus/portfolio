@@ -18,17 +18,17 @@ templ DocumentNotes(documents []portfolio.Document, basePath string) {
 for _, document := range documents {
 if document.Kind == portfolio.DocumentNote {
 @Window(WindowOptions{
-    ID: "note-" + document.Slug,
-    Title: underscoreIdentifier(document.Title) + ".md",
-    Class: "document-note",
-    Width: "36rem", Height: "28rem", Decoration: "fold",
-    Attributes: templ.Attributes{"data-document-note": document.Slug},
+ID: "note-" + document.Slug,
+Title: underscoreIdentifier(document.Title) + ".md",
+Class: "document-note",
+Width: "36rem", Height: "28rem", Decoration: "fold",
+Attributes: templ.Attributes{"data-document-note": document.Slug},
 }, WindowSlots{Record: noteRecord(document)}) {
-    @ScrollArea("Conteúdo de " + document.Title, "vertical") {
-        <div class="prose project-content__prose document-prose">
-            @renderMarkdown(document.Content, basePath)
-        </div>
-    }
+@ScrollArea("Conteúdo de " + document.Title, "vertical") {
+<div class="prose project-content__prose document-prose">
+	@renderMarkdown(document.Content, basePath)
+</div>
+}
 }
 
 }
@@ -67,7 +67,8 @@ templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document,
 <body>
 	<div class="article-page">
 		<header class="project-page__header">
-			<a class="article-page__back" data-documents-back href={ siteURL(basePath, "/#case") }>[VOLTAR AOS DOCUMENTOS]</a>
+			<a class="article-page__back" data-documents-back href={ siteURL(basePath, "/#case" ) }>[VOLTAR AOS
+				DOCUMENTOS]</a>
 			@themeToggle()
 		</header>
 		<main class="article-page__content" id="content">
@@ -77,10 +78,10 @@ templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document,
 					<p class="article-page__metadata meta-text">
 						<span><span aria-hidden="true">/ </span>{ author }</span>
 						if document.Date != "" {
-							<span class="article-page__metadata-item">
-								<span class="inline-divider" aria-hidden="true"></span>
-								<time datetime={ document.Date }>{ documentDateLabel(document.Date) }</time>
-							</span>
+						<span class="article-page__metadata-item">
+							<span class="inline-divider" aria-hidden="true"></span>
+							<time datetime={ document.Date }>{ documentDateLabel(document.Date) }</time>
+						</span>
 						}
 						<span class="article-page__metadata-item">
 							<span class="inline-divider" aria-hidden="true"></span>
@@ -88,7 +89,7 @@ templ ArticlePage(profile portfolio.ProfileContent, document portfolio.Document,
 						</span>
 					</p>
 					if document.Summary != "" {
-						<p class="article-page__summary">{ document.Summary }</p>
+					<p class="article-page__summary">{ document.Summary }</p>
 					}
 				</header>
 				<div class="prose project-content__prose document-prose">

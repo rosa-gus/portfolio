@@ -57,9 +57,15 @@ GitHub Pages deployment remains in the separate workflow triggered by pushes to 
 | `web/assets` | Source assets bundled by Vite. |
 
 To add a project, create an entry in `projects.json` with a unique slug and
-`#RRGGBB` tone, add `context.md`, `challenge.md`, `decision.md`, and `result.md`
-under its case directory, and reference its assets from `web/assets/projects/`.
-Select a media item as `media.cover`. To show a standalone icon on the home grid,
+`#RRGGBB` tone. Add editorial sections in reading order to the optional
+`caseStudy.sections` array. Give each section a unique English, lowercase
+kebab-case `id` for its anchor, a display `title`, and a `content` path such as
+`cases/fuste-confere/how-it-works.md`. The Markdown filename must match the ID.
+The page adds the gallery when media is available and ends with the technical
+details. The IDs `gallery` and `practice` and the suffix `-heading` are reserved.
+
+Reference project assets from `web/assets/projects/` and select a media item
+as `media.cover` when the project has media. To show a standalone icon on the home grid,
 add a `project` entry referencing the slug in `archive.json`. Collection membership
 is derived automatically from the project capabilities.
 
