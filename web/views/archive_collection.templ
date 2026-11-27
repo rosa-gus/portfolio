@@ -1,96 +1,74 @@
 package views
 
 import (
- "portfolio/internal/portfolio"
+"portfolio/internal/portfolio"
 )
 
 templ ProjectArchiveFloating(folders []portfolio.ArchiveFolder, basePath string) {
-    @Window(WindowOptions{
-        ID: "project-archive-floating", Title: "Coleção", Class: "project-archive__floating",
-        Inline: true, Width: "100%", Height: "24rem", Decoration: "tab",
-        Attributes: templ.Attributes{"data-archive-floating": true, "role": "region", "aria-label": "Coleção aberta", "hidden": true},
-        TitleAttributes: templ.Attributes{"data-archive-divider-title": true},
-        CloseAttributes: templ.Attributes{"data-archive-close": true, "aria-label": "Fechar pasta"},
-    }, WindowSlots{Information: archiveWindowInformation(), Commands: archiveWindowCommands()}) {
-			for _, folder := range folders {
-				<div
-					class="scroll-area project-archive__floating-files"
-					data-axis="horizontal"
-					id={ "archive-files-" +
-			folder.Key }
-					data-archive-files={ folder.Key }
-					role="region"
-					aria-roledescription="carrossel"
-					aria-label={ "Projetos de " + folder.Label }
-					hidden
-				>
-					<div class="project-archive__floating-files-viewport">
-						<div class="project-archive__floating-files-track">
-							for _, project := range folder.Projects {
-								<article class="project-archive__file document-fold">
-									<button
-										class="project-archive__file-preview"
-										type="button"
-										data-archive-file={ project.Slug }
-										aria-current="false"
-										aria-label={ "Consultar projeto " + project.Title }
-									>
-										<span class="project-archive__file-cover">
-											if images := projectArchiveImages(project); len(images) > 0 {
-												<img
-													src={ siteURL(basePath, images[0].Src) }
-													alt=""
-													width={ imageDimension(images[0].Width) }
-													height={ imageDimension(images[0].Height) }
-													loading="lazy"
-													decoding="async"
-												/>
-											} else {
-												<span aria-hidden="true">{ folder.Symbol }</span>
-											}
-										</span>
-										<span class="project-archive__file-details">
-											<span class="project-archive__file-meta">
-												<span>
-													{ project.Index } / { project.Year }
-												</span>
-												<span class="project-archive__file-marker" aria-hidden="true">
-													EM
-													CONSULTA
-												</span>
-											</span>
-											<strong class="project-archive__file-title">{ project.Title }</strong>
-											<span class="project-archive__file-description">{ project.BriefDescription }</span>
-										</span>
-									</button>
-									<a
-										class="project-archive__file-link text-action"
-										data-project-slug={ project.Slug }
-										href={ projectURL(basePath, project.Slug) }
-										aria-label={ "Ver case de " + project.Title }
-									>
-										VER CASE
-										<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
-									</a>
-								</article>
-							}
-						</div>
-					</div>
-				</div>
+@Window(WindowOptions{
+ID: "project-archive-floating", Title: "Coleção", Class: "project-archive__floating",
+Inline: true, Width: "100%", Height: "24rem", Decoration: "tab",
+Attributes: templ.Attributes{"data-archive-floating": true, "role": "region", "aria-label": "Coleção aberta", "hidden":
+true},
+TitleAttributes: templ.Attributes{"data-archive-divider-title": true},
+CloseAttributes: templ.Attributes{"data-archive-close": true, "aria-label": "Fechar pasta"},
+}, WindowSlots{Information: archiveWindowInformation(), Commands: archiveWindowCommands()}) {
+for _, folder := range folders {
+<div class="scroll-area project-archive__floating-files" data-axis="horizontal" id={ "archive-files-" + folder.Key }
+	data-archive-files={ folder.Key } role="region" aria-roledescription="carrossel" aria-label={ "Projetos de " +
+	folder.Label } hidden>
+	<div class="project-archive__floating-files-viewport">
+		<div class="project-archive__floating-files-track">
+			for _, project := range folder.Projects {
+			<article class="project-archive__file document-fold">
+				<button class="project-archive__file-preview" type="button" data-archive-file={ project.Slug }
+					aria-current="false" aria-label={ "Consultar projeto " + project.Title }>
+					<span class="project-archive__file-cover">
+						if images := projectArchiveImages(project); len(images) > 0 {
+						<img src={ siteURL(basePath, images[0].Src) } alt="" width={ imageDimension(images[0].Width) }
+							height={ imageDimension(images[0].Height) } loading="lazy" decoding="async" />
+						} else {
+						<span aria-hidden="true">{ folder.Symbol }</span>
+						}
+					</span>
+					<span class="project-archive__file-details">
+						<span class="project-archive__file-meta">
+							<span>
+								{ project.Index } / { project.Year }
+							</span>
+							<span class="project-archive__file-marker" aria-hidden="true">
+								EM
+								CONSULTA
+							</span>
+						</span>
+						<strong class="project-archive__file-title">{ project.Title }</strong>
+						<span class="project-archive__file-description">{ project.BriefDescription }</span>
+					</span>
+				</button>
+				<a class="project-archive__file-link text-action" data-project-slug={ project.Slug } href={
+					projectURL(basePath, project.Slug) } aria-label={ "Ver case de " + project.Title }>
+					VER CASE
+					<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+				</a>
+			</article>
 			}
-    }
+		</div>
+	</div>
+</div>
+}
+}
 }
 
 templ archiveWindowInformation() {
-    <span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
+<span class="project-archive__floating-count" data-archive-floating-count>[00] ARQ.</span>
 }
 
 templ archiveWindowCommands() {
-    <div class="project-archive__floating-navigation" aria-label="Navegação das fichas">
-        <span data-archive-files-position></span>
-        <div>
-            <button type="button" data-archive-files-prev aria-label="Ficha anterior">[ANTERIOR]</button>
-            <button type="button" data-archive-files-next aria-label="Próxima ficha">[PRÓXIMA]</button>
-        </div>
-    </div>
+<div class="project-archive__floating-navigation" aria-label="Navegação das fichas">
+	<span data-archive-files-position></span>
+	<div>
+		<button type="button" data-archive-files-prev aria-label="Ficha anterior">[ANTERIOR]</button>
+		<button type="button" data-archive-files-next aria-label="Próxima ficha">[PRÓXIMA]</button>
+	</div>
+</div>
 }

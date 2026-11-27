@@ -3,6 +3,13 @@ import test from "node:test";
 import { SkiEngine, SKI_STEP } from "../../web/scripts/games/ski/ski-engine.ts";
 import { SKI_CAPTURE_CONTACT, SKI_CAPTURE_DURATION, SkiFeedback } from "../../web/scripts/games/ski/ski-feedback.ts";
 
+function onlyCaption(feedback) {
+  assert.equal(feedback.captions.length, 1);
+  const [caption] = feedback.captions;
+  assert.ok(caption.text.trim(), "the caption has visible text");
+  return caption;
+}
+
 test("close successive near misses share one readable caption without changing score", () => {
   const game = new SkiEngine(() => 0.5);
   game.start();
@@ -10,9 +17,12 @@ test("close successive near misses share one readable caption without changing s
   const event = { type: "near-miss", x: 610, y: 142, points: 50 };
   feedback.step(game, 0, 1 / 60, [event]);
   feedback.step(game, 0, 0.1, [event]);
-  assert.equal(feedback.captions.length, 1);
-  assert.equal(feedback.captions[0].text, "por pouco ×2 +100");
-  assert.ok(feedback.captions[0].x <= 530);
+  const caption = onlyCaption(feedback);
+  assert.equal(caption.count, 2);
+  assert.equal(caption.points, event.points * 2);
+  assert.match(caption.text, new RegExp(`\\b${caption.count}\\b`));
+  assert.match(caption.text, new RegExp(`\\b${caption.points}\\b`));
+  assert.ok(caption.x <= 530);
   assert.equal(game.score, 0);
   feedback.step(game, 0, 0.3, [event]);
   assert.equal(feedback.captions.length, 2);
@@ -25,10 +35,12 @@ test("slalom entry and exit use the existing floating feedback", () => {
   const game = new SkiEngine(() => 0.5);
   const feedback = new SkiFeedback();
   feedback.step(game, 0, 1 / 60, [{ type: "slalom-start", level: 1 }]);
-  assert.equal(feedback.captions[0].text, "slalom à frente.");
+  const entry = onlyCaption(feedback);
+  assert.equal(entry.announcement, true);
   feedback.step(game, 0, 2, [{ type: "slalom-end", x: 320, y: 142 }]);
-  assert.equal(feedback.captions.length, 1);
-  assert.equal(feedback.captions[0].text, "pista aberta.");
+  const exit = onlyCaption(feedback);
+  assert.equal(exit.announcement, true);
+  assert.notEqual(exit.text, entry.text);
 });
 
 test("entering a blizzard displays its caption", () => {
@@ -36,7 +48,7 @@ test("entering a blizzard displays its caption", () => {
   const feedback = new SkiFeedback();
   game.start();
   feedback.step(game, 0, SKI_STEP, [{ type: "blizzard-start", thunder: 0 }]);
-  assert.deepEqual(feedback.captions.map(caption => caption.text), ["você entrou na nevasca."]);
+  assert.equal(onlyCaption(feedback).announcement, true);
 });
 
 test("a Yeti sprint shows only the proximity caption for either entrance", () => {
@@ -46,9 +58,10 @@ test("a Yeti sprint shows only the proximity caption for either entrance", () =>
     game.start();
     const x = game.player.x;
     const y = rush ? -16 : game.player.y - 140;
+    let previous;
     if (rush) {
       feedback.step(game, 0, SKI_STEP, [{ type: "slalom-end", x, y: game.player.y }]);
-      assert.equal(feedback.captions[0].text, "pista aberta.");
+      previous = onlyCaption(feedback);
     }
     game.yeti = {
       x, y, age: 0, strideAge: 0, blinkAt: null,
@@ -57,13 +70,15 @@ test("a Yeti sprint shows only the proximity caption for either entrance", () =>
     feedback.step(game, 0, SKI_STEP, [{ type: "yeti-appear", x, y, front: false, rush }]);
 
     if (!rush) {
-      assert.deepEqual(feedback.captions.map(caption => caption.text), ["companhia na pista."]);
+      previous = onlyCaption(feedback);
       game.yeti.attack = { kind: "sprint", until: 2 };
       feedback.step(game, 0, SKI_STEP, []);
     }
-    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+    const warning = onlyCaption(feedback);
+    assert.equal(warning.announcement, true);
+    assert.notEqual(warning.text, previous.text);
     feedback.step(game, 0, SKI_STEP, []);
-    assert.deepEqual(feedback.captions.map(caption => caption.text), ["ele está perto."]);
+    assert.equal(onlyCaption(feedback), warning);
   }
 });
 
@@ -71,26 +86,23 @@ test("the third crack starts the first line and leaves space for the second", ()
   const game = new SkiEngine(() => 0.5);
   game.start();
   const feedback = new SkiFeedback();
-  for (const count of [1, 2, 3]) {
+  const crackCaptions = [];
+  for (const count of [1, 2]) {
     feedback.step(game, 0, 2, [{ type: "yeti-crack", count, side: 1 }]);
-    assert.equal(feedback.captions.length, 1);
-    const [caption] = feedback.captions;
+    const caption = onlyCaption(feedback);
     assert.equal(caption.fixed, true);
-    if (count === 3) {
-      assert.match(caption.text, /^“.+”$/);
-      assert.equal(caption.y, game.player.y - 78);
-    } else {
-      assert.equal(caption.text, "[estalo ao longe]");
-    }
+    crackCaptions.push(caption);
   }
-  const [firstLine] = feedback.captions;
+  feedback.step(game, 0, 2, [{ type: "yeti-crack", count: 3, side: 1 }]);
+  const firstLine = onlyCaption(feedback);
+  assert.equal(firstLine.fixed, true);
+  assert.equal(firstLine.y, game.player.y - 78);
+  assert.ok(crackCaptions.every(caption => caption.text !== firstLine.text));
   assert.equal(firstLine.life, 0.9);
   feedback.step(game, 0, 0.9, []);
   assert.deepEqual(feedback.captions, []);
   feedback.step(game, 0, 0.4, [{ type: "yeti-explanation" }]);
-  assert.equal(feedback.captions.length, 1);
-  const [secondLine] = feedback.captions;
-  assert.match(secondLine.text, /^“.+”$/);
+  const secondLine = onlyCaption(feedback);
   assert.notEqual(secondLine.text, firstLine.text);
   assert.equal(secondLine.fixed, true);
   assert.equal(secondLine.life, 1.8);

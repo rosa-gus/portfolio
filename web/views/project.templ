@@ -8,22 +8,23 @@ templ ProjectNoteLink(slug string, key string, number string, label string) {
 	</a>
 }
 
-templ ProjectNoteHeading(slug string, key string, number string, label string) {
-	<h2 class="project-note__section-heading meta-text" id={ "project-" + slug + "-" + key + "-heading" }>
-		<span>{ number }</span><span class="inline-divider" aria-hidden="true"></span><span>{ label }</span>
-	</h2>
-}
-
-templ ProjectNoteSection(slug string, key string, number string, label string, content portfolio.MarkdownDocument, basePath string) {
-	<section class="project-note__section" id={ "project-" + slug + "-" + key } data-project-section={ key } aria-labelledby={ "project-" + slug + "-" + key + "-heading" } tabindex="-1">
-		@ProjectNoteHeading(slug, key, number, label)
-		<div class="project-content__prose">
-			@renderMarkdown(content, basePath)
-		</div>
+templ ProjectNoteSection(slug string, section projectPageSection, number string) {
+	<section class="project-note__section" id={ "project-" + slug + "-" + section.id } data-project-section={ section.id } aria-labelledby={ "project-" + slug + "-" + section.id + "-heading" } tabindex="-1">
+		<h2 class="project-note__section-heading meta-text" id={ "project-" + slug + "-" + section.id + "-heading" }>
+			<span>{ number }</span><span class="inline-divider" aria-hidden="true"></span><span>{ section.title }</span>
+		</h2>
+		@section.body
 	</section>
 }
 
+templ ProjectNoteProse(content portfolio.MarkdownDocument, basePath string) {
+	<div class="project-content__prose">
+		@renderMarkdown(content, basePath)
+	</div>
+}
+
 templ ProjectContent(project portfolio.Project, basePath string) {
+	{{ sections := projectPageSections(project, basePath) }}
 	<article class="project-content project-content--page" style={ projectToneStyle(project.Tone) } data-project-story>
 
 		<div class="project-note">
@@ -45,120 +46,108 @@ templ ProjectContent(project portfolio.Project, basePath string) {
 				}
 				<p class="project-note__role"><span class="meta-text">Atuação</span><span>{ projectRoleLabel(project.Role) }</span></p>
 			</header>
-			<nav class="project-note__index control-text" aria-label="Índice do estudo de caso">
+			<nav class="project-note__index control-text" aria-label="Índice da nota">
 				<p class="project-note__index-label">Nesta nota</p>
 				<div class="project-note__index-links">
-					@ProjectNoteLink(project.Slug, "context", "01", "Contexto")
-					@ProjectNoteLink(project.Slug, "challenge", "02", "Desafio")
-					@ProjectNoteLink(project.Slug, "decision", "03", "Decisões")
-					@ProjectNoteLink(project.Slug, "result", "04", "Resultado")
-					if len(project.Media.Items) > 0 {
-						@ProjectNoteLink(project.Slug, "gallery", "05", "Galeria")
+					for position, section := range sections {
+						@ProjectNoteLink(project.Slug, section.id, projectSectionNumber(position), section.title)
 					}
-					@ProjectNoteLink(project.Slug, "practice", "06", "Ficha")
 				</div>
 			</nav>
-			@ProjectNoteSection(project.Slug, "context", "01", "Contexto", project.CaseStudy.Context, basePath)
-			@ProjectNoteSection(project.Slug, "challenge", "02", "Desafio", project.CaseStudy.Challenge, basePath)
-			@ProjectNoteSection(project.Slug, "decision", "03", "Decisões", project.CaseStudy.Decision, basePath)
-			@ProjectNoteSection(project.Slug, "result", "04", "Resultado", project.CaseStudy.Result, basePath)
-			if len(project.Media.Items) > 0 {
-				<section class="project-note__section" id={ "project-" + project.Slug + "-gallery" } data-project-section="gallery" aria-labelledby={ "project-" + project.Slug + "-gallery-heading" } tabindex="-1">
-					@ProjectNoteHeading(project.Slug, "gallery", "05", "Galeria")
-					<div class="project-gallery" data-project-gallery aria-label={ "Galeria de " + project.Title }>
-						<div class="project-gallery__viewport" data-gallery-viewport>
-							<div class="project-gallery__track">
-								for index, image := range project.Media.Items {
-									<figure class="project-gallery__slide" data-gallery-slide aria-hidden={ index != 0 }>
-										<div class={ galleryMediaClass(image.Note != "") }>
-											if image.Note != "" {
-												<p class="project-gallery__note" id={ galleryNoteID(project.Slug, image.ID) }>
-													<span>[NOTA]</span> { image.Note }
-												</p>
-											}
-											<div class="project-gallery__image-frame">
-												<img
-													class={ galleryImageClass(image) }
-													src={ siteURL(basePath, image.Src) }
-													alt={ image.Alt }
-													width={ imageDimension(image.Width) }
-													height={ imageDimension(image.Height) }
-													loading="lazy"
-													decoding="async"
-													aria-describedby={ galleryDescriptionIDs(project.Slug, image.ID, image.Note != "") }
-												/>
-											</div>
-										</div>
-										<figcaption class="project-gallery__caption" id={ galleryCaptionID(project.Slug, image.ID) }>
-											<p class="project-gallery__label">{ image.Label }</p>
-											<p class="project-gallery__description">{ image.Caption }</p>
-										</figcaption>
-									</figure>
-								}
-							</div>
-						</div>
-						<div class="project-gallery__controls" aria-label="Controles da galeria">
-							<span data-gallery-counter aria-live="polite">
-								if len(project.Media.Items) > 0 {
-									{ galleryCounter(0, len(project.Media.Items)) }
-								} else {
-									00 / 00
-								}
-							</span>
-							<div>
-								<button type="button" data-gallery-expand>[AMPLIAR]</button>
-								<button type="button" data-gallery-prev>[ANTERIOR]</button>
-								<button type="button" data-gallery-next>[PRÓXIMA]</button>
-							</div>
-						</div>
-					</div>
-				</section>
+			for position, section := range sections {
+				@ProjectNoteSection(project.Slug, section, projectSectionNumber(position))
 			}
-			<section class="project-note__section" id={ "project-" + project.Slug + "-practice" } data-project-section="practice" aria-labelledby={ "project-" + project.Slug + "-practice-heading" } tabindex="-1">
-				@ProjectNoteHeading(project.Slug, "practice", "06", "Ficha técnica")
-				<dl class="project-note__facts">
-					<div><dt class="meta-text">Atuação</dt><dd>{ projectRoleLabel(project.Role) }</dd></div>
-					for _, branch := range project.PracticeMap {
-						<div>
-							<dt class="meta-text">{ capabilityLabel(branch.Capability) }</dt>
-							<dd class="project-note__technologies">
-								for index, technology := range branch.Technologies {
-									if index > 0 {
-										<span class="inline-divider inline-divider--small" aria-hidden="true"></span><span class="visually-hidden">; </span>
-									}
-									<span>{ technology }</span>
-								}
-							</dd>
-						</div>
-					}
-					if project.License.Name != "" {
-						<div><dt class="meta-text">Licença</dt><dd><a href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">{ project.License.Name } [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a></dd></div>
-					}
-					if project.Media.CoverCredit.Name != "" {
-						<div><dt class="meta-text">Fotografia da capa</dt><dd>
-							if project.Media.CoverCredit.AuthorURL != "" {
-								<a href={ externalURL(project.Media.CoverCredit.AuthorURL) } target="_blank" rel="noreferrer noopener">{ project.Media.CoverCredit.Name } [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
-							} else {
-								{ project.Media.CoverCredit.Name }
-							}
-						</dd></div>
-					}
-				</dl>
-				<div class="project-note__resources control-text" aria-label="Recursos do projeto">
-					if project.Links.Live != "" {
-						<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer noopener">[VISITAR SITE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
-					}
-					if project.Links.Repository != "" {
-						<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener" aria-label={ "Código-fonte: " + repositoryLabel(project.Links.Repository) }>[CÓDIGO-FONTE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
-					}
-					if project.Links.Releases != "" {
-						<a href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener" aria-label={ "Releases estáveis e experimentais do " + project.Title }>[VERSÕES <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
-					}
-				</div>
-			</section>
 			<footer class="project-note__ending control-text"><a href={ siteURL(basePath, "/#case") }>[VOLTAR AOS CASES]</a></footer>
 		</div>
 	</article>
+}
+
+templ ProjectNoteGallery(project portfolio.Project, basePath string) {
+	<div class="project-gallery" data-project-gallery aria-label={ "Galeria de " + project.Title }>
+		<div class="project-gallery__viewport" data-gallery-viewport>
+			<div class="project-gallery__track">
+				for index, image := range project.Media.Items {
+					<figure class="project-gallery__slide" data-gallery-slide aria-hidden={ index != 0 }>
+						<div class={ galleryMediaClass(image.Note != "") }>
+							if image.Note != "" {
+								<p class="project-gallery__note" id={ galleryNoteID(project.Slug, image.ID) }>
+									<span>[NOTA]</span> { image.Note }
+								</p>
+							}
+							<div class="project-gallery__image-frame">
+								<img
+									class={ galleryImageClass(image) }
+									src={ siteURL(basePath, image.Src) }
+									alt={ image.Alt }
+									width={ imageDimension(image.Width) }
+									height={ imageDimension(image.Height) }
+									loading="lazy"
+									decoding="async"
+									aria-describedby={ galleryDescriptionIDs(project.Slug, image.ID, image.Note != "") }
+								/>
+							</div>
+						</div>
+						<figcaption class="project-gallery__caption" id={ galleryCaptionID(project.Slug, image.ID) }>
+							<p class="project-gallery__label">{ image.Label }</p>
+							<p class="project-gallery__description">{ image.Caption }</p>
+						</figcaption>
+					</figure>
+				}
+			</div>
+		</div>
+		<div class="project-gallery__controls" aria-label="Controles da galeria">
+			<span data-gallery-counter aria-live="polite">
+				{ galleryCounter(0, len(project.Media.Items)) }
+			</span>
+			<div>
+				<button type="button" data-gallery-expand>[AMPLIAR]</button>
+				<button type="button" data-gallery-prev>[ANTERIOR]</button>
+				<button type="button" data-gallery-next>[PRÓXIMA]</button>
+			</div>
+		</div>
+	</div>
+}
+
+templ ProjectNoteFacts(project portfolio.Project, basePath string) {
+	<dl class="project-note__facts">
+		<div><dt class="meta-text">Atuação</dt><dd>{ projectRoleLabel(project.Role) }</dd></div>
+		for _, branch := range project.PracticeMap {
+			<div>
+				<dt class="meta-text">{ capabilityLabel(branch.Capability) }</dt>
+				<dd class="project-note__technologies">
+					for index, technology := range branch.Technologies {
+						if index > 0 {
+							<span class="inline-divider inline-divider--small" aria-hidden="true"></span><span class="visually-hidden">; </span>
+						}
+						<span>{ technology }</span>
+					}
+				</dd>
+			</div>
+		}
+		if project.License.Name != "" {
+			<div><dt class="meta-text">Licença</dt><dd><a href={ externalURL(project.License.URL) } target="_blank" rel="noreferrer noopener">{ project.License.Name } [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a></dd></div>
+		}
+		if project.Media.CoverCredit.Name != "" {
+			<div><dt class="meta-text">Fotografia da capa</dt><dd>
+				if project.Media.CoverCredit.AuthorURL != "" {
+					<a href={ externalURL(project.Media.CoverCredit.AuthorURL) } target="_blank" rel="noreferrer noopener">{ project.Media.CoverCredit.Name } [<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+				} else {
+					{ project.Media.CoverCredit.Name }
+				}
+			</dd></div>
+		}
+	</dl>
+	<div class="project-note__resources control-text" aria-label="Recursos do projeto">
+		if project.Links.Live != "" {
+			<a href={ externalURL(project.Links.Live) } target="_blank" rel="noreferrer noopener">[VISITAR SITE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+		}
+		if project.Links.Repository != "" {
+			<a href={ externalURL(project.Links.Repository) } target="_blank" rel="noreferrer noopener" aria-label={ "Código-fonte: " + repositoryLabel(project.Links.Repository) }>[CÓDIGO-FONTE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+		}
+		if project.Links.Releases != "" {
+			<a href={ externalURL(project.Links.Releases) } target="_blank" rel="noreferrer noopener" aria-label={ "Releases estáveis e experimentais do " + project.Title }>[VERSÕES <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]</a>
+		}
+	</div>
 }
 
 templ ProjectImageViewer() {
@@ -249,7 +238,7 @@ templ ProjectPage(profile portfolio.ProfileContent, project portfolio.Project, b
 					</div>
 				</header>
 				<main>
-					@ScrollArea("Leitura do estudo de caso", "vertical") {
+					@ScrollArea("Leitura da nota do projeto", "vertical") {
 						@ProjectContent(project, basePath)
 					}
 				</main>

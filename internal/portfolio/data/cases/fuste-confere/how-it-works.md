@@ -1,0 +1,5 @@
+Cada conferência começa pela seleção de uma representada e de dois arquivos CSV, um com as vendas faturadas e outro com o demonstrativo de comissões. A prévia permite validar o mapeamento das colunas e os formatos de datas e valores. Esse mapeamento pode ser salvo em perfis e reaproveitado nas próximas importações da mesma representada.
+
+O Fuste cruza os arquivos pelo identificador da venda, soma os lançamentos do demonstrativo que compartilham esse identificador e calcula a comissão esperada com o percentual vigente na data da venda. A tabela mostra o valor esperado, o informado e a diferença. Ela também sinaliza vendas sem lançamento, lançamentos sem venda correspondente e vendas sem acordo vigente.
+
+A aplicação roda localmente e guarda os valores e percentuais de cada conferência em SQLite. Ao reenviar os mesmos arquivos com a mesma configuração, é possível abrir o resultado anterior ou fazer uma nova conferência com os acordos atuais. A interface permite filtrar os itens e exportar a conferência completa em CSV.

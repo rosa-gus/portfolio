@@ -1,308 +1,260 @@
 package views
 
-import "portfolio/internal/portfolio"
+import (
+app "portfolio"
+"portfolio/internal/portfolio"
+)
 
-templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archive portfolio.Archive, basePath string, publicURL string) {
-	<!DOCTYPE html>
-	<html lang="pt-BR">
-		<head>
-			<meta charset="utf-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<meta name="description" content={ profile.SEO.Description }/>
-			@siteIcons(basePath)
-			@themeHead()
-			<title>{ siteMetadataTitle(profile) }</title>
-			<link rel="canonical" href={ externalURL(publicURL) }/>
-			<meta property="og:locale" content="pt_BR"/>
-			<meta property="og:type" content="website"/>
-			<meta property="og:site_name" content={ siteMetadataTitle(profile) }/>
-			<meta property="og:title" content={ siteMetadataTitle(profile) }/>
-			<meta property="og:description" content={ profile.SEO.Description }/>
-			<meta property="og:url" content={ publicURL }/>
-			<meta property="og:image" content={ socialImageURL(publicURL) }/>
-			<meta property="og:image:type" content="image/png"/>
-			<meta property="og:image:width" content="1000"/>
-			<meta property="og:image:height" content="525"/>
-			<meta property="og:image:alt" content={ profile.SEO.SocialImageAlt }/>
-			<meta name="twitter:card" content="summary_large_image"/>
-			<meta name="twitter:title" content={ siteMetadataTitle(profile) }/>
-			<meta name="twitter:description" content={ profile.SEO.Description }/>
-			<meta name="twitter:image" content={ socialImageURL(publicURL) }/>
-			<meta name="twitter:image:alt" content={ profile.SEO.SocialImageAlt }/>
-			for _, stylesheet := range appStylesheets() {
-				<link rel="stylesheet" href={ siteURL(basePath, stylesheet) }/>
-			}
-			<script type="module" src={ siteURL(basePath, appScript()) }></script>
-		</head>
-		<body>
-			<div class="site-shell">
-				<header class="masthead">
-					<a class="identity" href={ siteURL(basePath, "/") } aria-label={ "Página inicial de " + profile.Identity.DisplayName }>
-						<span class="identity__mark" aria-hidden="true">
-							<img class="identity__mark-image identity__mark-image--light" src={ siteURL(basePath, "/favicon/favicon-32x32.png") } width="32" height="32" alt=""/>
-							<img class="identity__mark-image identity__mark-image--dark" src={ siteURL(basePath, "/favicon/dark/favicon-32x32.png") } width="32" height="32" alt=""/>
-						</span>
-						<span>{ profile.Identity.DisplayName }</span>
-					</a>
-					<p class="masthead__role" data-page-title aria-live="polite">{ availabilityLabel(profile) }</p>
-					<div class="masthead__actions">
-						@themeToggle()
-					</div>
-				</header>
-				<main class="stage" id="content">
-					<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={ availabilityLabel(profile) } aria-labelledby="projects-title">
-						@EditorialHeading("projects-title", profile.Introduction.Heading, true)
-						@ProjectArchive(archive, basePath)
-					</section>
-					<section
-						class="content-panel information-panel career-panel"
-						id="career"
-						data-panel
-						data-panel-title="Experiência aplicada"
-						hidden
-						aria-labelledby="career-title"
-					>
-						@ScrollArea("Percurso profissional", "vertical") {
-							<div class="career-record">
-								<header class="career-record__header">
-									<h2 class="career-record__title" id="career-title">{ profile.Career.Heading }</h2>
-									<span class="career-record__rule meta-text" data-text-leader="-" aria-hidden="true">-</span>
-									<div class="career-record__index meta-text">
-										<p>/ Percurso selecionado</p>
-										<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
-									</div>
-								</header>
-								<ol class="career-record__list">
-									for _, entry := range profile.Career.Entries {
-										<li class="career-entry">
-											<p class="career-entry__period meta-text">{ entry.Period }</p>
-											<article class="career-entry__body">
-												<h3>{ entry.Title }</h3>
-												<p class="career-entry__context meta-text">{ entry.Context }</p>
-												<p class="career-entry__description">{ entry.Description }</p>
-												<div class="career-entry__meta meta-text">
-													<p>{ entry.DetailLabel }</p>
-													if len(entry.EvidenceSlugs) > 0 {
-														<div class="evidence-links">
-															for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
-																<a href={ projectURL(basePath, project.Slug) }>
-																	{ project.Title } <span
-	class="ui-arrow ui-arrow--redirect"
-	aria-hidden="true"
->↑</span>
-																</a>
-															}
-														</div>
-													} else {
-														<p>{ entry.Detail }</p>
-													}
-												</div>
-											</article>
-										</li>
-									}
-								</ol>
-								<footer class="career-record__practice meta-text">
-									<p>Prática</p>
-									<p class="career-capabilities">
-										for _, capability := range careerCapabilities(projects) {
-											<span>{ capability }</span>
-										}
-									</p>
-								</footer>
-							</div>
-						}
-					</section>
-					<section
-						class="content-panel information-panel about-panel"
-						id="about"
-						data-panel
-						data-panel-title="Perfil"
-						hidden
-						aria-labelledby="about-title"
-					>
-						<div class="about-panel__media" data-panel-background data-about-media data-about-state="image" aria-hidden="true">
-							<picture>
-								<source media="(max-width: 620px)" srcset={ siteURL(basePath, "/about-reticula-mobile-poster.webp") }/>
-								<img
-									data-about-image
-									src={ siteURL(basePath, "/about-reticula-poster.webp") }
-									alt=""
-									decoding="async"
-									loading="lazy"
-								/>
-							</picture>
-							<video data-about-video muted playsinline preload="none">
-								<source
-									src={ siteURL(basePath, "/about-reticula-mobile.webm") }
-									media="(max-width: 620px)"
-									type="video/webm"
-								/>
-								<source src={ siteURL(basePath, "/about-reticula.webm") } type="video/webm"/>
-							</video>
-						</div>
-						<div class="about-panel__controls" role="group" aria-labelledby="about-study-title">
-							<span class="about-panel__study-title meta-text" id="about-study-title">{ profile.About.Media.Label }{ " / " }{ profile.About.Media.Name }</span>
-							<details class="about-study">
-								<summary class="about-study__summary">
-									<span class="about-study__toggle">
-										<span
-											class="about-study__plus"
-											aria-hidden="true"
-										>+</span><span
-	class="about-study__minus"
-	aria-hidden="true"
->−</span>{ " DETALHES" }
-									</span>
-								</summary>
-								<div class="about-study__body">
-									<p class="about-study__description">{ profile.About.Media.Summary }</p>
-									<dl class="about-study__metadata">
-										<dt>Técnica</dt>
-										<dd>{ profile.About.Media.Technique }</dd>
-										<dt>Paleta</dt>
-										<dd>{ profile.About.Media.Palette }</dd>
-										<dt>Versão</dt>
-										<dd>{ profile.About.Media.Version }</dd>
-										if profile.About.Media.Author != "" {
-											<dt>Autor</dt>
-											<dd>
-												<a
-													href={ externalURL(profile.About.Media.AuthorURL) }
-													target="_blank"
-													rel="noreferrer"
-												>{ profile.About.Media.Author }</a>
-											</dd>
-										}
-									</dl>
-									<nav class="about-study__links" aria-label="Rosa-retícula">
-										<a
-											href={ externalURL(profile.About.Media.ExploreURL) }
-											target="_blank"
-											rel="noreferrer"
-										>
-											[EXPLORAR <span
-	class="ui-arrow ui-arrow--redirect"
-	aria-hidden="true"
->↑</span>]
-										</a>
-										<a
-											href={ externalURL(profile.About.Media.SourceURL) }
-											target="_blank"
-											rel="noreferrer"
-										>
-											[CÓDIGO-FONTE <span
-	class="ui-arrow ui-arrow--redirect"
-	aria-hidden="true"
->↑</span>]
-										</a>
-									</nav>
-								</div>
-							</details>
-							<button
-								class="about-panel__play"
-								data-about-play
-								type="button"
-								aria-label="Reproduzir o vídeo ensaio desde o início"
-								aria-pressed="false"
-							>
-								[ ]
-								REPRODUZIR
-							</button>
-						</div>
-						<div class="about-panel__copy">
-							<header class="about-panel__intro">
-								<p class="about-panel__byline">
-									<span class="about-panel__name">{ profile.Identity.Name }</span>
-									<span class="about-panel__profession">{ profile.Identity.Profession }</span>
-									<a class="about-panel__contact control-text" data-panel-target="contact" href="#contact">[ENTRAR EM CONTATO]</a>
-								</p>
-								<h2 class="about-panel__title" id="about-title">{ profile.About.Heading }</h2>
-								if profile.About.Lead != "" {
-									<p class="about-panel__lead">{ profile.About.Lead }</p>
-								}
-							</header>
-							if len(profile.About.Paragraphs) > 0 {
-								<div class="about-panel__body">
-									for _, paragraph := range profile.About.Paragraphs {
-										<p>{ paragraph }</p>
-									}
-								</div>
-							}
-						</div>
-					</section>
-					<section
-						class="content-panel information-panel contact-panel"
-						id="contact"
-						data-panel
-						data-panel-title="Contato"
-						hidden
-						aria-labelledby="contact-title"
-					>
-						<div class="contact-panel__media" data-panel-background aria-hidden="true"></div>
-						<div class="contact-panel__body">
-							<header class="contact-panel__heading">
-								<p class="contact-panel__correspondence meta-text">/ Correspondência</p>
-								<h2 class="contact-panel__title" id="contact-title">{ profile.Contact.Heading }</h2>
-								<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
-							</header>
-							<div class="contact-panel__primary">
-								<div class="contact-panel__address">
-									<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>
-										{
-								profile.Contact.Email }
-									</a>
-									<button class="contact-panel__copy" type="button" data-contact-copy data-copy-value={ profile.Contact.Email } aria-describedby="contact-copy-status" hidden>[COPIAR]</button>
-								</div>
-								<p
-									class="contact-panel__status meta-text"
-									id="contact-copy-status"
-									data-contact-copy-status
-									aria-live="polite"
-								></p>
-							</div>
-							if profile.Contact.GitHubURL != "" || profile.Contact.LinkedInURL != "" || profile.Contact.SourceURL != "" {
-								<nav class="contact-panel__channels meta-text" aria-label="Outros canais de contato">
-									if profile.Contact.GitHubURL != "" {
-										<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">
-											GitHub
-											<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
-										</a>
-									}
-									if profile.Contact.LinkedInURL != "" {
-										<a
-											href={ externalURL(profile.Contact.LinkedInURL) }
-											target="_blank"
-											rel="me noreferrer"
-										>
-											LinkedIn <span
-	class="ui-arrow ui-arrow--redirect"
-	aria-hidden="true"
->↑</span>
-										</a>
-									}
-									if profile.Contact.SourceURL != "" {
-										<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">
-											Código-fonte
-											<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
-										</a>
-									}
-								</nav>
-							}
-							<p class="contact-panel__signature meta-text">
-								assino como <span class="contact-panel__name-accent">rosa</span>{ " gus ou luis gustavo r.c." }
-							</p>
-						</div>
-					</section>
-				</main>
-				@DocumentNotes(archive.Documents, basePath)
-				@AppWindows(archive, basePath, profile.Contact.SourceURL)
-				<nav class="command-bar" aria-label="Seções principais">
-					<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
-					<a data-panel-target="career" href="#career">Carreira</a>
-					<a data-panel-target="about" href="#about">Sobre</a>
-					<a data-panel-target="contact" href="#contact">Contato</a>
-				</nav>
+templ Home(profile portfolio.ProfileContent, projects []portfolio.Project, archive portfolio.Archive, basePath string,
+publicURL string) {
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content={ profile.SEO.Description } />
+	@siteIcons(basePath)
+	@themeHead()
+	<title>{ siteMetadataTitle(profile) }</title>
+	<link rel="canonical" href={ externalURL(publicURL) } />
+	<meta property="og:locale" content="pt_BR" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content={ siteMetadataTitle(profile) } />
+	<meta property="og:title" content={ siteMetadataTitle(profile) } />
+	<meta property="og:description" content={ profile.SEO.Description } />
+	<meta property="og:url" content={ publicURL } />
+	<meta property="og:image" content={ socialImageURL(publicURL) } />
+	<meta property="og:image:type" content="image/png" />
+	<meta property="og:image:width" content="1000" />
+	<meta property="og:image:height" content="525" />
+	<meta property="og:image:alt" content={ profile.SEO.SocialImageAlt } />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={ siteMetadataTitle(profile) } />
+	<meta name="twitter:description" content={ profile.SEO.Description } />
+	<meta name="twitter:image" content={ socialImageURL(publicURL) } />
+	<meta name="twitter:image:alt" content={ profile.SEO.SocialImageAlt } />
+	for _, stylesheet := range appStylesheets() {
+	<link rel="stylesheet" href={ siteURL(basePath, stylesheet) } />
+	}
+	<script type="module" src={ siteURL(basePath, appScript()) }></script>
+</head>
+
+<body>
+	<div class="site-shell">
+		<header class="masthead">
+			<a class="identity" href={ siteURL(basePath, "/" ) } aria-label={ "Página inicial de " +
+				profile.Identity.DisplayName }>
+				<span class="identity__mark" aria-hidden="true">
+					<img class="identity__mark-image identity__mark-image--light" src={
+						siteURL(basePath, "/favicon/favicon-32x32.png" ) } width="32" height="32" alt="" />
+					<img class="identity__mark-image identity__mark-image--dark" src={
+						siteURL(basePath, "/favicon/dark/favicon-32x32.png" ) } width="32" height="32" alt="" />
+				</span>
+				<span>{ profile.Identity.DisplayName }</span>
+			</a>
+			<p class="masthead__role" data-page-title aria-live="polite">{ availabilityLabel(profile) }</p>
+			<div class="masthead__actions">
+				@themeToggle()
 			</div>
-		</body>
-	</html>
+		</header>
+		<main class="stage" id="content">
+			<section class="content-panel projects-panel is-current" id="case" data-panel data-panel-title={
+				availabilityLabel(profile) } aria-labelledby="projects-title">
+				@EditorialHeading("projects-title", profile.Introduction.Heading, true)
+				@ProjectArchive(archive, basePath)
+			</section>
+			<section class="content-panel information-panel career-panel" id="career" data-panel
+				data-panel-title="Experiência aplicada" hidden aria-labelledby="career-title">
+				@ScrollArea("Percurso profissional", "vertical") {
+				<div class="career-record">
+					<header class="career-record__header">
+						<h2 class="career-record__title" id="career-title">{ profile.Career.Heading }</h2>
+						<span class="career-record__rule meta-text" data-text-leader="-" aria-hidden="true">-</span>
+						<div class="career-record__index meta-text">
+							<p>/ Percurso selecionado</p>
+							<p>{ careerEntryRange(len(profile.Career.Entries)) }</p>
+						</div>
+					</header>
+					<ol class="career-record__list">
+						for _, entry := range profile.Career.Entries {
+						<li class="career-entry">
+							<p class="career-entry__period meta-text">{ entry.Period }</p>
+							<article class="career-entry__body">
+								<h3>{ entry.Title }</h3>
+								<p class="career-entry__context meta-text">{ entry.Context }</p>
+								<p class="career-entry__description">{ entry.Description }</p>
+								<div class="career-entry__meta meta-text">
+									<p>{ entry.DetailLabel }</p>
+									if len(entry.EvidenceSlugs) > 0 {
+									<div class="evidence-links">
+										for _, project := range projectEvidence(projects, entry.EvidenceSlugs) {
+										<a href={ projectURL(basePath, project.Slug) }>
+											{ project.Title } <span class="ui-arrow ui-arrow--redirect"
+												aria-hidden="true">↑</span>
+										</a>
+										}
+									</div>
+									} else {
+									<p>{ entry.Detail }</p>
+									}
+								</div>
+							</article>
+						</li>
+						}
+					</ol>
+					<footer class="career-record__practice meta-text">
+						<p>Prática</p>
+						<p class="career-capabilities">
+							for _, capability := range careerCapabilities(projects) {
+							<span>{ capability }</span>
+							}
+						</p>
+					</footer>
+				</div>
+				}
+			</section>
+			<section class="content-panel information-panel about-panel" id="about" data-panel data-panel-title="Perfil"
+				hidden aria-labelledby="about-title">
+				<div class="about-panel__media" data-panel-background data-about-media data-about-state="image"
+					aria-hidden="true">
+					<picture>
+						<source media="(max-width: 620px)" srcset={
+							siteURL(basePath, "/about-reticula-mobile-poster.webp" ) } />
+						<img data-about-image src={ siteURL(basePath, "/about-reticula-poster.webp" ) } alt=""
+							decoding="async" loading="lazy" />
+					</picture>
+					<video data-about-video muted playsinline preload="none">
+						<source src={ siteURL(basePath, "/about-reticula-mobile.webm" ) } media="(max-width: 620px)"
+							type="video/webm" />
+						<source src={ siteURL(basePath, "/about-reticula.webm" ) } type="video/webm" />
+					</video>
+				</div>
+				<div class="about-panel__controls" role="group" aria-labelledby="about-study-title">
+					<span class="about-panel__study-title meta-text" id="about-study-title">{ profile.About.Media.Label
+						}{ " / " }{ profile.About.Media.Name }</span>
+					<details class="about-study">
+						<summary class="about-study__summary">
+							<span class="about-study__toggle">
+								<span class="about-study__plus" aria-hidden="true">+</span><span
+									class="about-study__minus" aria-hidden="true">−</span>{ " DETALHES" }
+							</span>
+						</summary>
+						<div class="about-study__body">
+							<p class="about-study__description">{ profile.About.Media.Summary }</p>
+							<dl class="about-study__metadata">
+								<dt>Técnica</dt>
+								<dd>{ profile.About.Media.Technique }</dd>
+								<dt>Paleta</dt>
+								<dd>{ profile.About.Media.Palette }</dd>
+								<dt>Versão</dt>
+								<dd>{ profile.About.Media.Version }</dd>
+								if profile.About.Media.Author != "" {
+								<dt>Autor</dt>
+								<dd>
+									<a href={ externalURL(profile.About.Media.AuthorURL) } target="_blank"
+										rel="noreferrer">{ profile.About.Media.Author }</a>
+								</dd>
+								}
+							</dl>
+							<nav class="about-study__links" aria-label="Rosa-retícula">
+								<a href={ externalURL(profile.About.Media.ExploreURL) } target="_blank"
+									rel="noreferrer">
+									[EXPLORAR <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]
+								</a>
+								<a href={ externalURL(profile.About.Media.SourceURL) } target="_blank" rel="noreferrer">
+									[CÓDIGO-FONTE <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>]
+								</a>
+							</nav>
+						</div>
+					</details>
+					<button class="about-panel__play" data-about-play type="button"
+						aria-label="Reproduzir o vídeo ensaio desde o início" aria-pressed="false">
+						[ ]
+						REPRODUZIR
+					</button>
+				</div>
+				<div class="about-panel__copy">
+					<header class="about-panel__intro">
+						<p class="about-panel__byline">
+							<span class="about-panel__name">{ profile.Identity.Name }</span>
+							<span class="about-panel__profession">{ profile.Identity.Profession }</span>
+							<a class="about-panel__contact control-text" data-panel-target="contact"
+								href="#contact">[ENTRAR EM CONTATO]</a>
+						</p>
+						<h2 class="about-panel__title" id="about-title">{ profile.About.Heading }</h2>
+						if profile.About.Lead != "" {
+						<p class="about-panel__lead">{ profile.About.Lead }</p>
+						}
+					</header>
+					if len(profile.About.Paragraphs) > 0 {
+					<div class="about-panel__body">
+						for _, paragraph := range profile.About.Paragraphs {
+						<p>{ paragraph }</p>
+						}
+					</div>
+					}
+				</div>
+			</section>
+			<section class="content-panel information-panel contact-panel" id="contact" data-panel
+				data-panel-title="Contato" hidden aria-labelledby="contact-title">
+				<div class="contact-panel__media" data-panel-background aria-hidden="true"></div>
+				<div class="contact-panel__body">
+					<header class="contact-panel__heading">
+						<p class="contact-panel__correspondence meta-text">/ Correspondência</p>
+						<h2 class="contact-panel__title" id="contact-title">{ profile.Contact.Heading }</h2>
+						<p class="contact-panel__intro">{ profile.Contact.Introduction }</p>
+					</header>
+					<div class="contact-panel__primary">
+						<div class="contact-panel__address">
+							<a class="contact-panel__email" href={ emailURL(profile.Contact.Email) }>
+								{
+								profile.Contact.Email }
+							</a>
+							<button class="contact-panel__copy" type="button" data-contact-copy data-copy-value={
+								profile.Contact.Email } aria-describedby="contact-copy-status" hidden>[COPIAR]</button>
+						</div>
+						<p class="contact-panel__status meta-text" id="contact-copy-status" data-contact-copy-status
+							aria-live="polite"></p>
+					</div>
+					if profile.Contact.GitHubURL != "" || profile.Contact.LinkedInURL != "" || profile.Contact.SourceURL
+					!= "" {
+					<nav class="contact-panel__channels meta-text" aria-label="Outros canais de contato">
+						if profile.Contact.GitHubURL != "" {
+						<a href={ externalURL(profile.Contact.GitHubURL) } target="_blank" rel="me noreferrer">
+							GitHub
+							<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+						</a>
+						}
+						if profile.Contact.LinkedInURL != "" {
+						<a href={ externalURL(profile.Contact.LinkedInURL) } target="_blank" rel="me noreferrer">
+							LinkedIn <span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+						</a>
+						}
+						if profile.Contact.SourceURL != "" {
+						<a href={ externalURL(profile.Contact.SourceURL) } target="_blank" rel="noreferrer">
+							{ "Código-fonte (v. " + app.Version() + ")" }
+							<span class="ui-arrow ui-arrow--redirect" aria-hidden="true">↑</span>
+						</a>
+						}
+					</nav>
+					}
+					<p class="contact-panel__signature meta-text">
+						assino como <span class="contact-panel__name-accent">rosa</span>{ " gus ou luis gustavo r.c." }
+					</p>
+				</div>
+			</section>
+		</main>
+		@DocumentNotes(archive.Documents, basePath)
+		@AppWindows(archive, basePath, profile.Contact.SourceURL)
+		<nav class="command-bar" aria-label="Seções principais">
+			<a class="is-current" data-panel-target="case" href="#case" aria-current="page">Cases</a>
+			<a data-panel-target="career" href="#career">Carreira</a>
+			<a data-panel-target="about" href="#about">Sobre</a>
+			<a data-panel-target="contact" href="#contact">Contato</a>
+		</nav>
+	</div>
+</body>
+
+</html>
 }

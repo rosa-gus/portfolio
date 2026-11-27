@@ -1,132 +1,94 @@
 package views
 
 import (
-	"fmt"
-	"portfolio/internal/portfolio"
+"fmt"
+"portfolio/internal/portfolio"
 )
 
 templ ArchiveItem(item portfolio.ArchiveItem, basePath string) {
-	switch item.Kind {
-		case portfolio.ArchiveCollection:
-			@ArchiveCollectionItem(item.ID, item.Folder)
-		case portfolio.ArchiveDocument:
-			@ArchiveDocumentItem(item.ID, item.Document, basePath)
-		case portfolio.ArchiveProject:
-			@ArchiveProjectItem(item.ID, item.Project, basePath)
-		case portfolio.ArchiveApp:
-			@ArchiveAppItem(item.ID, item.Ref)
-		case portfolio.ArchiveLink:
-			@ArchiveLinkItem(item)
-	}
+switch item.Kind {
+case portfolio.ArchiveCollection:
+@ArchiveCollectionItem(item.ID, item.Folder)
+case portfolio.ArchiveDocument:
+@ArchiveDocumentItem(item.ID, item.Document, basePath)
+case portfolio.ArchiveProject:
+@ArchiveProjectItem(item.ID, item.Project, basePath)
+case portfolio.ArchiveApp:
+@ArchiveAppItem(item.ID, item.Ref)
+case portfolio.ArchiveLink:
+@ArchiveLinkItem(item)
+}
 }
 
 templ ArchiveCollectionItem(id string, folder portfolio.ArchiveFolder) {
-	<button
-		class="project-archive__item project-archive__item--folder"
-		type="button"
-		data-archive-item
-		data-archive-id={ id }
-		data-archive-folder={ folder.Key }
-		data-folder-symbol={ folder.Symbol }
-		data-folder-label={ folder.Label }
-		data-folder-count={ fmt.Sprintf("%02d", len(folder.Projects)) }
-		aria-label={ fmt.Sprintf("Abrir coleção %s, %d cases", folder.Label, len(folder.Projects)) }
-		disabled?={ len(folder.Projects) == 0 }
-		aria-expanded="false"
-		aria-controls="project-archive-floating"
-	>
-		<span class="project-archive__item-icon project-archive__item-icon--folder" aria-hidden="true">
-			<span class="project-archive__folder-tab"></span>
-			{ folder.Symbol }
-		</span>
-		<span class="project-archive__item-title">{ folder.Label }</span>
-		<span class="project-archive__item-meta">{ fmt.Sprintf("%02d CASE", len(folder.Projects)) }</span>
-	</button>
+<button class="project-archive__item project-archive__item--folder" type="button" data-archive-item data-archive-id={ id
+	} data-archive-folder={ folder.Key } data-folder-symbol={ folder.Symbol } data-folder-label={ folder.Label }
+	data-folder-count={ fmt.Sprintf("%02d", len(folder.Projects)) } aria-label={ fmt.Sprintf("Abrir coleção %s, %d
+	cases", folder.Label, len(folder.Projects)) } disabled?={ len(folder.Projects)==0 } aria-expanded="false"
+	aria-controls="project-archive-floating">
+	<span class="project-archive__item-icon project-archive__item-icon--folder" aria-hidden="true">
+		<span class="project-archive__folder-tab"></span>
+		{ folder.Symbol }
+	</span>
+	<span class="project-archive__item-title">{ folder.Label }</span>
+	<span class="project-archive__item-meta">{ fmt.Sprintf("%02d CASE", len(folder.Projects)) }</span>
+</button>
 }
 
 templ ArchiveDocumentItem(id string, document portfolio.Document, basePath string) {
-	if document.Kind == portfolio.DocumentNote {
-		<button class="project-archive__item" type="button" data-archive-item data-archive-id={ id } data-document-note-trigger={ document.Slug } data-window-trigger={ "note-" + document.Slug } aria-haspopup="dialog" aria-controls={ "note-" + document.Slug }>
-			@DocumentIcon(document.Kind)
-			<span class="project-archive__item-title">{ underscoreIdentifier(document.Title) }</span>
-			<span class="project-archive__item-meta">NOTA / MD</span>
-		</button>
-	} else if document.Kind == portfolio.DocumentArticle {
-		<a class="project-archive__item" data-archive-item data-archive-id={ id } data-archive-article={ document.Slug } href={ articleURL(basePath, document.Slug) } draggable="false">
-			@DocumentIcon(document.Kind)
-			<span class="project-archive__item-title">{ underscoreIdentifier(document.Title) }</span>
-			<span class="project-archive__item-meta">ARTIGO / MD</span>
-		</a>
-	}
+if document.Kind == portfolio.DocumentNote {
+<button class="project-archive__item" type="button" data-archive-item data-archive-id={ id }
+	data-document-note-trigger={ document.Slug } data-window-trigger={ "note-" + document.Slug } aria-haspopup="dialog"
+	aria-controls={ "note-" + document.Slug }>
+	@DocumentIcon(document.Kind)
+	<span class="project-archive__item-title">{ underscoreIdentifier(document.Title) }</span>
+	<span class="project-archive__item-meta">NOTA / MD</span>
+</button>
+} else if document.Kind == portfolio.DocumentArticle {
+<a class="project-archive__item" data-archive-item data-archive-id={ id } data-archive-article={ document.Slug } href={
+	articleURL(basePath, document.Slug) } draggable="false">
+	@DocumentIcon(document.Kind)
+	<span class="project-archive__item-title">{ underscoreIdentifier(document.Title) }</span>
+	<span class="project-archive__item-meta">ARTIGO / MD</span>
+</a>
+}
 }
 
 templ ArchiveProjectItem(id string, project portfolio.Project, basePath string) {
-	<button
-		class="project-archive__item project-archive__item--project"
-		type="button"
-		data-archive-item
-		data-archive-id={ id }
-		data-archive-project={ project.Slug }
-		aria-label={ "Consultar projeto " + project.Title }
-		aria-current="false"
-	>
-		<span
-			class="project-archive__item-icon project-archive__item-icon--project document-fold"
-			aria-hidden="true"
-		>
-			if image := projectGridPreview(project); image.Src != "" {
-				<img
-					src={ siteURL(basePath, image.Src) }
-					srcset={ projectGridPreviewSources(project, basePath) }
-					alt=""
-					width={ imageDimension(image.Width) }
-					height={ imageDimension(image.Height) }
-					loading="lazy"
-					decoding="async"
-					draggable="false"
-				/>
-			}
-		</span>
-		<span class="project-archive__item-title">{ underscoreIdentifier(project.Title) }</span>
-		<span class="project-archive__item-meta">CASE / { project.Year }</span>
-	</button>
+<button class="project-archive__item project-archive__item--project" type="button" data-archive-item data-archive-id={
+	id } data-archive-project={ project.Slug } aria-label={ "Consultar projeto " + project.Title } aria-current="false">
+	<span class="project-archive__item-icon project-archive__item-icon--project document-fold" aria-hidden="true">
+		if image := projectGridPreview(project); image.Src != "" {
+		<img src={ siteURL(basePath, image.Src) } srcset={ projectGridPreviewSources(project, basePath) } alt="" width={
+			imageDimension(image.Width) } height={ imageDimension(image.Height) } loading="lazy" decoding="async"
+			draggable="false" />
+		}
+	</span>
+	<span class="project-archive__item-title">{ underscoreIdentifier(project.Title) }</span>
+	<span class="project-archive__item-meta">CASE / { project.Year }</span>
+</button>
 }
 
 templ ArchiveAppItem(id string, ref string) {
-	<button
-		class="project-archive__item"
-		type="button"
-		data-archive-item
-		data-archive-id={ id }
-		data-popup-trigger={ ref }
-		data-window-trigger={ ref + "-game" }
-		aria-haspopup="dialog"
-		aria-controls={ ref + "-game" }
-	>
-		<span class="project-archive__item-icon project-archive__item-icon--app" aria-hidden="true">
-			@PixelIcon(ref)
-		</span>
-		<span class="project-archive__item-title">{ ref }</span>
-		<span class="project-archive__item-meta">JOGO / TS</span>
-	</button>
+<button class="project-archive__item" type="button" data-archive-item data-archive-id={ id } data-popup-trigger={ ref }
+	data-window-trigger={ ref + "-game" } aria-haspopup="dialog" aria-controls={ ref + "-game" }>
+	<span class="project-archive__item-icon project-archive__item-icon--app" aria-hidden="true">
+		@PixelIcon(ref)
+	</span>
+	<span class="project-archive__item-title">{ ref }</span>
+	<span class="project-archive__item-meta">JOGO / TS</span>
+</button>
 }
 
 templ ArchiveLinkItem(item portfolio.ArchiveItem) {
-	<a
-		class="project-archive__item project-archive__item--link"
-		data-archive-item
-		data-archive-id={ item.ID }
-		href={ externalURL(item.URL) }
-		target="_blank"
-		rel={ archiveLinkRel(item.Identity) }
-		draggable="false"
-		aria-label={ item.Label + " (abre em nova aba)" }
-	>
-		<span class="project-archive__item-icon project-archive__item-icon--link" aria-hidden="true">
-			<span>{ item.Icon }</span>
-			<span class="project-archive__item-link-arrow ui-arrow ui-arrow--redirect">↑</span>
-		</span>
-		<span class="project-archive__item-title">{ item.Label }</span>
-		<span class="project-archive__item-meta">LINK EXTERNO</span>
-	</a>
+<a class="project-archive__item project-archive__item--link" data-archive-item data-archive-id={ item.ID } href={
+	externalURL(item.URL) } target="_blank" rel={ archiveLinkRel(item.Identity) } draggable="false" aria-label={
+	item.Label + " (abre em nova aba)" }>
+	<span class="project-archive__item-icon project-archive__item-icon--link" aria-hidden="true">
+		<span>{ item.Icon }</span>
+		<span class="project-archive__item-link-arrow ui-arrow ui-arrow--redirect">↑</span>
+	</span>
+	<span class="project-archive__item-title">{ item.Label }</span>
+	<span class="project-archive__item-meta">LINK EXTERNO</span>
+</a>
 }

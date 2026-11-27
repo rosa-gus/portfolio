@@ -11,11 +11,8 @@ func TestEmbeddedCaseStudiesAreLoaded(t *testing.T) {
 
 	checked := 0
 	for _, project := range Projects {
-		study := project.CaseStudy
-		for _, document := range []MarkdownDocument{study.Context, study.Challenge, study.Decision, study.Result} {
-			if document.Path == "" {
-				continue
-			}
+		for _, section := range project.CaseStudy.Sections {
+			document := section.Content
 			contents, err := contentFiles.ReadFile(path.Join("data", document.Path))
 			if err != nil {
 				t.Fatal(err)
@@ -38,6 +35,7 @@ func TestLoadMarkdownDocumentRejectsInvalidPaths(t *testing.T) {
 		name string
 		path string
 	}{
+		{name: "empty path"},
 		{name: "different project", path: "cases/another-project/context.md"},
 		{name: "wrong section", path: "cases/example-project/result.md"},
 		{name: "wrong extension", path: "cases/example-project/context.txt"},
@@ -55,12 +53,12 @@ func TestLoadMarkdownDocumentRejectsInvalidPaths(t *testing.T) {
 	}
 }
 
-func TestEmptyMarkdownReferenceIsAllowed(t *testing.T) {
+func TestProjectWithNoCaseSectionsIsAllowed(t *testing.T) {
 	t.Parallel()
 
-	document := MarkdownDocument{}
-	if err := loadMarkdownDocument("example-project", "context", &document); err != nil {
-		t.Fatalf("empty reference returned an error: %v", err)
+	project := Project{Slug: "example-project"}
+	if err := loadCaseStudy(&project); err != nil {
+		t.Fatalf("loadCaseStudy() with no sections returned an error: %v", err)
 	}
 }
 

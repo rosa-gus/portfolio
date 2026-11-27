@@ -15,6 +15,7 @@ SOURCES = {
     "jaci-ui": "julia-reushenova.jpg",
     "mondo-send": "sue-hughes.jpeg",
     "coleoptera-identifier": "weronika-romanowska.jpg",
+    "fuste-confere": "fin.jpg",
 }
 # The 88×60 CSS icon has a one-pixel border on each side.
 PREVIEW_SIZE = (86, 58)

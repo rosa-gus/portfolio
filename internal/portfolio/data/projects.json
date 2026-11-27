@@ -45,10 +45,28 @@
       }
     ],
     "caseStudy": {
-      "context": "cases/abrigo-do-wlad/context.md",
-      "challenge": "cases/abrigo-do-wlad/challenge.md",
-      "decision": "cases/abrigo-do-wlad/decision.md",
-      "result": "cases/abrigo-do-wlad/result.md"
+      "sections": [
+        {
+          "id": "context",
+          "title": "Contexto",
+          "content": "cases/abrigo-do-wlad/context.md"
+        },
+        {
+          "id": "challenge",
+          "title": "Desafio",
+          "content": "cases/abrigo-do-wlad/challenge.md"
+        },
+        {
+          "id": "decision",
+          "title": "Decisões",
+          "content": "cases/abrigo-do-wlad/decision.md"
+        },
+        {
+          "id": "result",
+          "title": "Resultado",
+          "content": "cases/abrigo-do-wlad/result.md"
+        }
+      ]
     },
     "media": {
       "cover": "public-home-cover",
@@ -155,10 +173,28 @@
       "url": "https://www.gnu.org/licenses/gpl-3.0.html"
     },
     "caseStudy": {
-      "context": "cases/coleoptera-identifier/context.md",
-      "challenge": "cases/coleoptera-identifier/challenge.md",
-      "decision": "cases/coleoptera-identifier/decision.md",
-      "result": "cases/coleoptera-identifier/result.md"
+      "sections": [
+        {
+          "id": "context",
+          "title": "Contexto",
+          "content": "cases/coleoptera-identifier/context.md"
+        },
+        {
+          "id": "challenge",
+          "title": "Desafio",
+          "content": "cases/coleoptera-identifier/challenge.md"
+        },
+        {
+          "id": "decision",
+          "title": "Decisões",
+          "content": "cases/coleoptera-identifier/decision.md"
+        },
+        {
+          "id": "result",
+          "title": "Resultado",
+          "content": "cases/coleoptera-identifier/result.md"
+        }
+      ]
     },
     "media": {
       "cover": "coleoptera-experiment-cover",
@@ -203,7 +239,6 @@
           "label": "Coleoptera Identifier · Capa Externa",
           "caption": "Capa utilizada no Github e em outros meios externos."
         }
-
       ]
     },
     "links": {
@@ -238,7 +273,13 @@
     "practiceMap": [
       {
         "capability": "interfaces",
-        "technologies": ["Python", "GTK 4", "Libadwaita", "PyGObject", "Nautilus"]
+        "technologies": [
+          "Python",
+          "GTK 4",
+          "Libadwaita",
+          "PyGObject",
+          "Nautilus"
+        ]
       },
       {
         "capability": "systems-and-apis",
@@ -250,10 +291,28 @@
       "url": "https://www.gnu.org/licenses/gpl-3.0.html"
     },
     "caseStudy": {
-      "context": "cases/mondo-send/context.md",
-      "challenge": "cases/mondo-send/challenge.md",
-      "decision": "cases/mondo-send/decision.md",
-      "result": "cases/mondo-send/result.md"
+      "sections": [
+        {
+          "id": "context",
+          "title": "Contexto",
+          "content": "cases/mondo-send/context.md"
+        },
+        {
+          "id": "challenge",
+          "title": "Desafio",
+          "content": "cases/mondo-send/challenge.md"
+        },
+        {
+          "id": "decision",
+          "title": "Decisões",
+          "content": "cases/mondo-send/decision.md"
+        },
+        {
+          "id": "result",
+          "title": "Resultado",
+          "content": "cases/mondo-send/result.md"
+        }
+      ]
     },
     "media": {
       "cover": "cover",
@@ -344,7 +403,13 @@
       },
       {
         "capability": "data-and-automation",
-        "technologies": ["Rust", "TypeScript", "MusicBrainz", "Cloudflare R2", "Cloudflare D1"]
+        "technologies": [
+          "Rust",
+          "TypeScript",
+          "MusicBrainz",
+          "Cloudflare R2",
+          "Cloudflare D1"
+        ]
       }
     ],
     "license": {
@@ -352,10 +417,28 @@
       "url": "https://www.gnu.org/licenses/gpl-3.0.html"
     },
     "caseStudy": {
-      "context": "cases/timbre-palette/context.md",
-      "challenge": "cases/timbre-palette/challenge.md",
-      "decision": "cases/timbre-palette/decision.md",
-      "result": "cases/timbre-palette/result.md"
+      "sections": [
+        {
+          "id": "context",
+          "title": "Contexto",
+          "content": "cases/timbre-palette/context.md"
+        },
+        {
+          "id": "challenge",
+          "title": "Desafio",
+          "content": "cases/timbre-palette/challenge.md"
+        },
+        {
+          "id": "decision",
+          "title": "Decisões",
+          "content": "cases/timbre-palette/decision.md"
+        },
+        {
+          "id": "result",
+          "title": "Resultado",
+          "content": "cases/timbre-palette/result.md"
+        }
+      ]
     },
     "media": {
       "cover": "editorial-cover",
@@ -391,9 +474,7 @@
   },
   {
     "slug": "jaci-ui",
-    "relations": [
-      { "ref": "abrigo-do-wlad", "label": "Design system de" }
-    ],
+    "relations": [{ "ref": "abrigo-do-wlad", "label": "Design system de" }],
     "index": "05",
     "title": "Jaci UI",
     "category": "Design system",
@@ -430,10 +511,28 @@
       "url": "https://opensource.org/license/mit"
     },
     "caseStudy": {
-      "context": "cases/jaci-ui/context.md",
-      "challenge": "cases/jaci-ui/challenge.md",
-      "decision": "cases/jaci-ui/decision.md",
-      "result": "cases/jaci-ui/result.md"
+      "sections": [
+        {
+          "id": "context",
+          "title": "Contexto",
+          "content": "cases/jaci-ui/context.md"
+        },
+        {
+          "id": "challenge",
+          "title": "Desafio",
+          "content": "cases/jaci-ui/challenge.md"
+        },
+        {
+          "id": "decision",
+          "title": "Decisões",
+          "content": "cases/jaci-ui/decision.md"
+        },
+        {
+          "id": "result",
+          "title": "Resultado",
+          "content": "cases/jaci-ui/result.md"
+        }
+      ]
     },
     "media": {
       "cover": "jaci-moon-cover",
@@ -550,5 +649,108 @@
     },
     "featured": false,
     "tone": "#577142"
+  },
+  {
+    "slug": "fuste-confere",
+    "index": "06",
+    "title": "Fuste",
+    "category": "Finanças",
+    "year": "2026",
+    "status": "MVP conceitual",
+    "briefDescription": "Um aplicativo local para representantes comerciais conferirem se as comissões informadas pelas representadas batem com o valor esperado por venda.",
+    "summary": "O Fuste cruza os CSVs de vendas e comissões, aplica o acordo vigente na data de cada venda e aponta diferenças entre o valor esperado e o informado.",
+    "role": "Desenvolvimento full-stack",
+    "stack": [
+      "C#",
+      ".NET",
+      "ASP.NET Core",
+      "SQLite",
+      "Svelte",
+      "TypeScript",
+      "Vite",
+      "Carbon Design System"
+    ],
+    "featuredStack": ["C#", "Svelte"],
+    "capabilities": ["interfaces", "systems-and-apis", "data-and-automation"],
+    "practiceMap": [
+      {
+        "capability": "interfaces",
+        "technologies": ["Svelte", "TypeScript", "Vite", "Carbon Design System"]
+      },
+      {
+        "capability": "systems-and-apis",
+        "technologies": ["C#", ".NET", "ASP.NET Core", "SQLite"]
+      },
+      {
+        "capability": "data-and-automation",
+        "technologies": ["C#", "SQLite"]
+      }
+    ],
+    "license": {
+      "name": "Apache-2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "caseStudy": {
+      "sections": [
+        {
+          "id": "how-it-works",
+          "title": "Como funciona",
+          "content": "cases/fuste-confere/how-it-works.md"
+        }
+      ]
+    },
+    "media": {
+      "cover": "editorial-cover",
+      "preview": "/projects/covers/previews/fuste-confere.webp",
+      "coverCredit": {
+        "name": "FIN",
+        "author_url": "https://unsplash.com/@fin21"
+      },
+      "items": [
+        {
+          "id": "editorial-cover",
+          "src": "/projects/covers/fuste-confere.webp",
+          "alt": "Calculadora, caneta e papéis com tabelas e anotações sobre uma mesa, em azul-ardósia e preto.",
+          "label": "Fuste · Capa editorial",
+          "caption": "Calculadora e registros de vendas fotografados de cima, com tratamento em azul-ardósia e preto."
+        },
+        {
+          "id": "first-reconciliation",
+          "src": "/projects/fuste-confere/image01.webp",
+          "alt": "Tela inicial do Fuste em tema claro, com o botão Cadastrar representada em destaque.",
+          "label": "Fuste · Primeira conferência",
+          "caption": "O primeiro acesso orienta o cadastro de uma representada antes da conferência de comissões."
+        },
+        {
+          "id": "reconciliation-setup",
+          "src": "/projects/fuste-confere/image02.webp",
+          "alt": "Tela de nova conferência em tema escuro, com os dois CSVs selecionados e um acordo de comissão de 5% ao lado.",
+          "label": "Fuste · Arquivos e acordo",
+          "caption": "A seleção dos arquivos de vendas e do demonstrativo fica ao lado do acordo de comissão e da sua data de vigência."
+        },
+        {
+          "id": "reconciliation-results",
+          "src": "/projects/fuste-confere/image03.webp",
+          "alt": "Tabela de resultados filtrada por divergência, com os valores esperados, informados e a diferença de cada venda.",
+          "label": "Fuste · Divergências por venda",
+          "caption": "O filtro destaca as vendas com divergências. A conferência completa pode ser exportada em CSV."
+        },
+        {
+          "id": "fuste-settings",
+          "src": "/projects/fuste-confere/image04.webp",
+          "alt": "Painel Opções aberto na aba Conexão, com Usar API local marcado e o resumo da conferência ao fundo.",
+          "label": "Fuste · Menu de Opções",
+          "caption": "O painel de opções possui ajustes de tema, conexão, banco de dados e atualizações."
+        }
+      ]
+    },
+    "links": {
+      "caseStudy": "/case/fuste-confere",
+      "repository": "https://github.com/rosa-gus/fuste-confere",
+      "releases": "https://github.com/rosa-gus/fuste-confere/releases/tag/v0.1.0",
+      "live": ""
+    },
+    "featured": false,
+    "tone": "#456584"
   }
 ]

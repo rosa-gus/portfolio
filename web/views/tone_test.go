@@ -3,6 +3,8 @@ package views
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"html"
 	"strings"
 	"testing"
 
@@ -105,10 +107,12 @@ func TestProjectContentRendersContinuousNoteAndTechnicalDetails(t *testing.T) {
 			{Capability: "security", Technologies: []string{"Python"}},
 		},
 		CaseStudy: portfolio.ProjectCaseStudy{
-			Context:   portfolio.MarkdownDocument{Source: "Context body."},
-			Challenge: portfolio.MarkdownDocument{Source: "Challenge body."},
-			Decision:  portfolio.MarkdownDocument{Source: "Decision body."},
-			Result:    portfolio.MarkdownDocument{Source: "Result body."},
+			Sections: []portfolio.ProjectCaseSection{
+				{ID: "context", Title: "Contexto", Content: portfolio.MarkdownDocument{Source: "Context body."}},
+				{ID: "challenge", Title: "Desafio", Content: portfolio.MarkdownDocument{Source: "Challenge body."}},
+				{ID: "decision", Title: "Decisões", Content: portfolio.MarkdownDocument{Source: "Decision body."}},
+				{ID: "result", Title: "Resultado", Content: portfolio.MarkdownDocument{Source: "Result body."}},
+			},
 		},
 		Media: portfolio.ProjectMedia{Items: []portfolio.ProjectImage{
 			{ID: "screen", Src: "/projects/screen.png", Alt: "Project screen", Label: "Interface"},
@@ -160,4 +164,76 @@ func TestProjectContentRendersContinuousNoteAndTechnicalDetails(t *testing.T) {
 	assertNotContains(t, html, `Mapa de prática`)
 	assertNotContains(t, html, `project-content__mobile-metadata`)
 	assertNotContains(t, html, `project-content__metadata-row`)
+}
+
+func TestProjectNoteRendersOnlyItsConfiguredSections(t *testing.T) {
+	t.Parallel()
+
+	project := portfolio.Project{
+		Slug:  "example-note",
+		Title: "Example note",
+		CaseStudy: portfolio.ProjectCaseStudy{
+			Sections: []portfolio.ProjectCaseSection{
+				{ID: "workflow", Title: "Fluxo de trabalho", Content: portfolio.MarkdownDocument{Source: "Example workflow."}},
+				{ID: "storage", Title: "Armazenamento", Content: portfolio.MarkdownDocument{Source: "Example storage."}},
+			},
+		},
+	}
+	var output bytes.Buffer
+	if err := ProjectContent(project, "").Render(context.Background(), &output); err != nil {
+		t.Fatalf("ProjectContent().Render() returned an error: %v", err)
+	}
+
+	rendered := output.String()
+	want := []struct{ id, title string }{
+		{"workflow", "Fluxo de trabalho"},
+		{"storage", "Armazenamento"},
+		{"practice", "Ficha técnica"},
+	}
+	for _, attribute := range []string{"data-project-anchor", "data-project-section"} {
+		if got := strings.Count(rendered, attribute+`="`); got != len(want) {
+			t.Errorf("%s count = %d, want %d", attribute, got, len(want))
+		}
+		previous := -1
+		for _, section := range want {
+			position := strings.Index(rendered, attribute+`="`+section.id+`"`)
+			if position <= previous {
+				t.Fatalf("%s %q is missing or out of order", attribute, section.id)
+			}
+			previous = position
+		}
+	}
+	for index, section := range want {
+		assertContains(t, rendered, fmt.Sprintf(
+			`href="#project-example-note-%s" data-project-anchor="%s"><span class="project-note__number">%02d</span><span>%s</span>`,
+			section.id, section.id, index+1, section.title,
+		))
+	}
+	assertContains(t, rendered, "<p>Example workflow.</p>")
+	assertContains(t, rendered, "<p>Example storage.</p>")
+}
+
+func TestFusteNoteRendersCatalogMedia(t *testing.T) {
+	t.Parallel()
+
+	project, ok := portfolio.FindProject("fuste-confere")
+	if !ok {
+		t.Fatal("Fuste is missing from the project catalog")
+	}
+	var output bytes.Buffer
+	if err := ProjectContent(project, "").Render(context.Background(), &output); err != nil {
+		t.Fatalf("ProjectContent().Render() returned an error: %v", err)
+	}
+
+	rendered := output.String()
+	for _, image := range project.Media.Items {
+		assertContains(t, rendered, `src="`+html.EscapeString(image.Src)+`" alt="`+html.EscapeString(image.Alt)+`"`)
+	}
+	credit := project.Media.CoverCredit
+	if credit.Name != "" {
+		assertContains(t, rendered, html.EscapeString(credit.Name))
+		if credit.AuthorURL != "" {
+			assertContains(t, rendered, `href="`+html.EscapeString(credit.AuthorURL)+`"`)
+		}
+	}
 }

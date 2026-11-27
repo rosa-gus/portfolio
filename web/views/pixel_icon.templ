@@ -1,7 +1,7 @@
 package views
 
 templ PixelIcon(name string) {
-	if pattern, exists := pixelIconPatterns[name]; exists {
-		<span class="pixel-icon" data-pixel-icon={ name } style={ pixelIconStyle(pattern) } aria-hidden="true"></span>
-	}
+if pattern, exists := pixelIconPatterns[name]; exists {
+<span class="pixel-icon" data-pixel-icon={ name } style={ pixelIconStyle(pattern) } aria-hidden="true"></span>
+}
 }
